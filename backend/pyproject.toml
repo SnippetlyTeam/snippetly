@@ -1,0 +1,43 @@
+[project]
+name = "snippetly-api"
+version = "0.1.0"
+description = "Snippetly - platform for creating and sharing code fragments"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.16.5",
+    "beanie>=2.0.0",
+    "fastapi>=0.117.1",
+    "pydantic>=2.11.9",
+    "pydantic-settings>=2.10.1",
+    "sqlalchemy>=2.0.43",
+    "uvicorn>=0.36.0",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "ruff>=0.13.1",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = [
+    "B", "C", "E", "F", "W",
+    "B9", "ANN", "Q0", "N8"
+]
+ignore = ["N807", "F401"]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+
+[tool.mypy]
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+show_error_codes = true
+pretty = true
