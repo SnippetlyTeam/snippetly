@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     "mypy>=1.18.2",
     "ruff>=0.13.1",
+    "types-passlib>=1.7.7.20250602",
 ]
 
 [tool.ruff]
@@ -31,7 +32,7 @@ select = [
     "B", "C", "E", "F", "W",
     "B9", "ANN", "Q0", "N8"
 ]
-ignore = ["N807", "F401"]
+ignore = ["N807", "F401", "F405"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -45,6 +46,7 @@ warn_unused_ignores = true
 show_error_codes = true
 pretty = true
 mypy_path = "src/"
+exclude = ["src/adapters/postgres/migrations/.*"]
 
 
 [tool.alembic]

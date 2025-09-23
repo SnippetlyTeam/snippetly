@@ -14,7 +14,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.security import hash_password, verify_password, generate_secure_token
+from src.core.security import (
+    hash_password,
+    verify_password,
+    generate_secure_token,
+)
 from .base import Base
 from .enums import GenderEnum
 
@@ -28,7 +32,12 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True
     )
-    _hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    username: Mapped[str] = mapped_column(
+        String(40), nullable=False, unique=True
+    )
+    _hashed_password: Mapped[str] = mapped_column(
+        "hashed_password", String(255), nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
