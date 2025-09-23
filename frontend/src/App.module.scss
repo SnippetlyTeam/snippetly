@@ -1,0 +1,32 @@
+.app {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  min-height: 100vh;
+}
+
+.mainContent {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-top: 80px;
+  padding-bottom: 56px;
+
+  color: var(--color-primary);
+
+  @include on-desktop {
+    padding-top: 96px;
+    padding-bottom: 80px;
+  }
+}
+
+header {
+  box-sizing: border-box;
+  width: 100%;
+}
