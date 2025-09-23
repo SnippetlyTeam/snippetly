@@ -60,6 +60,10 @@
 
 .text {
   font-size: 14px;
+
+  a {
+    font-size: 14px;
+  }
 }
 
 .button {
@@ -91,8 +95,14 @@
   border: none;
 }
 
-a {
+.error {
+  margin: 0;
   font-size: 14px;
+  color: var(--color-red);
+}
+
+a {
+  font-size: 12px;
   color: var(--color-accent);
   @include set-transition;
 

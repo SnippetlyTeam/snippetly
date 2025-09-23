@@ -10,21 +10,48 @@ const AuthPage: React.FC<Props> = ({ formType }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [emailInputValue, setEmailInputValue] = useState('');
   const [passwordInputValue, setPasswordInputValue] = useState('');
+  const [isEmailError, setIsEmailError] = useState(false);
+  const [isPasswordError, setIsPasswordError] = useState(false);
   const isSignUp = formType === 'signup';
 
   function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setEmailInputValue(event.target.value);
+
+    if (isEmailError) {
+      setIsEmailError(false);
+    }
   }
 
   function handlePasswordInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPasswordInputValue(event.target.value);
+
+    if (isPasswordError) {
+      setIsPasswordError(false);
+    }
+  }
+
+  function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!emailInputValue.trim()) {
+      setIsEmailError(true);
+    }
+
+    if (!passwordInputValue.trim()) {
+      setIsPasswordError(true);
+    }
   }
 
   return (
     <main className={styles.main}>
       <h2>{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
 
-      <form action="#" className={styles.form}>
+      <form
+        noValidate
+        action="#"
+        className={styles.form}
+        onSubmit={handleFormSubmit}
+      >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
             <label
@@ -43,6 +70,10 @@ const AuthPage: React.FC<Props> = ({ formType }) => {
               placeholder="Enter your username or email"
               onChange={handleEmailInputChange}
             />
+
+            {isEmailError && (
+              <p className={styles.error}>Email or Username: can’t be blank</p>
+            )}
           </div>
           <div className={styles.inputsItem}>
             <label
@@ -70,7 +101,9 @@ const AuthPage: React.FC<Props> = ({ formType }) => {
               </button>
             </div>
 
-            <Link to='/'>Forgot the password?</Link>
+            {isPasswordError && <p className={styles.error}>Password: can’t be blank</p>}
+
+            <Link to='/`'>Forgot the password?</Link>
           </div>
         </div>
 
