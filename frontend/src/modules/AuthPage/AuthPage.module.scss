@@ -60,15 +60,6 @@
 
 .text {
   font-size: 14px;
-
-  a {
-    color: var(--color-accent);
-    @include set-transition;
-
-    &:hover {
-      color: var(--color-purple);
-    }
-  }
 }
 
 .button {
@@ -98,4 +89,14 @@
   right: 10px;
   cursor: pointer;
   border: none;
+}
+
+a {
+  font-size: 14px;
+  color: var(--color-accent);
+  @include set-transition;
+
+  &:hover {
+    color: var(--color-purple);
+  }
 }

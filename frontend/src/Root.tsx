@@ -8,7 +8,7 @@ export const Root = () => (
     <Routes>
       <Route path="/" element={<App />}>
         <Route index element={<LandingPage />} />
-        <Route path="login" element={<AuthPage formType='login' />} />
+        <Route path="signin" element={<AuthPage formType='signin' />} />
         <Route path="signup" element={<AuthPage formType='signup' />} />
       </Route>
     </Routes>

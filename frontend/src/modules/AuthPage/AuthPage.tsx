@@ -4,30 +4,44 @@ import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 
-type Props = { formType: 'login' | 'signup' }
+type Props = { formType: 'signin' | 'signup' }
 
 const AuthPage: React.FC<Props> = ({ formType }) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [emailInputValue, setEmailInputValue] = useState('');
+  const [passwordInputValue, setPasswordInputValue] = useState('');
   const isSignUp = formType === 'signup';
+
+  function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setEmailInputValue(event.target.value);
+  }
+
+  function handlePasswordInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    setPasswordInputValue(event.target.value);
+  }
 
   return (
     <main className={styles.main}>
-      <h2>{isSignUp ? 'Sign Up' : 'Log In'}</h2>
+      <h2>{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
 
       <form action="#" className={styles.form}>
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
             <label
-              htmlFor="email"
+              htmlFor="usernameOrEmail"
               className={styles.inputsTitle}
             >
-              Email
+              Email or username
             </label>
             <input
+              required
+              value={emailInputValue}
               className={styles.input}
-              id="email"
-              type="email"
-              placeholder="Enter your email"
+              id="usernameOrEmail"
+              type="text"
+              autoComplete="username"
+              placeholder="Enter your username or email"
+              onChange={handleEmailInputChange}
             />
           </div>
           <div className={styles.inputsItem}>
@@ -38,10 +52,13 @@ const AuthPage: React.FC<Props> = ({ formType }) => {
             </label>
             <div className={styles.container}>
               <input
+                required
+                value={passwordInputValue}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
                 id="password"
                 placeholder={isSignUp ? 'Create a password' : 'Enter your password'}
+                onChange={handlePasswordInputChange}
               />
               <button
                 className={styles.eye}
@@ -52,21 +69,23 @@ const AuthPage: React.FC<Props> = ({ formType }) => {
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
+
+            <Link to='/'>Forgot the password?</Link>
           </div>
         </div>
 
         <button
           type="submit"
           className={styles.button}
-        >{isSignUp ? 'Sign Up' : 'Log In'}</button>
+        >{isSignUp ? 'Sign Up' : 'Sign In'}</button>
 
         {isSignUp ? (
           <p className={styles.text}>
-            Already have an account? <Link to='/login'>Log In</Link>
+            Already have an account? <Link to='/signin'>Sign In</Link>
           </p>
         ) : (
           <p className={styles.text}>
-            Don't have an account? <Link to='/signup'>Sign Up</Link>
+            Need an account? <Link to='/signup'>Sign Up</Link>
           </p>
         )}
       </form>
