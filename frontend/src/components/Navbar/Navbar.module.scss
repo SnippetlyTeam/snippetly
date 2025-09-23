@@ -35,7 +35,7 @@
 .link {
   font-family: "Space Mono", monospace;
   color: var(--color-white);
-  transition: color 0.2s ease-out;
+  @include set-transition(color);
 
   &:hover {
     color: var(--color-purple);

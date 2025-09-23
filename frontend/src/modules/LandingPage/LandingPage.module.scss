@@ -52,7 +52,7 @@
   background-color: var(--color-accent);
   color: var(--primary-bg-color);
 
-  transition: background-color 0.2s ease-out;
+  @include set-transition(background-color);
 
   @include on-tablet {
     height: 48px;

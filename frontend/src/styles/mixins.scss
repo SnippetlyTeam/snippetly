@@ -1,4 +1,4 @@
-@use 'variables' as *;
+@use "variables" as *;
 
 @mixin on-tablet {
   @media (min-width: $tablet-min-width) {
@@ -22,4 +22,8 @@
   @include on-desktop {
     padding-inline: $content-padding-desktop;
   }
+}
+
+@mixin set-transition($properties: all, $duration: 0.2s, $timing: ease) {
+  transition: $properties $duration $timing;
 }
