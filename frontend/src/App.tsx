@@ -1,13 +1,13 @@
 import { Outlet } from 'react-router-dom';
-import './App.module.scss';
 import Navbar from './components/Navbar/Navbar';
+import styles from './App.module.scss';
 
 const App: React.FC = () => (
-  <div className="app-container">
+  <div className={styles.app}>
     <header>
       <Navbar />
     </header>
-    <div className="main-content">
+    <div className={styles.mainContent}>
       <Outlet />
     </div>
   </div>

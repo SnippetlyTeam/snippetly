@@ -1,0 +1,19 @@
+.app {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+}
+
+.mainContent {
+  padding-top: 48px;
+
+  @include on-tablet {
+    padding-top: 64px;
+  }
+
+  @include on-tablet {
+    padding-top: 80px;
+  }
+  max-width: 1200px;
+}
