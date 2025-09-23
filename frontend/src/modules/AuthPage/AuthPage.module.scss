@@ -1,0 +1,22 @@
+.main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  justify-content: center;
+  align-items: center;
+}
+
+.form {
+  max-width: 384px;
+  width: 100%;
+  padding: 32px;
+  background-color: var(--secondary-bg-color);
+}
+
+.inputs {
+  &Item {
+    display: flex;
+    flex-direction: column;
+  }
+}

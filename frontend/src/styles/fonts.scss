@@ -23,6 +23,15 @@ h1 {
   }
 }
 
+h2 {
+  font-size: 32px;
+  line-height: 1.2;
+
+  @include on-tablet {
+    font-size: 36px;
+  }
+}
+
 .buttonText {
   font-size: 14px;
   font-weight: 600;
