@@ -1,3 +1,4 @@
+import CodeEditor from '../../components/CodeEditor/CodeEditor';
 import styles from './LandingPage.module.scss';
 
 const LandingPage: React.FC = () => {
@@ -14,9 +15,7 @@ const LandingPage: React.FC = () => {
 
       <button className={`${styles.button} buttonText`}>Start Coding</button>
 
-      <div className={styles.redactor}>
-        
-      </div>
+      <CodeEditor />
     </main>
   )
 }
