@@ -1,10 +1,16 @@
 body {
   background-color: var(--bg-color);
-  color: white;
+  color: var(--color-white);
   padding: 0;
   margin: 0;
 }
 
 a {
   text-decoration: none;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }

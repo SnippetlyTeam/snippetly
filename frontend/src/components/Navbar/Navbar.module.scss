@@ -1,5 +1,28 @@
 .nav {
+  display: flex;
+  justify-content: space-between;
   background-color: var(--footer-bg-color);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   padding: 16px;
+
+  position: relative;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.list {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.link {
+  font-family: "Space Mono", monospace;
+  color: var(--color-white);
+  transition: color 0.2s ease-out;
+
+  &:hover {
+    color: var(--color-purple);
+  }
 }
