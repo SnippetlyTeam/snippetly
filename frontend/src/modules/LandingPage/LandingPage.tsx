@@ -1,4 +1,5 @@
 import CodeEditor from '../../components/CodeEditor/CodeEditor';
+import MainButton from '../../components/MainButton/MainButton';
 import styles from './LandingPage.module.scss';
 
 const LandingPage: React.FC = () => {
@@ -14,8 +15,7 @@ const LandingPage: React.FC = () => {
       </div>
 
       <CodeEditor />
-
-      <button className={`${styles.button} buttonText`}>Start Coding</button>
+      <MainButton content='Start Coding' />
     </main>
   )
 }
