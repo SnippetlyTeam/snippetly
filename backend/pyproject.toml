@@ -6,8 +6,11 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "alembic>=1.16.5",
+    "asyncpg>=0.30.0",
     "beanie>=2.0.0",
     "fastapi>=0.117.1",
+    "passlib[bcrypt]>=1.7.4",
+    "psycopg>=3.2.10",
     "pydantic>=2.11.9",
     "pydantic-settings>=2.10.1",
     "sqlalchemy>=2.0.43",
@@ -41,3 +44,11 @@ warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
 pretty = true
+mypy_path = "src/"
+
+
+[tool.alembic]
+path_separator = "os"
+script_location = "src/adapters/postgres/migrations"
+prepend_sys_path = "."
+sqlalchemy.url = "driver://user:pass@localhost/dbname"
