@@ -1,8 +1,9 @@
 # Snippetly-API
 
 ---
+## Getting Started
 
-## **1. Setup virtual environment (Linux/macOS)**
+### **1. Setup virtual environment (Linux/macOS)**
 
 ```bash
 # Go to the backend directory
@@ -21,7 +22,7 @@ uv install --without dev
 
 ---
 
-## 2. Setup virtual environment (Windows, PowerShell)
+### 2. Setup virtual environment (Windows, PowerShell)
 
 ```powershell
 # Go to the backend directory
@@ -42,7 +43,7 @@ uv install --without dev
 
 ---
 
-## 3. Run the backend
+### 3. Run the backend
 
 ```bash
 # From Linux/macOS
@@ -57,7 +58,7 @@ uvicorn src.main:app --port 8000
 
 ---
 
-## 4. Test the Hello endpoint
+### 4. Test the Hello endpoint
 
 Once the server is running, open a browser or Postman and go to:
 
@@ -66,3 +67,15 @@ GET http://127.0.0.1:8000/docs/
 ```
 
 to get OpenAPI
+
+
+## How to run migrations
+
+To run database migrations, make sure to use environment variables from `.env.sample` (`cp .env.sample .env` in backend directory).
+This ensures that Alembic has access to the correct database URL and other configuration values.
+
+Run the migrations with the following command:
+
+```bash
+uv run alembic upgrade head
+```
