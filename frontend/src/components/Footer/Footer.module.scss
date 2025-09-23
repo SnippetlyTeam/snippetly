@@ -1,0 +1,14 @@
+.footer {
+  background-color: var(--footer-bg-color);
+  min-width: 100%;
+
+  padding-block: 24px;
+
+  @include on-tablet {
+    padding-block: 28px;
+  }
+
+  @include on-desktop {
+    padding-block: 32px;
+  }
+}
