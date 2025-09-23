@@ -1,5 +1,10 @@
 .logo {
+  color: var(--color-accent);
+}
+
+.large {
   font-size: 24px;
+  font-weight: 700;
 
   @include on-tablet {
     font-size: 28px;
@@ -8,7 +13,13 @@
   @include on-tablet {
     font-size: 32px;
   }
+}
 
+.small {
   font-weight: 700;
-  color: var(--color-accent);
+  font-size: 16px;
+
+  @include on-tablet {
+    font-size: 20px;
+  }
 }

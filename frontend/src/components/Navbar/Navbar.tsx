@@ -6,7 +6,7 @@ import { NavLink } from 'react-router-dom';
 const Navbar: React.FC = () => {
   return (
     <nav className={styles.nav}>
-      <Logo />
+      <Logo type='large'/>
 
       <ul className={styles.list}>
         <li className={styles.listItem}>

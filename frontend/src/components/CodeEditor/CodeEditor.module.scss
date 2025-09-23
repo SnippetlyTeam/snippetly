@@ -1,4 +1,6 @@
 .editor {
+  display: flex;
+  flex-direction: column;
   font-size: 14px;
 
   width: 100%;
@@ -10,4 +12,8 @@
   box-sizing: border-box;
 
   background-color: var(--footer-bg-color);
+
+  @include on-desktop {
+    min-height: 300px;
+  }
 }

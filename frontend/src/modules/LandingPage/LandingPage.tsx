@@ -13,9 +13,9 @@ const LandingPage: React.FC = () => {
         </p>
       </div>
 
-      <button className={`${styles.button} buttonText`}>Start Coding</button>
-
       <CodeEditor />
+
+      <button className={`${styles.button} buttonText`}>Start Coding</button>
     </main>
   )
 }
