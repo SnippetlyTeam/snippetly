@@ -4,11 +4,12 @@ import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 
-
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  
   const [emailInputValue, setEmailInputValue] = useState('');
   const [passwordInputValue, setPasswordInputValue] = useState('');
+
   const [isEmailError, setIsEmailError] = useState(false);
   const [isPasswordError, setIsPasswordError] = useState(false);
 

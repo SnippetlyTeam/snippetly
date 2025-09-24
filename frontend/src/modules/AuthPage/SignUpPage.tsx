@@ -3,78 +3,37 @@ import styles from './AuthPage.module.scss';
 import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
-
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const SignUpPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
-  const [usernameInputValue, setUsernameInputValue] = useState('');
-  const [emailInputValue, setEmailInputValue] = useState('');
+  const signupSchema = z.object({
+    username: z.string()
+      .min(3)
+      .max(40)
+      .regex(/^[A-Za-z][A-Za-z0-9_]*$/),
+    email: z.email(),
+    password: z.string()
+      .min(8)
+      .regex(/^\S+$/),
+    confirmPassword: z.string(),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword']
+  });
 
-  const [passwordInputValue, setPasswordInputValue] = useState('');
-  const [confirmPasswordInputValue, setConfirmPasswordInputValue] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(signupSchema),
+  });
 
-  const [isUsernameError, setIsUsernameError] = useState(false);
-  const [isEmailError, setIsEmailError] = useState(false);
-  const [isPasswordError, setIsPasswordError] = useState(false);
-  const [isPasswordMatchError, setIsPasswordMatchError] = useState(false);
-
-  function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setEmailInputValue(event.target.value);
-
-    if (isEmailError) {
-      setIsEmailError(false);
-    }
-  }
-
-  function handlePasswordInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setPasswordInputValue(event.target.value);
-
-    if (isPasswordError) {
-      setIsPasswordError(false);
-    }
-  }
-
-  function handleConfirmPasswordInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setConfirmPasswordInputValue(event.target.value);
-
-    if (isPasswordMatchError) {
-      setIsPasswordMatchError(false);
-    }
-  }
-
-  function handleUsernameInputChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setUsernameInputValue(event.target.value);
-
-    if (isUsernameError) {
-      setIsUsernameError(false);
-    }
-  }
-
-  function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!emailInputValue.trim()) {
-      setIsEmailError(true);
-    }
-
-    if (!passwordInputValue.trim()) {
-      setIsPasswordError(true);
-    }
-
-    if (
-      !usernameInputValue.trim() ||
-      !/^[A-Za-z]/.test(usernameInputValue.trim()) ||
-      usernameInputValue.trim().includes(' ') ||
-      usernameInputValue.trim().length < 3
-    ) {
-      setIsUsernameError(true);
-    }
-
-    if (passwordInputValue.trim() !== confirmPasswordInputValue) {
-      setIsPasswordMatchError(true);
-    }
-  }
+  function handleFormSubmit() { }
 
   return (
     <main className={styles.main}>
@@ -84,7 +43,7 @@ const SignUpPage: React.FC = () => {
         noValidate
         action="#"
         className={styles.form}
-        onSubmit={handleFormSubmit}
+        onSubmit={handleSubmit(handleFormSubmit)}
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
@@ -95,19 +54,16 @@ const SignUpPage: React.FC = () => {
               Username
             </label>
             <input
-              required
-              minLength={3}
-              maxLength={40}
-              value={usernameInputValue}
+              {...register('username')}
               className={styles.input}
-              id="usernameOrEmail"
+              maxLength={40}
+              id="username"
               type="text"
               autoComplete="username"
               placeholder="Enter your username"
-              onChange={handleUsernameInputChange}
             />
 
-            {isUsernameError && (
+            {errors.username && (
               <p className={styles.error}>
                 Username must start with a letter,
                 have no spaces, and be 3 - 40 characters.
@@ -122,17 +78,15 @@ const SignUpPage: React.FC = () => {
               Email
             </label>
             <input
-              required
-              value={emailInputValue}
+              {...register('email')}
               className={styles.input}
-              id="usernameOrEmail"
+              id="email"
               type="email"
-              autoComplete="username"
+              autoComplete="email"
               placeholder="Enter your email"
-              onChange={handleEmailInputChange}
             />
 
-            {isEmailError && (
+            {errors.email && (
               <p className={styles.error}>Email: can’t be blank</p>
             )}
           </div>
@@ -144,13 +98,13 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
-                required
-                value={passwordInputValue}
+                {...register('password')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
                 id="password"
                 placeholder={'Create your password'}
-                onChange={handlePasswordInputChange}
+                maxLength={30}
+                autoComplete="new-password"
               />
               <button
                 className={styles.eye}
@@ -162,7 +116,7 @@ const SignUpPage: React.FC = () => {
               </button>
             </div>
 
-            {isPasswordError && (
+            {errors.password && (
               <p className={styles.error}>
                 Password can’t be blank.
                 Password should contain at least one capital letter,
@@ -178,13 +132,13 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
-                required
-                value={confirmPasswordInputValue}
+                {...register('confirmPassword')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
                 id="password"
                 placeholder={'Confirm your password'}
-                onChange={handleConfirmPasswordInputChange}
+                maxLength={30}
+                autoComplete="new-password"
               />
               <button
                 className={styles.eye}
@@ -196,7 +150,7 @@ const SignUpPage: React.FC = () => {
               </button>
             </div>
 
-            {isPasswordMatchError && <p className={styles.error}>Passwords do not match.</p>}
+            {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
           </div>
         </div>
 
