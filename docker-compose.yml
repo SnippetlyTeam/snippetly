@@ -1,0 +1,41 @@
+version: "3.9"
+
+# Base services shared by all environments. Ports are not exposed here;
+# see docker-compose.dev.yml for development-time port mappings.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: snippetly-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-snippetly}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snippetly}
+      POSTGRES_DB: ${POSTGRES_DB:-snippetly}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: snippetly-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  default:
+    name: snippetly-net
+
+volumes:
+  pgdata:
+  redisdata:

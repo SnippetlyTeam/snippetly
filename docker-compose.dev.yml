@@ -1,0 +1,29 @@
+version: "3.9"
+
+# Development-only overrides: adds port mappings and PGAdmin UI
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: snippetly-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.test}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "9090:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  pgadmin:
