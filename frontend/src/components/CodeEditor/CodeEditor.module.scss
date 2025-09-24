@@ -11,7 +11,7 @@
   padding: 16px;
   box-sizing: border-box;
 
-  background-color: var(--footer-bg-color);
+  background-color: var(--secondary-bg-color);
 
   @include on-desktop {
     min-height: 300px;
