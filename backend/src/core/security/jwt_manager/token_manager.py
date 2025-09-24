@@ -5,6 +5,7 @@ from typing import Optional, cast
 import jwt
 from pydantic import SecretStr
 from redis.asyncio.client import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.models import UserModel
 from src.adapters.redis import blacklist as redis_blacklist
@@ -48,19 +49,7 @@ class JWTAuthManager(JWTAuthInterface):
     def __generate_jti(length: int = 16) -> str:
         return secrets.token_hex(length)
 
-    def create_access_token(
-        self, user: UserModel, expires_delta: Optional[timedelta] = None
-    ) -> str:
-        user_data = self.__parse_user_data(user, self._access_token_life)
-        return self.__create_token(user_data, self._secret_key_access)
-
-    def create_refresh_token(
-        self, user: UserModel, expires_delta: Optional[timedelta] = None
-    ) -> str:
-        user_data = self.__parse_user_data(user, self._refresh_token_life)
-        return self.__create_token(user_data, self._secret_key_refresh)
-
-    def decode_token(self, token: str) -> Optional[dict]:
+    def _decode_token(self, token: str) -> Optional[dict]:
         try:
             payload = jwt.decode(
                 token,
@@ -71,11 +60,21 @@ class JWTAuthManager(JWTAuthInterface):
         except jwt.PyJWTError:
             return None
 
-    async def add_to_blacklist(self, redis: Redis, jti: str, exp: int) -> None:
+    @staticmethod
+    async def add_to_blacklist(redis: Redis, jti: str, exp: int) -> None:
         await redis_blacklist.add_to_blacklist(redis, jti, exp)
 
-    async def is_blacklisted(self, redis: Redis, jti: str) -> bool:
+    @staticmethod
+    async def is_blacklisted(redis: Redis, jti: str) -> bool:
         return await redis_blacklist.is_blacklisted(redis, jti)
+
+    def create_access_token(self, user: UserModel) -> str:
+        user_data = self.__parse_user_data(user, self._access_token_life)
+        return self.__create_token(user_data, self._secret_key_access)
+
+    def create_refresh_token(self, user: UserModel) -> str:
+        user_data = self.__parse_user_data(user, self._refresh_token_life)
+        return self.__create_token(user_data, self._secret_key_refresh)
 
     async def verify_token(
         self, redis: Redis, token: str, is_refresh: bool = False
@@ -95,3 +94,24 @@ class JWTAuthManager(JWTAuthInterface):
             return None
 
         return cast(dict, payload)
+
+    async def refresh_tokens(
+        self, db: AsyncSession, redis: Redis, refresh_token: str
+    ) -> Optional[dict]:
+        payload = await self.verify_token(
+            redis=redis, token=refresh_token, is_refresh=True
+        )
+        if not payload:
+            return None
+
+        user_id = payload.get("user_id")
+        if not user_id:
+            return None
+
+        user = await db.get(UserModel, user_id)
+        if not user:
+            return None
+
+        new_access_token = self.create_access_token(user)
+
+        return {"access_token": new_access_token}

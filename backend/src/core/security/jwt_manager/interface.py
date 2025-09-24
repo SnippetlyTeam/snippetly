@@ -3,48 +3,29 @@ from datetime import timedelta
 from typing import Optional
 
 from redis.asyncio.client import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.models import UserModel
 
 
 class JWTAuthInterface(ABC):
     @abstractmethod
-    def create_access_token(
-        self, user: UserModel, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, user: UserModel) -> str:
         """
         An abstract method for creating an access token.
 
         :param user: The payload user data to encode within the token
-        :param expires_delta: (Optional[timedelta]): The duration
-                until the token expires. If not provided,
-                a default expiration time should be used.
         :return: The generated access token as a string.
         """
         pass
 
     @abstractmethod
-    def create_refresh_token(
-        self, user: UserModel, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_refresh_token(self, user: UserModel) -> str:
         """
         An abstract method for creating a refresh token.
 
         :param user: The payload user data to encode within the token
-        :param expires_delta: (Optional[timedelta]): The duration
-                until the token expires. If not provided,
-                a default expiration time should be used
         :return: The generated refresh token as a sting.
-        """
-        pass
-
-    @abstractmethod
-    def decode_token(self, token: str) -> Optional[dict]:
-        """
-        Decode a JWT token without verifying its signature or expiration.
-
-        :param token: The JWT token string to decode.
-        :return: Decoded token payload as dictionary, or None if decoding fails
         """
         pass
 
@@ -70,36 +51,16 @@ class JWTAuthInterface(ABC):
         pass
 
     @abstractmethod
-    async def add_to_blacklist(self, redis: Redis, jti: str, exp: int) -> None:
-        """
-        Add a token to the blacklist to prevent its further use.
-
-        :param redis: Async Redis client
-        :param jti: The JWT identifier string to add to blacklist.
-        :param exp:
-        :return:
-        """
-        pass
-
-    @abstractmethod
-    async def is_blacklisted(self, redis: Redis, jti: str) -> bool:
-        """
-        Check if a token is present in the blacklist.
-
-        :param redis: Async Redis client
-        :param jti: The JWT token identifier to check if blacklisted.
-        :return: bool value
-        """
-        pass
-
-    @abstractmethod
-    async def refresh_tokens(self, refresh_token: str) -> dict:
+    async def refresh_tokens(
+        self, db: AsyncSession, redis: Redis, refresh_token: str
+    ) -> dict:
         """
         Create new access token using a valid refresh token.
 
-        :param refresh_token: Valid refresh token string.
-        :return: Dictionary with new access_token and
-                  optionally new refresh_token.
+        :param db: Database session to query or update auth data.
+        :param redis: Redis instance for managing token-related state.
+        :param refresh_token: Refresh token used to validate new tokens.
+        :return: A dictionary containing refreshed authentication tokens.
         """
         pass
 
