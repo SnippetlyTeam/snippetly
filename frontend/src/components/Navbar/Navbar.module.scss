@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
 
-  background-color: var(--footer-bg-color);
+  background-color: var(--secondary-bg-color);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   padding: 16px;
   max-height: 48px;
@@ -35,7 +35,7 @@
 .link {
   font-family: "Space Mono", monospace;
   color: var(--color-white);
-  transition: color 0.2s ease-out;
+  @include set-transition(color);
 
   &:hover {
     color: var(--color-purple);
