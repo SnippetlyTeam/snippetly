@@ -1,10 +1,11 @@
 from pydantic_settings import SettingsConfigDict
 
 from src.core.config.postgres import PostgresSQLSettings
+from src.core.config.redis import RedisSettings
 from src.core.config.security import SecuritySettings
 
 
-class Settings(PostgresSQLSettings, SecuritySettings):
+class Settings(PostgresSQLSettings, SecuritySettings, RedisSettings):
     pass
 
 

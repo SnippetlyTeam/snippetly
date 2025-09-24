@@ -6,6 +6,7 @@ from src.core.config.redis import RedisSettings
 
 _redis_client: Optional[Redis] = None
 
+
 def get_redis_client(settings: RedisSettings) -> Redis:
     global _redis_client
     if _redis_client is None:
@@ -16,4 +17,3 @@ def get_redis_client(settings: RedisSettings) -> Redis:
             decode_responses=True,
         )
     return _redis_client
-

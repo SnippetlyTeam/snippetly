@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import timedelta
 from typing import Optional
 
+from redis.asyncio.client import Redis
+
 from src.adapters.postgres.models import UserModel
 
 
@@ -14,8 +16,9 @@ class JWTAuthInterface(ABC):
         An abstract method for creating an access token.
 
         :param user: The payload user data to encode within the token
-        :param expires_delta: (Optional[timedelta]): The duration until the token expires. If not
-                provided, a default expiration time should be used.
+        :param expires_delta: (Optional[timedelta]): The duration
+                until the token expires. If not provided,
+                a default expiration time should be used.
         :return: The generated access token as a string.
         """
         pass
@@ -28,8 +31,9 @@ class JWTAuthInterface(ABC):
         An abstract method for creating a refresh token.
 
         :param user: The payload user data to encode within the token
-        :param expires_delta: (Optional[timedelta]): The duration until the token expires. If not
-                provided, a default expiration time should be used
+        :param expires_delta: (Optional[timedelta]): The duration
+                until the token expires. If not provided,
+                a default expiration time should be used
         :return: The generated refresh token as a sting.
         """
         pass
@@ -45,7 +49,9 @@ class JWTAuthInterface(ABC):
         pass
 
     @abstractmethod
-    async def verify_token(self, token: str) -> Optional[dict]:
+    async def verify_token(
+        self, redis: Redis, token: str, is_refresh: bool = False
+    ) -> Optional[dict]:
         """
         Verify and validate a JWT token.
 
@@ -55,28 +61,34 @@ class JWTAuthInterface(ABC):
         - Blacklist check
         - Required claims validation
 
+        :param redis: Async Redis client
         :param token: The JWT token string to verify.
+        :param is_refresh: bool, value represent if token is refresh or access
+                default=False (access token)
         :return:
         """
         pass
 
     @abstractmethod
-    async def add_to_blacklist(self, token: str) -> None:
+    async def add_to_blacklist(self, redis: Redis, jti: str, exp: int) -> None:
         """
         Add a token to the blacklist to prevent its further use.
 
-        :param token: The JWT token string to add to blacklist.
+        :param redis: Async Redis client
+        :param jti: The JWT identifier string to add to blacklist.
+        :param exp:
         :return:
         """
         pass
 
     @abstractmethod
-    async def is_blacklisted(self, token: str) -> bool:
+    async def is_blacklisted(self, redis: Redis, jti: str) -> bool:
         """
         Check if a token is present in the blacklist.
 
-        :param token: The JWT token string to check if blacklisted.
-        :return:
+        :param redis: Async Redis client
+        :param jti: The JWT token identifier to check if blacklisted.
+        :return: bool value
         """
         pass
 
@@ -86,7 +98,8 @@ class JWTAuthInterface(ABC):
         Create new access token using a valid refresh token.
 
         :param refresh_token: Valid refresh token string.
-        :return: Dictionary with new access_token and optionally new refresh_token.
+        :return: Dictionary with new access_token and
+                  optionally new refresh_token.
         """
         pass
 

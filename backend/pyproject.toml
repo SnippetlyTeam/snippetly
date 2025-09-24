@@ -34,7 +34,7 @@ select = [
     "B", "C", "E", "F", "W",
     "B9", "ANN", "Q0", "N8"
 ]
-ignore = ["N807", "F401", "F405"]
+ignore = ["N807", "F401", "F405", "ANN204"]
 
 [tool.ruff.format]
 docstring-code-format = true

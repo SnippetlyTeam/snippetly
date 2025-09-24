@@ -1,11 +1,13 @@
 import secrets
 from datetime import timedelta, datetime, timezone
-from typing import Optional
+from typing import Optional, cast
 
 import jwt
 from pydantic import SecretStr
+from redis.asyncio.client import Redis
 
 from src.adapters.postgres.models import UserModel
+from src.adapters.redis import blacklist as redis_blacklist
 from src.core.security.jwt_manager import JWTAuthInterface
 
 
@@ -62,12 +64,34 @@ class JWTAuthManager(JWTAuthInterface):
         try:
             payload = jwt.decode(
                 token,
-                options={
-                    "verify_signature": False,
-                    "verify_exp": False
-                },
+                options={"verify_signature": False, "verify_exp": False},
                 algorithms=[self._algorithm],
             )
-            return payload
+            return cast(dict, payload)
         except jwt.PyJWTError:
             return None
+
+    async def add_to_blacklist(self, redis: Redis, jti: str, exp: int) -> None:
+        await redis_blacklist.add_to_blacklist(redis, jti, exp)
+
+    async def is_blacklisted(self, redis: Redis, jti: str) -> bool:
+        return await redis_blacklist.is_blacklisted(redis, jti)
+
+    async def verify_token(
+        self, redis: Redis, token: str, is_refresh: bool = False
+    ) -> Optional[dict]:
+        key = (
+            self._secret_key_refresh if is_refresh else self._secret_key_access
+        )
+        try:
+            payload = jwt.decode(token, key=key, algorithms=[self._algorithm])
+        except jwt.ExpiredSignatureError:
+            return None
+        except jwt.InvalidTokenError:
+            return None
+
+        jti = payload.get("jti")
+        if not jti or await self.is_blacklisted(redis, jti):
+            return None
+
+        return cast(dict, payload)
