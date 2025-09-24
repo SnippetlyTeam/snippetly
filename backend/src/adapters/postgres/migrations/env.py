@@ -4,7 +4,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from src.core.config import get_settings
-from src.adapters.postgres.models import * # noqa: F403
+from src.adapters.postgres.models import *  # noqa: F403
 
 config = context.config
 settings = get_settings()
