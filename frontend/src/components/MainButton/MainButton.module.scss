@@ -1,0 +1,24 @@
+.button {
+  cursor: pointer;
+  height: 40px;
+  width: 150px;
+
+  border-radius: 999px;
+  border: none;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  background-color: var(--color-accent);
+  color: var(--bg-color);
+
+  transition: background-color 0.2s ease-out;
+
+  @include on-tablet {
+    height: 48px;
+    width: 190px;
+  }
+
+  &:hover {
+    background-color: var(--color-accent-hover);
+  }
+}

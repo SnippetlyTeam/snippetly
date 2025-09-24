@@ -87,7 +87,7 @@ const SignUpPage: React.FC = () => {
             />
 
             {errors.email && (
-              <p className={styles.error}>Email: can’t be blank</p>
+              <p className={styles.error}>This email does not seem valid.</p>
             )}
           </div>
           <div className={styles.inputsItem}>
