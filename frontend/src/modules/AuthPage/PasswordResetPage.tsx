@@ -6,13 +6,30 @@ import { useState } from 'react';
 const PasswordResetPage: React.FC = () => {
   const [emailInputValue, setEmailInputValue] = useState('');
 
-  const [isEmailError, setIsEmailError] = useState(false);
+  const [isEmptyError, setIsEmptyError] = useState(false);
+  const [isValidError, setIsValidError] = useState(false);
+
+  const emailRegex = /^[a-zA-Z0-9+._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setEmailInputValue(event.target.value);
 
-    if (isEmailError) {
-      setIsEmailError(false);
+    if (isEmptyError) {
+      setIsEmptyError(false);
+    }
+
+    if (!isValidError || emailRegex.test(emailInputValue)) {
+      setIsValidError(false);
+    }
+  }
+
+  function handleEmailInputBlur() {
+    if (emailInputValue.length === 0) {
+      setIsValidError(false);
+      return;
+    }
+    if (!emailRegex.test(emailInputValue)) {
+      setIsValidError(true);
     }
   }
 
@@ -20,7 +37,8 @@ const PasswordResetPage: React.FC = () => {
     event.preventDefault();
 
     if (emailInputValue.length === 0) {
-      setIsEmailError(true);
+      setIsEmptyError(true);
+      setIsValidError(false);
     }
   }
 
@@ -36,25 +54,27 @@ const PasswordResetPage: React.FC = () => {
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="usernameOrEmail"
-              className={styles.inputsDescription}
-            >
+            <p className={styles.inputsDescription}>
               Enter your email address below, and we'll send you a link to reset your password.
-            </label>
+            </p>
             <input
               required
               className={styles.input}
-              id="usernameOrEmail"
-              type="text"
+              id="email"
+              type="email"
               autoComplete="username"
               placeholder="Enter your email address"
               value={emailInputValue}
               onChange={handleEmailInputChange}
+              onBlur={handleEmailInputBlur}
             />
 
-            {isEmailError && (
+            {isEmptyError && (
               <p className={styles.error}>Email is required</p>
+            )}
+
+            {isValidError && !isEmptyError && (
+              <p className={styles.error}>Please enter a valid email address</p>
             )}
           </div>
         </div>

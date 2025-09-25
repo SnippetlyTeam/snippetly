@@ -24,11 +24,10 @@
     color: var(--color-accent);
     @include set-transition;
 
-    
     &:hover {
       color: var(--color-purple);
     }
-    
+
     &.back {
       align-self: center;
     }
@@ -54,7 +53,7 @@
   &Description {
     font-weight: normal;
     font-size: 14px;
-    margin-bottom: 8px;
+    margin: 0 0 8px 0;
   }
 }
 

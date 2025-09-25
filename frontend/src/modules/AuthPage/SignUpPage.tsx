@@ -48,7 +48,7 @@ const SignUpPage: React.FC = () => {
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
             <label
-              htmlFor="usernameOrEmail"
+              htmlFor="username"
               className={styles.inputsTitle}
             >
               Username
@@ -72,7 +72,7 @@ const SignUpPage: React.FC = () => {
           </div>
           <div className={styles.inputsItem}>
             <label
-              htmlFor="usernameOrEmail"
+              htmlFor="email"
               className={styles.inputsTitle}
             >
               Email
