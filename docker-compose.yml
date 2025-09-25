@@ -1,41 +1,67 @@
-version: "3.9"
-
-# Base services shared by all environments. Ports are not exposed here;
-# see docker-compose.dev.yml for development-time port mappings.
 services:
   db:
     image: postgres:16-alpine
     container_name: snippetly-db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-snippetly}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-snippetly}
-      POSTGRES_DB: ${POSTGRES_DB:-snippetly}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - pgdata_dev:/var/lib/postgresql/data
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     container_name: snippetly-redis
     command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
     volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - redisdata_dev:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      interval: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snippetly-backend
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DATABASE_URL: postgres://postgres:postgres@db:5432/app_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: snippetly-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata_dev:
+  redisdata_dev:
 
 networks:
   default:
     name: snippetly-net
-
-volumes:
-  pgdata:
-  redisdata:
