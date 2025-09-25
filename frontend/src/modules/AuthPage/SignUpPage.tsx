@@ -161,7 +161,7 @@ const SignUpPage: React.FC = () => {
 
 
         <p className={styles.text}>
-          Have an account? <Link to='/signin'>Sign In</Link>
+          Have an account? <Link to='/sign-in'>Sign In</Link>
         </p>
       </form>
     </main>

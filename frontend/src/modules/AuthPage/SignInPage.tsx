@@ -102,7 +102,7 @@ const SignInPage: React.FC = () => {
 
             {isPasswordError && <p className={styles.error}>Password: can’t be blank</p>}
 
-            <Link to='/`'>Forgot the password?</Link>
+            <Link to='/password-reset'>Forgot the password?</Link>
           </div>
         </div>
 
@@ -113,7 +113,7 @@ const SignInPage: React.FC = () => {
 
 
         <p className={styles.text}>
-          Need an account? <Link to='/signup'>Sign Up</Link>
+          Need an account? <Link to='/sign-up'>Sign Up</Link>
         </p>
       </form>
     </main>
