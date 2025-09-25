@@ -13,5 +13,8 @@ PostgreSQLSessionLocal = async_sessionmaker(autoflush=False, bind=engine)
 
 
 async def get_db() -> AsyncSession:
-    with PostgreSQLSessionLocal() as db:
+    db = PostgreSQLSessionLocal()
+    try:
         yield db
+    finally:
+        await db.close()
