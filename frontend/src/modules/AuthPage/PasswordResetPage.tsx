@@ -54,7 +54,10 @@ const PasswordResetPage: React.FC = () => {
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
-            <p className={styles.inputsDescription}>
+            <p
+              className={styles.inputsDescription}
+              id="email-instructions"
+            >
               Enter your email address below, and we'll send you a link to reset your password.
             </p>
             <input
@@ -67,14 +70,32 @@ const PasswordResetPage: React.FC = () => {
               value={emailInputValue}
               onChange={handleEmailInputChange}
               onBlur={handleEmailInputBlur}
+              aria-label="Email address"
+              aria-describedby={
+                isEmptyError
+                  ? "email-instructions email-error-empty"
+                  : isValidError && !isEmptyError
+                  ? "email-instructions email-error-invalid"
+                  : "email-instructions"
+              }
             />
 
             {isEmptyError && (
-              <p className={styles.error}>Email is required</p>
+              <p
+                className={styles.error}
+                id="email-error-empty"
+              >
+                Email is required
+              </p>
             )}
 
             {isValidError && !isEmptyError && (
-              <p className={styles.error}>Please enter a valid email address</p>
+              <p
+                className={styles.error}
+                id="email-error-invalid"
+              >
+                Please enter a valid email address
+              </p>
             )}
           </div>
         </div>

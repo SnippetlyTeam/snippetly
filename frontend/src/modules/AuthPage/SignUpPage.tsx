@@ -37,19 +37,21 @@ const SignUpPage: React.FC = () => {
 
   return (
     <main className={styles.main}>
-      <h2>Sign Up</h2>
+      <h2 id="sign-up-title">Sign Up</h2>
 
       <form
         noValidate
         action="#"
         className={styles.form}
         onSubmit={handleSubmit(handleFormSubmit)}
+        aria-labelledby="sign-up-title"
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
             <label
               htmlFor="username"
               className={styles.inputsTitle}
+              id="username-label"
             >
               Username
             </label>
@@ -61,10 +63,21 @@ const SignUpPage: React.FC = () => {
               type="text"
               autoComplete="username"
               placeholder="Enter your username"
+              aria-describedby={
+                errors.username
+                  ? "username-label username-error"
+                  : "username-label"
+              }
+              aria-invalid={errors.username ? "true" : undefined}
             />
 
             {errors.username && (
-              <p className={styles.error}>
+              <p
+                className={styles.error}
+                id="username-error"
+                role="alert"
+                aria-live="assertive"
+              >
                 Username must start with a letter,
                 have no spaces, and be 3 - 40 characters.
               </p>
@@ -74,6 +87,7 @@ const SignUpPage: React.FC = () => {
             <label
               htmlFor="email"
               className={styles.inputsTitle}
+              id="email-label"
             >
               Email
             </label>
@@ -84,16 +98,31 @@ const SignUpPage: React.FC = () => {
               type="email"
               autoComplete="email"
               placeholder="Enter your email"
+              aria-describedby={
+                errors.email
+                  ? "email-label email-error"
+                  : "email-label"
+              }
+              aria-invalid={errors.email ? "true" : undefined}
             />
 
             {errors.email && (
-              <p className={styles.error}>This email does not seem valid.</p>
+              <p
+                className={styles.error}
+                id="email-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                This email does not seem valid.
+              </p>
             )}
           </div>
           <div className={styles.inputsItem}>
             <label
               htmlFor="password"
-              className={styles.inputsTitle}>
+              className={styles.inputsTitle}
+              id="password-label"
+            >
               Password
             </label>
             <div className={styles.container}>
@@ -105,19 +134,32 @@ const SignUpPage: React.FC = () => {
                 placeholder={'Create your password'}
                 maxLength={30}
                 autoComplete="new-password"
+                aria-describedby={
+                  errors.password
+                    ? "password-label password-error"
+                    : "password-label"
+                }
+                aria-invalid={errors.password ? "true" : undefined}
               />
               <button
                 className={styles.eye}
                 type='button'
+                aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
+                onMouseLeave={() => setIsPasswordVisible(false)}
               >
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
 
             {errors.password && (
-              <p className={styles.error}>
+              <p
+                className={styles.error}
+                id="password-error"
+                role="alert"
+                aria-live="assertive"
+              >
                 Password can’t be blank.
                 Password should contain at least one capital letter,
                 one number, and one special character.
@@ -126,8 +168,10 @@ const SignUpPage: React.FC = () => {
           </div>
           <div className={styles.inputsItem}>
             <label
-              htmlFor="password"
-              className={styles.inputsTitle}>
+              htmlFor="confirmPassword"
+              className={styles.inputsTitle}
+              id="confirmPassword-label"
+            >
               Confirm password
             </label>
             <div className={styles.container}>
@@ -135,22 +179,39 @@ const SignUpPage: React.FC = () => {
                 {...register('confirmPassword')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
-                id="password"
+                id="confirmPassword"
                 placeholder={'Confirm your password'}
                 maxLength={30}
                 autoComplete="new-password"
+                aria-describedby={
+                  errors.confirmPassword
+                    ? "confirmPassword-label confirmPassword-error"
+                    : "confirmPassword-label"
+                }
+                aria-invalid={errors.confirmPassword ? "true" : undefined}
               />
               <button
                 className={styles.eye}
                 type='button'
+                aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
+                onMouseLeave={() => setIsPasswordVisible(false)}
               >
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
 
-            {errors.confirmPassword && <p className={styles.error}>{errors.confirmPassword.message}</p>}
+            {errors.confirmPassword && (
+              <p
+                className={styles.error}
+                id="confirmPassword-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -158,7 +219,6 @@ const SignUpPage: React.FC = () => {
           type="submit"
           className={styles.button}
         >Sign Up</button>
-
 
         <p className={styles.text}>
           Have an account? <Link to='/sign-in'>Sign In</Link>
