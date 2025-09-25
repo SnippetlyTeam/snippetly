@@ -59,6 +59,10 @@ class TokenRefreshRequestSchema(BaseModel):
     refresh_token: str
 
 
+class LogoutRequestSchema(BaseModel):
+    refresh_token: str
+
+
 # --- Response ---
 class UserRegistrationResponseSchema(EmailMixin, UsernameMixin, BaseModel):
     id: int

@@ -66,3 +66,11 @@ class JWTAuthInterface(ABC):
         :param user_id: The user identifier.
         """
         pass
+
+    @abstractmethod
+    async def add_to_blacklist(self, jti: str, exp: int) -> None:
+        pass
+
+    @abstractmethod
+    def decode_token(self, token: str) -> Optional[dict]:
+        pass

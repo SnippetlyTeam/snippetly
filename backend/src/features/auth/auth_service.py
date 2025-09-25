@@ -1,13 +1,14 @@
-from sqlalchemy import select, or_, delete
+import jwt
+from sqlalchemy import select, or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.models import UserModel, RefreshTokenModel
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.security.jwt_manager.exceptions import UserNotFoundError
+from src.core.exceptions.exceptions import UserNotFoundError
 
 
-class UserService:
+class AuthService:
     def __init__(self, db: AsyncSession, jwt_manager: JWTAuthInterface):
         self.db = db
         self.jwt_manager = jwt_manager
@@ -21,7 +22,7 @@ class UserService:
         result = await self.db.execute(query)
         existing_user = result.scalar_one_or_none()
         if existing_user:
-            raise IntegrityError("User already exists", None, None) # type: ignore[arg-type]
+            raise IntegrityError("User already exists", None, None)  # type: ignore[arg-type]
 
         user = UserModel.create(
             email=email, username=username, new_password=password
@@ -61,13 +62,6 @@ class UserService:
         refresh_token = self.jwt_manager.create_refresh_token(user_data)
 
         try:
-            # delete old refresh token
-            await self.db.execute(
-                delete(RefreshTokenModel).where(
-                    RefreshTokenModel.user_id == user.id
-                )
-            )
-
             new_refresh_token = RefreshTokenModel.create(
                 user.id, refresh_token, 7
             )
@@ -90,3 +84,32 @@ class UserService:
         if not result:
             raise UserNotFoundError("Invalid refresh token")
         return result
+
+    async def logout_user(self, refresh_token: str, access_token: str) -> None:
+        payload = await self.jwt_manager.verify_token(refresh_token, True)
+        if payload is None:
+            raise jwt.InvalidTokenError("Invalid refresh token")
+
+        query = select(RefreshTokenModel).where(
+            RefreshTokenModel.token == refresh_token
+        )
+        result = await self.db.execute(query)
+        token = result.scalar_one_or_none()
+
+        if token:
+            try:
+                await self.db.delete(token)
+                await self.db.commit()
+            except SQLAlchemyError:
+                await self.db.rollback()
+                raise
+
+        access_payload = self.jwt_manager.decode_token(access_token)
+        if (
+            access_payload
+            and access_payload.get("jti")
+            and access_payload.get("exp")
+        ):
+            jti = access_payload["jti"]
+            exp = access_payload["exp"]
+            await self.jwt_manager.add_to_blacklist(jti, exp)

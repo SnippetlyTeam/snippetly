@@ -2,10 +2,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.connection import get_db
+from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.auth import (
     UserRegistrationResponseSchema,
     UserRegistrationRequestSchema,
@@ -13,11 +14,14 @@ from src.api.v1.schemas.auth import (
     UserLoginResponseSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
+    LogoutRequestSchema,
 )
+from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.dependencies.auth import get_token, get_current_user
 from src.core.dependencies.token_manager import get_jwt_manager
+from src.core.exceptions.exceptions import UserNotFoundError
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.security.jwt_manager.exceptions import UserNotFoundError
-from src.features.auth.user_service import UserService
+from src.features.auth.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -28,7 +32,7 @@ async def register(
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
 ) -> UserRegistrationResponseSchema:
-    service = UserService(db, jwt_manager)
+    service = AuthService(db, jwt_manager)
     try:
         user = await service.register_user(
             data.email, data.username, data.password
@@ -40,13 +44,14 @@ async def register(
         ) from e
 
 
+#TODO: check if user is_active
 @router.post("/login", summary="Log in via username or email")
 async def login_user(
     data: UserLoginRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
 ) -> UserLoginResponseSchema:
-    service = UserService(db, jwt_manager)
+    service = AuthService(db, jwt_manager)
     try:
         tokens = await service.login_user(data.login, data.password)
         return UserLoginResponseSchema(**tokens)
@@ -56,15 +61,57 @@ async def login_user(
         ) from e
 
 
-@router.post("/refresh",summary="Refresh token")
+@router.post("/refresh", summary="Refresh token")
 async def refresh(
     data: TokenRefreshRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
 ) -> TokenRefreshResponseSchema:
-    service = UserService(db, jwt_manager)
+    service = AuthService(db, jwt_manager)
     try:
         result = await service.refresh_tokens(data.refresh_token)
         return TokenRefreshResponseSchema(**result)
     except UserNotFoundError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
+
+
+@router.post(
+    "/logout/",
+    response_model=MessageResponseSchema,
+    status_code=200,
+    summary="User Logout",
+)
+async def logout_user(
+    user_data: LogoutRequestSchema,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+    access_token: Annotated[str, Depends(get_token)],
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+) -> MessageResponseSchema:
+    service = AuthService(db, jwt_manager)
+    try:
+        await service.logout_user(user_data.refresh_token, access_token)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to log out. Try again"
+        ) from e
+    return MessageResponseSchema(message="Logged out successfully")
+
+
+@router.get("/test-access-token")
+async def test_access_token(
+    token: Annotated[str, Depends(get_token)],
+    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+) -> MessageResponseSchema:
+    """
+    Protected endpoint to check if access token is valid
+    and not blacklisted.
+    """
+    payload = await jwt_manager.verify_token(token, is_refresh=False)
+    if not payload:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or blacklisted token",
+        )
+
+    return MessageResponseSchema(message="Your token is valid!")

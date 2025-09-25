@@ -11,7 +11,7 @@ from src.adapters.postgres.models import UserModel
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.security.jwt_manager.exceptions import UserNotFoundError
+from src.core.exceptions.exceptions import UserNotFoundError
 
 
 class JWTAuthManager(JWTAuthInterface):
@@ -51,7 +51,7 @@ class JWTAuthManager(JWTAuthInterface):
     def __generate_jti(length: int = 16) -> str:
         return secrets.token_hex(length)
 
-    def _decode_token(self, token: str) -> Optional[dict]:
+    def decode_token(self, token: str) -> Optional[dict]:
         try:
             payload = jwt.decode(
                 token,
@@ -82,22 +82,23 @@ class JWTAuthManager(JWTAuthInterface):
         payload = self.__parse_user_data(user_data, self._refresh_token_life)
         return self.__create_token(payload, self._secret_key_refresh)
 
-    async def verify_token(
-        self, token: str, is_refresh: bool = False
-    ) -> Optional[dict]:
+    async def verify_token(self, token: str, is_refresh: bool = False) -> dict:
         key = (
             self._secret_key_refresh if is_refresh else self._secret_key_access
         )
         try:
             payload = jwt.decode(token, key=key, algorithms=[self._algorithm])
-        except jwt.ExpiredSignatureError:
-            return None
-        except jwt.InvalidTokenError:
-            return None
+        except jwt.ExpiredSignatureError as e:
+            raise jwt.InvalidTokenError("Token has expired") from e
+        except jwt.InvalidTokenError as e:
+            raise jwt.InvalidTokenError("Invalid token") from e
 
         jti = payload.get("jti")
-        if not jti or await self.is_blacklisted(jti):
-            return None
+        if not jti:
+            raise jwt.InvalidTokenError("Token missing jti claim")
+
+        if await self.is_blacklisted(jti):
+            raise jwt.InvalidTokenError("Token is blacklisted")
 
         return cast(dict, payload)
 

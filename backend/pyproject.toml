@@ -9,7 +9,6 @@ dependencies = [
     "asyncpg>=0.30.0",
     "beanie>=2.0.0",
     "fastapi>=0.117.1",
-    "passlib[bcrypt]>=1.7.4",
     "psycopg>=3.2.10",
     "pydantic[email]>=2.11.9",
     "pydantic-settings>=2.10.1",
@@ -17,6 +16,7 @@ dependencies = [
     "redis>=6.4.0",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.36.0",
+    "bcrypt>=4.3.0",
 ]
 
 [dependency-groups]
