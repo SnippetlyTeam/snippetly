@@ -1,3 +1,5 @@
+from typing import AsyncGenerator
+
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
@@ -12,7 +14,7 @@ engine = create_async_engine(settings.postgres_url)
 PostgreSQLSessionLocal = async_sessionmaker(autoflush=False, bind=engine)
 
 
-async def get_db() -> AsyncSession:
+async def get_db() -> AsyncGenerator[AsyncSession]:
     db = PostgreSQLSessionLocal()
     try:
         yield db

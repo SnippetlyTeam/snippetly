@@ -46,7 +46,9 @@ class JWTAuthInterface(ABC):
         pass
 
     @abstractmethod
-    async def refresh_tokens(self, db: AsyncSession, refresh_token: str) -> dict:
+    async def refresh_tokens(
+        self, db: AsyncSession, refresh_token: str
+    ) -> Optional[dict]:
         """
         Create new access token using a valid refresh token.
 

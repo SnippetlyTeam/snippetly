@@ -11,7 +11,7 @@ from src.core.security.jwt_manager.token_manager import JWTAuthManager
 
 async def get_jwt_manager(
     settings: Annotated[Settings, Depends(get_settings)],
-    redis_client: Annotated[Redis, get_redis_client],
+    redis_client: Annotated[Redis, Depends(get_redis_client)],
 ) -> JWTAuthInterface:
     return JWTAuthManager(
         redis_client=redis_client,

@@ -85,7 +85,9 @@ class JWTAuthManager(JWTAuthInterface):
     async def verify_token(
         self, token: str, is_refresh: bool = False
     ) -> Optional[dict]:
-        key = self._secret_key_refresh if is_refresh else self._secret_key_access
+        key = (
+            self._secret_key_refresh if is_refresh else self._secret_key_access
+        )
         try:
             payload = jwt.decode(token, key=key, algorithms=[self._algorithm])
         except jwt.ExpiredSignatureError:
@@ -121,4 +123,4 @@ class JWTAuthManager(JWTAuthInterface):
 
         return {"access_token": new_access_token}
 
-    def revoke_all_user_tokens(self, user_id: int) -> None: ...
+    async def revoke_all_user_tokens(self, user_id: int) -> None: ...

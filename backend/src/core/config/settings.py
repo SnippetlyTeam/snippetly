@@ -15,3 +15,5 @@ class DevelopmentSettings(Settings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    DEBUG: bool = True

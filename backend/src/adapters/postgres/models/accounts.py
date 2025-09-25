@@ -27,14 +27,24 @@ from .enums import GenderEnum
 class UserModel(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
-    username: Mapped[str] = mapped_column(String(40), nullable=False, unique=True)
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    email: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True
+    )
+    username: Mapped[str] = mapped_column(
+        String(40), nullable=False, unique=True
+    )
     _hashed_password: Mapped[str] = mapped_column(
         "hashed_password", String(255), nullable=False
     )
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -81,7 +91,9 @@ class UserModel(Base):
         return verify_password(new_password, self._hashed_password)
 
     @classmethod
-    def create(cls, email: EmailStr, username: str, new_password: str) -> "UserModel":
+    def create(
+        cls, email: EmailStr, username: str, new_password: str
+    ) -> "UserModel":
         user = cls(email=email, username=username)
         user.password = new_password
         return user
@@ -90,7 +102,9 @@ class UserModel(Base):
 class UserProfileModel(Base):
     __tablename__ = "user_profiles"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     first_name: Mapped[str | None] = mapped_column(String(100))
     last_name: Mapped[str | None] = mapped_column(String(100))
     gender: Mapped[GenderEnum | None] = mapped_column(Enum(GenderEnum))
@@ -101,7 +115,9 @@ class UserProfileModel(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
     )
 
-    user: Mapped["UserModel"] = relationship("UserModel", back_populates="profile")
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="profile"
+    )
 
     def __repr__(self) -> str:
         return f"<UserProfileModel(id={self.id}, user_id={self.user_id})>"
@@ -110,7 +126,9 @@ class UserProfileModel(Base):
 class TokenBaseModel(Base):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     token: Mapped[str] = mapped_column(
         String(64), unique=True, nullable=False, default=generate_secure_token
     )
@@ -140,7 +158,9 @@ class ActivationTokenModel(TokenBaseModel):
         )
 
     @classmethod
-    def create(cls, user_id: int, token: str, days: int) -> "ActivationTokenModel":
+    def create(
+        cls, user_id: int, token: str, days: int
+    ) -> "ActivationTokenModel":
         expires_at = datetime.now(timezone.utc) + timedelta(days=days)
         return cls(user_id=user_id, expires_at=expires_at, token=token)
 
@@ -179,6 +199,8 @@ class RefreshTokenModel(TokenBaseModel):
         )
 
     @classmethod
-    def create(cls, user_id: int, token: str, days: int) -> "RefreshTokenModel":
+    def create(
+        cls, user_id: int, token: str, days: int
+    ) -> "RefreshTokenModel":
         expires_at = datetime.now(timezone.utc) + timedelta(days=days)
         return cls(user_id=user_id, expires_at=expires_at, token=token)
