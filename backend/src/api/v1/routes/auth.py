@@ -26,7 +26,12 @@ from src.features.auth.auth_service import AuthService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register", summary="Register New User")
+@router.post(
+    "/register",
+    summary="Register New User",
+    status_code=201,
+    description="Register a new user with email, username, and password",
+)
 async def register(
     data: UserRegistrationRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -44,8 +49,13 @@ async def register(
         ) from e
 
 
-#TODO: check if user is_active
-@router.post("/login", summary="Log in via username or email")
+# TODO: check if user is_active
+@router.post(
+    "/login",
+    summary="Log in via username or email",
+    status_code=200,
+    description="Authenticate a user and return access/refresh tokens",
+)
 async def login_user(
     data: UserLoginRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -61,7 +71,12 @@ async def login_user(
         ) from e
 
 
-@router.post("/refresh", summary="Refresh token")
+@router.post(
+    "/refresh",
+    summary="Refresh token",
+    status_code=200,
+    description="Refresh an access token using a valid refresh token",
+)
 async def refresh(
     data: TokenRefreshRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -80,6 +95,7 @@ async def refresh(
     response_model=MessageResponseSchema,
     status_code=200,
     summary="User Logout",
+    description="Logout a user by revoking their refresh and access tokens",
 )
 async def logout_user(
     user_data: LogoutRequestSchema,
@@ -98,7 +114,33 @@ async def logout_user(
     return MessageResponseSchema(message="Logged out successfully")
 
 
-@router.get("/test-access-token")
+@router.post(
+    "/revoke-all-tokens",
+    summary="Logout from all sessions",
+    status_code=200,
+    description="Revoke all tokens of the current user, "
+    "logging out from every session",
+)
+async def revoke_all_tokens(
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+) -> MessageResponseSchema:
+    """"""
+    service = AuthService(db, jwt_manager)
+    try:
+        await service.logout_from_all_sessions(current_user)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to log out from every sessions. Try again",
+        ) from e
+    return MessageResponseSchema(
+        message="Logged out from every session successfully"
+    )
+
+
+@router.get("/test-access-token/")
 async def test_access_token(
     token: Annotated[str, Depends(get_token)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],

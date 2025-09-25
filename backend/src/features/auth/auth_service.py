@@ -86,10 +86,6 @@ class AuthService:
         return result
 
     async def logout_user(self, refresh_token: str, access_token: str) -> None:
-        payload = await self.jwt_manager.verify_token(refresh_token, True)
-        if payload is None:
-            raise jwt.InvalidTokenError("Invalid refresh token")
-
         query = select(RefreshTokenModel).where(
             RefreshTokenModel.token == refresh_token
         )
@@ -113,3 +109,6 @@ class AuthService:
             jti = access_payload["jti"]
             exp = access_payload["exp"]
             await self.jwt_manager.add_to_blacklist(jti, exp)
+
+    async def logout_from_all_sessions(self, user: UserModel) -> None:
+        await self.jwt_manager.revoke_all_user_tokens(self.db, user.id)

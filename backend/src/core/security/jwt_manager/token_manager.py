@@ -5,9 +5,11 @@ from typing import Optional, cast
 import jwt
 from pydantic import SecretStr
 from redis.asyncio.client import Redis
+from sqlalchemy import delete
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, RefreshTokenModel
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
 from src.core.security.jwt_manager import JWTAuthInterface
@@ -51,6 +53,9 @@ class JWTAuthManager(JWTAuthInterface):
     def __generate_jti(length: int = 16) -> str:
         return secrets.token_hex(length)
 
+    async def is_blacklisted(self, jti: str) -> bool:
+        return await redis_blacklist.is_blacklisted(self._redis_client, jti)
+
     def decode_token(self, token: str) -> Optional[dict]:
         try:
             payload = jwt.decode(
@@ -64,9 +69,6 @@ class JWTAuthManager(JWTAuthInterface):
 
     async def add_to_blacklist(self, jti: str, exp: int) -> None:
         await redis_blacklist.add_to_blacklist(self._redis_client, jti, exp)
-
-    async def is_blacklisted(self, jti: str) -> bool:
-        return await redis_blacklist.is_blacklisted(self._redis_client, jti)
 
     async def create_access_token(self, user_data: dict) -> str:
         payload = self.__parse_user_data(user_data, self._access_token_life)
@@ -124,4 +126,36 @@ class JWTAuthManager(JWTAuthInterface):
 
         return {"access_token": new_access_token}
 
-    async def revoke_all_user_tokens(self, user_id: int) -> None: ...
+    async def revoke_all_user_tokens(
+        self, db: AsyncSession, user_id: int
+    ) -> None:
+        try:
+            await db.execute(
+                delete(RefreshTokenModel).where(
+                    RefreshTokenModel.user_id == user_id
+                )
+            )
+            await db.commit()
+        except SQLAlchemyError:
+            await db.rollback()
+            raise
+
+        keys = await self._redis_client.keys("access:*")
+        for key in keys:
+            jti = key.split("access:")[1]
+
+            token_user_id = await redis_common.get_access_token(
+                self._redis_client, jti
+            )
+            if token_user_id is not None:
+                token_user_id = (
+                    token_user_id.decode()
+                    if isinstance(token_user_id, bytes)
+                    else token_user_id
+                )
+
+            if token_user_id == str(user_id):
+                ttl = await self._redis_client.ttl(key)
+                if ttl > 0:
+                    exp = int(datetime.now(timezone.utc).timestamp()) + ttl
+                    await self.add_to_blacklist(jti, exp)
