@@ -46,10 +46,13 @@ class UserRegistrationRequestSchema(
     pass
 
 
-class UserLoginRequestSchema(
-    EmailMixin, UsernameMixin, PasswordMixin, BaseModel
-):
-    pass
+class UserLoginRequestSchema(PasswordMixin, BaseModel):
+    login: str = Field(..., min_length=3, max_length=40)
+
+    @field_validator("login")
+    @classmethod
+    def validate_login(cls, value: str) -> str:
+        return value.strip()
 
 
 class TokenRefreshRequestSchema(BaseModel):

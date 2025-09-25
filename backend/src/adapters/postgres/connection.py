@@ -14,7 +14,7 @@ engine = create_async_engine(settings.postgres_url)
 PostgreSQLSessionLocal = async_sessionmaker(autoflush=False, bind=engine)
 
 
-async def get_db() -> AsyncGenerator[AsyncSession]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     db = PostgreSQLSessionLocal()
     try:
         yield db

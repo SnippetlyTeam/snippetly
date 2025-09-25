@@ -22,7 +22,7 @@ from src.features.auth.user_service import UserService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/register")
+@router.post("/register", summary="Register New User")
 async def register(
     data: UserRegistrationRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -40,7 +40,7 @@ async def register(
         ) from e
 
 
-@router.post("/login")
+@router.post("/login", summary="Log in via username or email")
 async def login_user(
     data: UserLoginRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -48,7 +48,7 @@ async def login_user(
 ) -> UserLoginResponseSchema:
     service = UserService(db, jwt_manager)
     try:
-        tokens = await service.login_user(data.email, data.password)
+        tokens = await service.login_user(data.login, data.password)
         return UserLoginResponseSchema(**tokens)
     except UserNotFoundError as e:
         raise HTTPException(
@@ -56,7 +56,7 @@ async def login_user(
         ) from e
 
 
-@router.post("/refresh")
+@router.post("/refresh",summary="Refresh token")
 async def refresh(
     data: TokenRefreshRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
