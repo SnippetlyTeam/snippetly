@@ -40,6 +40,15 @@ wheels = [
 ]
 
 [[package]]
+name = "async-timeout"
+version = "5.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a5/ae/136395dfbfe00dfc94da3f3e136d0b13f394cba8f4841120e34226265780/async_timeout-5.0.1.tar.gz", hash = "sha256:d9321a7a3d5a6a5e187e824d2fa0793ce379a202935782d555d6e9d2735677d3", size = 9274, upload-time = "2024-11-06T16:41:39.6Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fe/ba/e2081de779ca30d473f21f5b30e0e737c438205440784c7dfc81efc2b029/async_timeout-5.0.1-py3-none-any.whl", hash = "sha256:39e3809566ff85354557ec2398b55e096c8364bacac9405a7a1fa429e77fe76c", size = 6233, upload-time = "2024-11-06T16:41:37.9Z" },
+]
+
+[[package]]
 name = "asyncpg"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -169,6 +178,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/8c/8b/57666417c0f90f08bcafa776861060426765fdb422eb10212086fb811d26/dnspython-2.8.0.tar.gz", hash = "sha256:181d3c6996452cb1189c4046c61599b84a5a86e099562ffde77d26984ff26d0f", size = 368251, upload-time = "2025-09-07T18:58:00.022Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/5a/18ad964b0086c6e62e2e7500f7edc89e3faa45033c71c1893d34eed2b2de/dnspython-2.8.0-py3-none-any.whl", hash = "sha256:01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af", size = 331094, upload-time = "2025-09-07T18:57:58.071Z" },
+]
+
+[[package]]
+name = "email-validator"
+version = "2.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dnspython" },
+    { name = "idna" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f5/22/900cb125c76b7aaa450ce02fd727f452243f2e91a61af068b40adba60ea9/email_validator-2.3.0.tar.gz", hash = "sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426", size = 51238, upload-time = "2025-08-26T13:09:06.831Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/15/545e2b6cf2e3be84bc1ed85613edd75b8aea69807a71c26f4ca6a9258e82/email_validator-2.3.0-py3-none-any.whl", hash = "sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4", size = 35604, upload-time = "2025-08-26T13:09:05.858Z" },
 ]
 
 [[package]]
@@ -365,20 +387,6 @@ wheels = [
 ]
 
 [[package]]
-name = "passlib"
-version = "1.7.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b6/06/9da9ee59a67fae7761aab3ccc84fa4f3f33f125b370f1ccdb915bf967c11/passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04", size = 689844, upload-time = "2020-10-08T19:00:52.121Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
-]
-
-[package.optional-dependencies]
-bcrypt = [
-    { name = "bcrypt" },
-]
-
-[[package]]
 name = "pathspec"
 version = "0.12.1"
 source = { registry = "https://pypi.org/simple" }
@@ -413,6 +421,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ff/5d/09a551ba512d7ca404d785072700d3f6727a02f6f3c24ecfd081c7cf0aa8/pydantic-2.11.9.tar.gz", hash = "sha256:6b8ffda597a14812a7975c90b82a8a2e777d9257aba3453f973acd3c032a18e2", size = 788495, upload-time = "2025-09-13T11:26:39.325Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3e/d3/108f2006987c58e76691d5ae5d200dd3e0f532cb4e5fa3560751c3a1feba/pydantic-2.11.9-py3-none-any.whl", hash = "sha256:c42dd626f5cfc1c6950ce6205ea58c93efa406da65f479dcb4029d5934857da2", size = 444855, upload-time = "2025-09-13T11:26:36.909Z" },
+]
+
+[package.optional-dependencies]
+email = [
+    { name = "email-validator" },
 ]
 
 [[package]]
@@ -495,6 +508,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyjwt"
+version = "2.10.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/46/bd74733ff231675599650d3e47f361794b22ef3e3770998dda30d3b63726/pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953", size = 87785, upload-time = "2024-11-28T03:43:29.933Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/ad/689f02752eeec26aed679477e80e632ef1b682313be70793d798c1d5fc8f/PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb", size = 22997, upload-time = "2024-11-28T03:43:27.893Z" },
+]
+
+[[package]]
 name = "pymongo"
 version = "4.15.1"
 source = { registry = "https://pypi.org/simple" }
@@ -555,6 +577,18 @@ wheels = [
 ]
 
 [[package]]
+name = "redis"
+version = "6.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "async-timeout", marker = "python_full_version < '3.11.3'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0d/d6/e8b92798a5bd67d659d51a18170e91c16ac3b59738d91894651ee255ed49/redis-6.4.0.tar.gz", hash = "sha256:b01bc7282b8444e28ec36b261df5375183bb47a07eb9c603f284e89cbc5ef010", size = 4647399, upload-time = "2025-08-07T08:10:11.441Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/02/89e2ed7e85db6c93dfa9e8f691c5087df4e3551ab39081a4d7c6d1f90e05/redis-6.4.0-py3-none-any.whl", hash = "sha256:f0544fa9604264e9464cdf4814e7d4830f74b165d52f2a330a760a88dd248b7f", size = 279847, upload-time = "2025-08-07T08:10:09.84Z" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.13.1"
 source = { registry = "https://pypi.org/simple" }
@@ -596,12 +630,14 @@ source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
     { name = "asyncpg" },
+    { name = "bcrypt" },
     { name = "beanie" },
     { name = "fastapi" },
-    { name = "passlib", extra = ["bcrypt"] },
     { name = "psycopg" },
-    { name = "pydantic" },
+    { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
+    { name = "pyjwt" },
+    { name = "redis" },
     { name = "sqlalchemy" },
     { name = "uvicorn" },
 ]
@@ -610,18 +646,21 @@ dependencies = [
 dev = [
     { name = "mypy" },
     { name = "ruff" },
+    { name = "types-passlib" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "asyncpg", specifier = ">=0.30.0" },
+    { name = "bcrypt", specifier = ">=4.3.0" },
     { name = "beanie", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.117.1" },
-    { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
     { name = "psycopg", specifier = ">=3.2.10" },
-    { name = "pydantic", specifier = ">=2.11.9" },
+    { name = "pydantic", extras = ["email"], specifier = ">=2.11.9" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
+    { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "redis", specifier = ">=6.4.0" },
     { name = "sqlalchemy", specifier = ">=2.0.43" },
     { name = "uvicorn", specifier = ">=0.36.0" },
 ]
@@ -630,6 +669,7 @@ requires-dist = [
 dev = [
     { name = "mypy", specifier = ">=1.18.2" },
     { name = "ruff", specifier = ">=0.13.1" },
+    { name = "types-passlib", specifier = ">=1.7.7.20250602" },
 ]
 
 [[package]]
@@ -680,6 +720,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a7/a5/d6f429d43394057b67a6b5bbe6eae2f77a6bf7459d961fdb224bf206eee6/starlette-0.48.0.tar.gz", hash = "sha256:7e8cee469a8ab2352911528110ce9088fdc6a37d9876926e73da7ce4aa4c7a46", size = 2652949, upload-time = "2025-09-13T08:41:05.699Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/be/72/2db2f49247d0a18b4f1bb9a5a39a0162869acf235f3a96418363947b3d46/starlette-0.48.0-py3-none-any.whl", hash = "sha256:0764ca97b097582558ecb498132ed0c7d942f233f365b86ba37770e026510659", size = 73736, upload-time = "2025-09-13T08:41:03.869Z" },
+]
+
+[[package]]
+name = "types-passlib"
+version = "1.7.7.20250602"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/3e/501a5832130e5f93450b1e02090e2ee27a37135d11378a47debf960e3131/types_passlib-1.7.7.20250602.tar.gz", hash = "sha256:cf2350e78d36b6b09e4db44284d96651b57285f499cfabf111b616065abab7b3", size = 25406, upload-time = "2025-06-02T03:14:56.033Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/fc/530236c21f1a0be84c42b23c91c250ef96404c475b739ac4479430ebd7d4/types_passlib-1.7.7.20250602-py3-none-any.whl", hash = "sha256:ed73a91be9a22484ebd62cc0d127675ded542b892b99776db92dab760bbfe274", size = 40410, upload-time = "2025-06-02T03:14:54.834Z" },
 ]
 
 [[package]]
