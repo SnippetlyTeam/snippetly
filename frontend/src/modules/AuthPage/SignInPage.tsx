@@ -50,12 +50,14 @@ const SignInPage: React.FC = () => {
         action="#"
         className={styles.form}
         onSubmit={handleFormSubmit}
+        aria-labelledby="sign-in-title"
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
             <label
               htmlFor="usernameOrEmail"
               className={styles.inputsTitle}
+              id="usernameOrEmail-label"
             >
               Email or username
             </label>
@@ -68,16 +70,31 @@ const SignInPage: React.FC = () => {
               autoComplete="username"
               placeholder="Enter your username or email"
               onChange={handleEmailInputChange}
+              aria-describedby={
+                isEmailError
+                  ? "usernameOrEmail-label usernameOrEmail-error"
+                  : "usernameOrEmail-label"
+              }
+              aria-invalid={isEmailError ? "true" : undefined}
             />
 
             {isEmailError && (
-              <p className={styles.error}>Email or Username: can’t be blank</p>
+              <p
+                className={styles.error}
+                id="usernameOrEmail-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                Email or Username: can’t be blank
+              </p>
             )}
           </div>
           <div className={styles.inputsItem}>
             <label
               htmlFor="password"
-              className={styles.inputsTitle}>
+              className={styles.inputsTitle}
+              id="password-label"
+            >
               Password
             </label>
             <div className={styles.container}>
@@ -89,31 +106,51 @@ const SignInPage: React.FC = () => {
                 id="password"
                 placeholder={'Enter your password'}
                 onChange={handlePasswordInputChange}
+                aria-describedby={
+                  isPasswordError
+                    ? "password-label password-error"
+                    : "password-label"
+                }
+                aria-invalid={isPasswordError ? "true" : undefined}
+                autoComplete="current-password"
               />
               <button
                 className={styles.eye}
                 type='button'
+                aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
+                onMouseLeave={() => setIsPasswordVisible(false)}
               >
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
 
-            {isPasswordError && <p className={styles.error}>Password: can’t be blank</p>}
+            {isPasswordError && (
+              <p
+                className={styles.error}
+                id="password-error"
+                role="alert"
+                aria-live="assertive"
+              >
+                Password: can’t be blank
+              </p>
+            )}
 
-            <Link to='/`'>Forgot the password?</Link>
+            <Link to='/password-reset' id="forgot-password-link">
+              Forgot the password?
+            </Link>
           </div>
         </div>
 
         <button
           type="submit"
           className={styles.button}
+          aria-label="Sign in to your account"
         >Sign In</button>
 
-
         <p className={styles.text}>
-          Need an account? <Link to='/signup'>Sign Up</Link>
+          Need an account? <Link to='/sign-up'>Sign Up</Link>
         </p>
       </form>
     </main>
