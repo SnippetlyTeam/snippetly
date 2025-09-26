@@ -1,5 +1,6 @@
 from typing import Annotated
 
+import jwt
 from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -19,7 +20,7 @@ from src.api.v1.schemas.auth import (
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_token, get_current_user
 from src.core.dependencies.token_manager import get_jwt_manager
-from src.core.exceptions.exceptions import UserNotFoundError
+from src.core.exceptions.exceptions import UserNotFoundError, AuthenticationError
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth.auth_service import AuthService
 
@@ -86,6 +87,8 @@ async def refresh(
     try:
         result = await service.refresh_tokens(data.refresh_token)
         return TokenRefreshResponseSchema(**result)
+    except AuthenticationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
     except UserNotFoundError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
 
@@ -102,7 +105,7 @@ async def logout_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
     access_token: Annotated[str, Depends(get_token)],
-    current_user: Annotated[UserModel, Depends(get_current_user)],
+    current_user: Annotated[UserModel, Depends(get_current_user)], # noqa
 ) -> MessageResponseSchema:
     service = AuthService(db, jwt_manager)
     try:
@@ -149,11 +152,12 @@ async def test_access_token(
     Protected endpoint to check if access token is valid
     and not blacklisted.
     """
-    payload = await jwt_manager.verify_token(token, is_refresh=False)
-    if not payload:
+    try:
+        await jwt_manager.verify_token(token, is_refresh=False)
+    except jwt.InvalidTokenError as e:
         raise HTTPException(
             status_code=401,
             detail="Invalid or blacklisted token",
-        )
+        ) from e
 
     return MessageResponseSchema(message="Your token is valid!")

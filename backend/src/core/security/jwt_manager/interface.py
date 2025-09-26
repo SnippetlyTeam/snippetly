@@ -66,7 +66,7 @@ class JWTAuthInterface(ABC):
         :return: Dictionary containing new access token
                 {"access_token": str} if successful
         :rtype: dict or None
-        :raises jwt.InvalidTokenError: if refresh token is invalid
+        :raises AuthenticationError: if refresh token is invalid
         :raises UserNotFoundError: if user does not exist in database
         """
         pass
