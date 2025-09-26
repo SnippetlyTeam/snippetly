@@ -17,6 +17,7 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.36.0",
     "bcrypt>=4.3.0",
+    "aiosmtplib>=4.0.2",
 ]
 
 [dependency-groups]

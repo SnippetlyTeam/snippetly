@@ -20,13 +20,17 @@ from src.api.v1.schemas.auth import (
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_token, get_current_user
 from src.core.dependencies.token_manager import get_jwt_manager
-from src.core.exceptions.exceptions import UserNotFoundError, AuthenticationError
+from src.core.exceptions.exceptions import (
+    UserNotFoundError,
+    AuthenticationError,
+)
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-
+#TODO: Return message if username or email is taken
+#       according to requirements
 @router.post(
     "/register",
     summary="Register New User",
@@ -105,7 +109,7 @@ async def logout_user(
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
     access_token: Annotated[str, Depends(get_token)],
-    current_user: Annotated[UserModel, Depends(get_current_user)], # noqa
+    current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
 ) -> MessageResponseSchema:
     service = AuthService(db, jwt_manager)
     try:
