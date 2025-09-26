@@ -40,6 +40,18 @@ services:
     volumes:
       - ./backend/src:/app/src
 
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: snippetly-migrate
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+    command: uv run alembic upgrade head
+
+
   frontend:
     build:
       context: ./frontend

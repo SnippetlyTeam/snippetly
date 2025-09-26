@@ -3,79 +3,43 @@
 ---
 ## Getting Started
 
-### **1. Setup virtual environment (Linux/macOS)**
+---
+
+### 1. Environment variables
+Before running the project, copy the sample environment file:
+
+From the root of the project
+
+On Windows PowerShell use: 
+```bash
+copy backend\.env.sample backend\.env
+```
+
+On (Linux/macOS):
+```bash
+cp backend/.env.sample backend/.env
+```
+---
+
+### 2. Run with Docker Compose
 
 ```bash
-# Go to the backend directory
-cd ~/Projects/works/projects/snippetly\ setup/backend
-
-# Create a virtual environment
-python -m venv .venv
-
-# Activate it
-source .venv/bin/activate
-
-# Install dependencies
-pip install uv
-uv install --without dev
+docker compose up --build
 ```
+
+This will start:
+
+* **backend** (FastAPI + Uvicorn)
+* **frontend**
+* **PostgreSQL** database
+* **Redis**
 
 ---
 
-### 2. Setup virtual environment (Windows, PowerShell)
+### 3. Open API documentation
 
-```powershell
-# Go to the backend directory
-cd "C:\path\to\snippetly setup\backend"
+After the backend is running, the interactive API docs are available at:
 
-# Create a virtual environment
-python -m venv .venv
-
-# Activate it
-.venv\Scripts\Activate.ps1
-
-# Install dependencies
-pip install uv
-uv install --without dev
-```
-
-> Make sure you run commands from the **backend directory**, where `main.py` is located inside `src/`.
+ [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
-
-### 3. Run the backend
-
-```bash
-# From Linux/macOS
-uvicorn src.main:app --port 8000
-
-# From Windows (PowerShell)
-uvicorn src.main:app --port 8000
-```
-
-* `src.main:app` — tells Uvicorn where the FastAPI app is located.
-* `--port 8000` — starts the server on port 8000.
-
----
-
-### 4. Test the Hello endpoint
-
-Once the server is running, open a browser or Postman and go to:
-
-```
-GET http://127.0.0.1:8000/docs/
-```
-
-to get OpenAPI
-
-
-## How to run migrations
-
-To run database migrations, make sure to use environment variables from `.env.sample` (`cp .env.sample .env` in backend directory).
-This ensures that Alembic has access to the correct database URL and other configuration values.
-
-Run the migrations with the following command:
-
-```bash
-uv run alembic upgrade head
-```
