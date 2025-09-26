@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta, timezone
 
+from pydantic import EmailStr
 from sqlalchemy import (
     Integer,
     String,
@@ -14,7 +15,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.core.security import hash_password, verify_password, generate_secure_token
+from src.core.security import (
+    hash_password,
+    verify_password,
+    generate_secure_token,
+)
 from .base import Base
 from .enums import GenderEnum
 
@@ -28,7 +33,12 @@ class UserModel(Base):
     email: Mapped[str] = mapped_column(
         String(255), nullable=False, unique=True
     )
-    _hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    username: Mapped[str] = mapped_column(
+        String(40), nullable=False, unique=True
+    )
+    _hashed_password: Mapped[str] = mapped_column(
+        "hashed_password", String(255), nullable=False
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
@@ -80,6 +90,14 @@ class UserModel(Base):
     def verify_password(self, new_password: str) -> bool:
         return verify_password(new_password, self._hashed_password)
 
+    @classmethod
+    def create(
+        cls, email: EmailStr, username: str, new_password: str
+    ) -> "UserModel":
+        user = cls(email=email, username=username)
+        user.password = new_password
+        return user
+
 
 class UserProfileModel(Base):
     __tablename__ = "user_profiles"
@@ -98,9 +116,7 @@ class UserProfileModel(Base):
     )
 
     user: Mapped["UserModel"] = relationship(
-        "UserModel",
-        back_populates="user_profile",
-        cascade="all, delete-orphan",
+        "UserModel", back_populates="profile"
     )
 
     def __repr__(self) -> str:
@@ -181,3 +197,10 @@ class RefreshTokenModel(TokenBaseModel):
             f"<RefreshTokenModel(id={self.id}, "
             f"token={self.token}, expires_at={self.expires_at})>"
         )
+
+    @classmethod
+    def create(
+        cls, user_id: int, token: str, days: int
+    ) -> "RefreshTokenModel":
+        expires_at = datetime.now(timezone.utc) + timedelta(days=days)
+        return cls(user_id=user_id, expires_at=expires_at, token=token)

@@ -1,13 +1,10 @@
-
-import sys
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
 from src.core.config import get_settings
-from src.adapters.postgres.models import *
+from src.adapters.postgres.models import *  # noqa: F403
 
 config = context.config
 settings = get_settings()

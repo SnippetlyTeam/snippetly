@@ -9,18 +9,21 @@ dependencies = [
     "asyncpg>=0.30.0",
     "beanie>=2.0.0",
     "fastapi>=0.117.1",
-    "passlib[bcrypt]>=1.7.4",
     "psycopg>=3.2.10",
-    "pydantic>=2.11.9",
+    "pydantic[email]>=2.11.9",
     "pydantic-settings>=2.10.1",
+    "pyjwt>=2.10.1",
+    "redis>=6.4.0",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.36.0",
+    "bcrypt>=4.3.0",
 ]
 
 [dependency-groups]
 dev = [
     "mypy>=1.18.2",
     "ruff>=0.13.1",
+    "types-passlib>=1.7.7.20250602",
 ]
 
 [tool.ruff]
@@ -31,7 +34,7 @@ select = [
     "B", "C", "E", "F", "W",
     "B9", "ANN", "Q0", "N8"
 ]
-ignore = ["N807", "F401"]
+ignore = ["N807", "F401", "F405", "ANN204"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -45,6 +48,7 @@ warn_unused_ignores = true
 show_error_codes = true
 pretty = true
 mypy_path = "src/"
+exclude = ["src/adapters/postgres/migrations/.*"]
 
 
 [tool.alembic]
