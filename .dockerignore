@@ -1,0 +1,28 @@
+# cache
+__pycache__/
+.mypy_cache
+.ruff_cache
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+
+# Virtual environments
+backend/.venv/
+env/
+venv/
+
+# Editor & OS files
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Secrets & environment files
+.env
+.env.*
