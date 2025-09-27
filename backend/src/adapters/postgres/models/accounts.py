@@ -1,4 +1,5 @@
 from datetime import datetime, date, timedelta, timezone
+from typing import Optional
 
 from pydantic import EmailStr
 from sqlalchemy import (
@@ -141,6 +142,19 @@ class TokenBaseModel(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
+    @classmethod
+    def create(
+        cls,
+        user_id: int,
+        token: Optional[str] = None,
+        days: int = 1,
+    ) -> "TokenBaseModel":
+        return cls(
+            user_id=user_id,
+            token=token or generate_secure_token(),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=days),
+        )
+
 
 class ActivationTokenModel(TokenBaseModel):
     __tablename__ = "activation_tokens"
@@ -156,13 +170,6 @@ class ActivationTokenModel(TokenBaseModel):
             f"<ActivationTokenModel(id={self.id}, "
             f"token={self.token}, expires_at={self.expires_at})>"
         )
-
-    @classmethod
-    def create(
-        cls, user_id: int, token: str, days: int
-    ) -> "ActivationTokenModel":
-        expires_at = datetime.now(timezone.utc) + timedelta(days=days)
-        return cls(user_id=user_id, expires_at=expires_at, token=token)
 
 
 class PasswordResetTokenModel(TokenBaseModel):
@@ -197,10 +204,3 @@ class RefreshTokenModel(TokenBaseModel):
             f"<RefreshTokenModel(id={self.id}, "
             f"token={self.token}, expires_at={self.expires_at})>"
         )
-
-    @classmethod
-    def create(
-        cls, user_id: int, token: str, days: int
-    ) -> "RefreshTokenModel":
-        expires_at = datetime.now(timezone.utc) + timedelta(days=days)
-        return cls(user_id=user_id, expires_at=expires_at, token=token)

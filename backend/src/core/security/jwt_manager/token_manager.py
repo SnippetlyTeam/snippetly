@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.postgres.models import UserModel, RefreshTokenModel
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
-from src.core.exceptions.exceptions import (
+from src.core.exceptions import (
     UserNotFoundError,
     AuthenticationError,
 )

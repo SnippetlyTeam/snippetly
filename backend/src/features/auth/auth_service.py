@@ -9,7 +9,8 @@ from src.adapters.postgres.models import (
     RefreshTokenModel,
     ActivationTokenModel,
 )
-from src.core.exceptions.exceptions import (
+from src.core.config import Settings
+from src.core.exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
     UserNotActiveError,
@@ -20,9 +21,15 @@ from src.features.auth.interface import AuthServiceInterface
 
 
 class AuthService(AuthServiceInterface):
-    def __init__(self, db: AsyncSession, jwt_manager: JWTAuthInterface):
+    def __init__(
+        self,
+        db: AsyncSession,
+        jwt_manager: JWTAuthInterface,
+        settings: Settings,
+    ):
         self.db = db
         self.jwt_manager = jwt_manager
+        self.settings = settings
 
     async def register_user(
         self, email: str, username: str, password: str
@@ -43,7 +50,9 @@ class AuthService(AuthServiceInterface):
             email=email, username=username, new_password=password
         )
         token = generate_secure_token()
-        activation_token = ActivationTokenModel.create(user.id, token, 1)
+        activation_token = ActivationTokenModel.create(
+            user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
+        )
         user.activation_token = activation_token
 
         self.db.add_all([user, activation_token])
@@ -85,7 +94,7 @@ class AuthService(AuthServiceInterface):
 
         try:
             new_refresh_token = RefreshTokenModel.create(
-                user.id, refresh_token, 7
+                user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
             )
             self.db.add(new_refresh_token)
             await self.db.commit()

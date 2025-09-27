@@ -21,7 +21,7 @@ from src.core.dependencies.auth_service import get_auth_service
 from src.core.dependencies.email import get_email_sender
 from src.core.dependencies.token_manager import get_jwt_manager
 from src.core.email import EmailSenderInterface
-from src.core.exceptions.exceptions import (
+from src.core.exceptions import (
     UserNotFoundError,
     AuthenticationError,
     UserAlreadyExistsError,
@@ -61,7 +61,6 @@ async def register(
     return UserRegistrationResponseSchema.model_validate(user)
 
 
-# TODO: check if user is_active
 @router.post(
     "/login",
     summary="Log in via username or email",

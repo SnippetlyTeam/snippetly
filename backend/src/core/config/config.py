@@ -18,7 +18,3 @@ class BaseAppSettings(BaseSettings):
     PROJECT_ROOT: Path = Path(__file__).parent.parent.parent.parent.resolve()
 
     DEBUG: bool = False
-
-
-if __name__ == "__main__":
-    print(BaseAppSettings().PROJECT_ROOT)
