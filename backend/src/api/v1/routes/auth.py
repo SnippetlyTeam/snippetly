@@ -29,7 +29,8 @@ from src.features.auth.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-#TODO: Return message if username or email is taken
+
+# TODO: Return message if username or email is taken
 #       according to requirements
 @router.post(
     "/register",
