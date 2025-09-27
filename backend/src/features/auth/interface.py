@@ -19,7 +19,9 @@ class AuthServiceInterface(ABC):
         :type password: str
         :return: Tuple of created UserModel and activation token
         :rtype: Tuple[UserModel, str]
-        :raises IntegrityError: if user with email or username already exists
+        :raises UserAlreadyExistsError: if user with email or username
+                already exists
+                SQLAlchemyError: if database error happened
         """
         pass
 
@@ -35,6 +37,7 @@ class AuthServiceInterface(ABC):
         :return: Dictionary with access_token, refresh_token, and token_type
         :rtype: dict
         :raises UserNotFoundError: if credentials are invalid
+                UserNotActiveError: if is_active is False
         """
         pass
 
@@ -45,7 +48,7 @@ class AuthServiceInterface(ABC):
 
         :param refresh_token: Current refresh token
         :type refresh_token: str
-        :return: Dictionary with new access_token, refresh_token, and token_type
+        :return: Dictionary with new access_token, refresh_token, token_type
         :rtype: dict
         :raises UserNotFoundError: if refresh token is invalid
         """
@@ -61,7 +64,8 @@ class AuthServiceInterface(ABC):
         :param access_token: Access token of the session
         :type access_token: str
         :return: None
-        :rtype: None
+        :raises SQLAlchemyError: if error occurred during
+                refresh token deletion
         """
         pass
 
@@ -73,6 +77,5 @@ class AuthServiceInterface(ABC):
         :param user: UserModel instance to log out from all sessions
         :type user: UserModel
         :return: None
-        :rtype: None
         """
         pass

@@ -3,7 +3,7 @@ from typing import Annotated
 import jwt
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.params import Depends
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 
 from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.auth import (
@@ -24,6 +24,8 @@ from src.core.email import EmailSenderInterface
 from src.core.exceptions.exceptions import (
     UserNotFoundError,
     AuthenticationError,
+    UserAlreadyExistsError,
+    UserNotActiveError,
 )
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth import AuthServiceInterface
@@ -31,8 +33,6 @@ from src.features.auth import AuthServiceInterface
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-# TODO: Return message if username or email is taken
-#       according to requirements
 @router.post(
     "/register",
     summary="Register New User",
@@ -49,11 +49,10 @@ async def register(
         user, token = await service.register_user(
             data.email, data.username, data.password
         )
-
-    except IntegrityError as e:
-        raise HTTPException(
-            status_code=400, detail="User already exists"
-        ) from e
+    except UserAlreadyExistsError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
     else:
         background_tasks.add_task(
             email_sender.send_activation_email, user.email, token
@@ -71,14 +70,21 @@ async def register(
 )
 async def login_user(
     data: UserLoginRequestSchema,
-service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> UserLoginResponseSchema:
     try:
         tokens = await service.login_user(data.login, data.password)
         return UserLoginResponseSchema(**tokens)
     except UserNotFoundError as e:
         raise HTTPException(
-            status_code=400, detail="Invalid credentials"
+            status_code=404, detail="Invalid credentials"
+        ) from e
+    except UserNotActiveError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong during refresh token creation",
         ) from e
 
 
@@ -90,7 +96,7 @@ service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 )
 async def refresh(
     data: TokenRefreshRequestSchema,
-service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> TokenRefreshResponseSchema:
     try:
         result = await service.refresh_tokens(data.refresh_token)
@@ -110,7 +116,7 @@ service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 )
 async def logout_user(
     user_data: LogoutRequestSchema,
-service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     access_token: Annotated[str, Depends(get_token)],
     current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
 ) -> MessageResponseSchema:
@@ -131,7 +137,7 @@ service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     "logging out from every session",
 )
 async def revoke_all_tokens(
-service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     current_user: Annotated[UserModel, Depends(get_current_user)],
 ) -> MessageResponseSchema:
     """"""

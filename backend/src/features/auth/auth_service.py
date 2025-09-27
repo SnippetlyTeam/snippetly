@@ -1,7 +1,7 @@
 from typing import Tuple
 
 from sqlalchemy import select, or_
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.models import (
@@ -9,7 +9,11 @@ from src.adapters.postgres.models import (
     RefreshTokenModel,
     ActivationTokenModel,
 )
-from src.core.exceptions.exceptions import UserNotFoundError
+from src.core.exceptions.exceptions import (
+    UserNotFoundError,
+    UserAlreadyExistsError,
+    UserNotActiveError,
+)
 from src.core.security import generate_secure_token
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth.interface import AuthServiceInterface
@@ -28,13 +32,16 @@ class AuthService(AuthServiceInterface):
         )
         result = await self.db.execute(query)
         existing_user = result.scalar_one_or_none()
+
         if existing_user:
-            raise IntegrityError("User already exists", None, None)  # type: ignore[arg-type]
+            if existing_user.email == email:
+                raise UserAlreadyExistsError("This email is taken.")
+            if existing_user.username == username:
+                raise UserAlreadyExistsError("This username is taken.")
 
         user = UserModel.create(
             email=email, username=username, new_password=password
         )
-
         token = generate_secure_token()
         activation_token = ActivationTokenModel.create(user.id, token, 1)
         user.activation_token = activation_token
@@ -45,9 +52,9 @@ class AuthService(AuthServiceInterface):
             await self.db.commit()
             await self.db.refresh(user)
             return user, token
-        except IntegrityError as e:
+        except SQLAlchemyError:
             await self.db.rollback()
-            raise IntegrityError("User already exists", None, e) from e
+            raise
 
     async def login_user(self, email_or_username: str, password: str) -> dict:
         query = select(UserModel).where(
@@ -61,6 +68,9 @@ class AuthService(AuthServiceInterface):
 
         if not user or not user.verify_password(password):
             raise UserNotFoundError("Invalid credentials")
+
+        if not user.is_active:
+            raise UserNotActiveError("User account is not activated")
 
         await self.db.refresh(user, ["id", "username", "email", "is_admin"])
 
@@ -92,10 +102,7 @@ class AuthService(AuthServiceInterface):
         }
 
     async def refresh_tokens(self, refresh_token: str) -> dict:
-        result = await self.jwt_manager.refresh_tokens(self.db, refresh_token)
-        if not result:
-            raise UserNotFoundError("Invalid refresh token")
-        return result
+        return await self.jwt_manager.refresh_tokens(self.db, refresh_token)
 
     async def logout_user(self, refresh_token: str, access_token: str) -> None:
         query = select(RefreshTokenModel).where(
