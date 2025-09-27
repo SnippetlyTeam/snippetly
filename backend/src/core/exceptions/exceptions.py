@@ -16,9 +16,9 @@ class UserNotActiveError(Exception):
     pass
 
 
-class ActivationTokenNotFoundError(Exception):
+class TokenNotFoundError(Exception):
     pass
 
 
-class ActivationTokenExpiredError(Exception):
+class TokenExpiredError(Exception):
     pass

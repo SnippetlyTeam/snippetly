@@ -76,4 +76,10 @@ class EmailSenderManager(EmailSenderInterface):
 
     async def send_password_reset_email(
         self, email: EmailStr, token: str
-    ) -> None: ...
+    ) -> None:
+        subject = "Password Reset"
+        body = (
+            f"Please click the link to reset your "
+            f"password: {self._app_url}/reset-password/{token}"
+        )
+        await self._send_email(email, subject, body)

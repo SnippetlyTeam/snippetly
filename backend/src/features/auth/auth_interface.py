@@ -1,43 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+
 from src.adapters.postgres.models import UserModel
 
 
 class AuthServiceInterface(ABC):
-    @abstractmethod
-    async def register_user(
-        self, email: str, username: str, password: str
-    ) -> Tuple[UserModel, str]:
-        """
-        Register a new user and create an activation token.
-
-        :param email: User's email address
-        :type email: str
-        :param username: Desired username
-        :type username: str
-        :param password: User's password
-        :type password: str
-        :return: Tuple of created UserModel and activation token
-        :rtype: Tuple[UserModel, str]
-        :raises UserAlreadyExistsError: if user with email or username
-                already exists
-                SQLAlchemyError: if database error happened
-        """
-        pass
-
-    @abstractmethod
-    async def activate_account(self, token: str) -> None:
-        """
-        Activate new user's account by token
-
-        :param token: Activation Token
-        :type: str
-        :return: None
-        :raises ActivationTokenNotFoundError: If token was not found
-                ActivationTokenExpiredError: If token is expired
-                SQLAlchemyError: If user activation went wrong
-        """
-
     @abstractmethod
     async def login_user(self, email_or_username: str, password: str) -> dict:
         """

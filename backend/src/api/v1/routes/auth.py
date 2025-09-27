@@ -1,7 +1,8 @@
 from typing import Annotated
 
 import jwt
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from click.formatting import measure_table
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -15,10 +16,16 @@ from src.api.v1.schemas.auth import (
     TokenRefreshResponseSchema,
     LogoutRequestSchema,
     ActivationRequestSchema,
+    PasswordResetRequestSchema,
+    PasswordResetCompletionSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
-from src.core.dependencies.auth import get_token, get_current_user
-from src.core.dependencies.auth_service import get_auth_service
+from src.core.dependencies.auth import (
+    get_token,
+    get_current_user,
+    get_auth_service,
+    get_user_service,
+)
 from src.core.dependencies.email import get_email_sender
 from src.core.dependencies.token_manager import get_jwt_manager
 from src.core.email import EmailSenderInterface
@@ -27,11 +34,11 @@ from src.core.exceptions import (
     AuthenticationError,
     UserAlreadyExistsError,
     UserNotActiveError,
-    ActivationTokenNotFoundError,
-    ActivationTokenExpiredError,
+    TokenNotFoundError,
+    TokenExpiredError,
 )
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth import AuthServiceInterface
+from src.features.auth import AuthServiceInterface, UserServiceInterface
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -44,7 +51,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(
     data: UserRegistrationRequestSchema,
-    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[UserServiceInterface, Depends(get_user_service)],
     email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
     background_tasks: BackgroundTasks,
 ) -> UserRegistrationResponseSchema:
@@ -73,14 +80,14 @@ async def register(
     "that was given in email",
 )
 async def activate_account(
-    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    service: Annotated[UserServiceInterface, Depends(get_user_service)],
     data: ActivationRequestSchema,
 ) -> MessageResponseSchema:
     try:
         await service.activate_account(data.activation_token)
-    except ActivationTokenNotFoundError as e:
+    except TokenNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
-    except ActivationTokenExpiredError as e:
+    except TokenExpiredError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except SQLAlchemyError as e:
         raise HTTPException(
@@ -180,6 +187,55 @@ async def revoke_all_tokens(
     return MessageResponseSchema(
         message="Logged out from every session successfully"
     )
+
+
+@router.post("/reset-password/request")
+async def reset_password_request(
+    data: PasswordResetRequestSchema,
+    service: Annotated[UserServiceInterface, Depends(get_user_service)],
+    email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
+    background_tasks: BackgroundTasks,
+) -> MessageResponseSchema:
+    message = (
+        "If an account with that email exists, "
+        "we've sent password reset instructions. "
+        "Please check your inbox"
+    )
+    try:
+        user, reset_token = await service.reset_password_token(data.email)
+    except UserNotFoundError:
+        return MessageResponseSchema(message=message)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail="Something went wrong"
+        ) from e
+    else:
+        background_tasks.add_task(
+            email_sender.send_password_reset_email, data.email, reset_token
+        )
+    return MessageResponseSchema(message=message)
+
+
+@router.post("/reset-password/complete")
+async def reset_password_complete(
+    data: PasswordResetCompletionSchema,
+    service: Annotated[UserServiceInterface, Depends(get_user_service)],
+) -> MessageResponseSchema:
+    try:
+        await service.reset_password_complete(
+            data.email, data.password, data.password_reset_token
+        )
+    except TokenNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except TokenExpiredError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong during password reset",
+        ) from e
+
+    return MessageResponseSchema(message="Password has been successfully changed")
 
 
 @router.get("/test-access-token/")

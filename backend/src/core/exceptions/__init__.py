@@ -3,6 +3,6 @@ from .exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
     AuthenticationError,
-    ActivationTokenNotFoundError,
-    ActivationTokenExpiredError,
+    TokenNotFoundError,
+    TokenExpiredError,
 )

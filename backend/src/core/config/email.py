@@ -14,4 +14,4 @@ class EmailSettings(BaseAppSettings):
     USE_TLS: bool = False
 
     # Temporarily here. Have to be changed to frontend URL
-    APP_URL: str = "http://localhost:8000"
+    APP_URL: str = "http://localhost:5173"

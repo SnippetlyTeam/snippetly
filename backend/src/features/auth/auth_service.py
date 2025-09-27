@@ -1,6 +1,3 @@
-from datetime import datetime, timezone
-from typing import Tuple
-
 from sqlalchemy import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,19 +5,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.postgres.models import (
     UserModel,
     RefreshTokenModel,
-    ActivationTokenModel,
 )
 from src.core.config import Settings
 from src.core.exceptions import (
     UserNotFoundError,
-    UserAlreadyExistsError,
     UserNotActiveError,
-    ActivationTokenNotFoundError,
-    ActivationTokenExpiredError,
 )
-from src.core.security import generate_secure_token
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth.interface import AuthServiceInterface
+from src.features.auth.auth_interface import AuthServiceInterface
 
 
 class AuthService(AuthServiceInterface):
@@ -33,70 +25,6 @@ class AuthService(AuthServiceInterface):
         self.db = db
         self.jwt_manager = jwt_manager
         self.settings = settings
-
-    async def register_user(
-        self, email: str, username: str, password: str
-    ) -> Tuple[UserModel, str]:
-        query = select(UserModel).where(
-            or_(UserModel.email == email, UserModel.username == username)
-        )
-        result = await self.db.execute(query)
-        existing_user = result.scalar_one_or_none()
-
-        if existing_user:
-            if existing_user.email == email:
-                raise UserAlreadyExistsError("This email is taken.")
-            if existing_user.username == username:
-                raise UserAlreadyExistsError("This username is taken.")
-
-        user = UserModel.create(
-            email=email, username=username, new_password=password
-        )
-        token = generate_secure_token()
-        activation_token = ActivationTokenModel.create(
-            user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
-        )
-        user.activation_token = activation_token
-
-        self.db.add_all([user, activation_token])
-
-        try:
-            await self.db.commit()
-            await self.db.refresh(user)
-            return user, token
-        except SQLAlchemyError:
-            await self.db.rollback()
-            raise
-
-    async def activate_account(self, token: str) -> None:
-        query = (
-            select(UserModel, ActivationTokenModel)
-            .join(ActivationTokenModel)
-            .where(ActivationTokenModel.token == token)
-        )
-        result = await self.db.execute(query)
-        row = result.one_or_none()
-
-        if not row:
-            raise ActivationTokenNotFoundError(
-                "Activation token was not found"
-            )
-
-        user, token_model = row
-
-        if token_model.expires_at < datetime.now(timezone.utc):
-            raise ActivationTokenExpiredError("Activation token has expired")
-
-        user.is_active = True
-
-        await self.db.delete(token_model)
-
-        try:
-            await self.db.commit()
-            await self.db.refresh(user)
-        except SQLAlchemyError:
-            await self.db.rollback()
-            raise
 
     async def login_user(self, email_or_username: str, password: str) -> dict:
         query = select(UserModel).where(
