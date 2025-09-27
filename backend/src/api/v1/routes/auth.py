@@ -4,9 +4,7 @@ import jwt
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.connection import get_db
 from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.auth import (
     UserRegistrationResponseSchema,
@@ -19,15 +17,16 @@ from src.api.v1.schemas.auth import (
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_token, get_current_user
+from src.core.dependencies.auth_service import get_auth_service
 from src.core.dependencies.email import get_email_sender
 from src.core.dependencies.token_manager import get_jwt_manager
-from src.core.email.interface import EmailSenderInterface
+from src.core.email import EmailSenderInterface
 from src.core.exceptions.exceptions import (
     UserNotFoundError,
     AuthenticationError,
 )
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth.auth_service import AuthService
+from src.features.auth import AuthServiceInterface
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -42,12 +41,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(
     data: UserRegistrationRequestSchema,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
 ) -> UserRegistrationResponseSchema:
-    service = AuthService(db, jwt_manager)
     try:
         user, token = await service.register_user(
             data.email, data.username, data.password
@@ -58,9 +55,12 @@ async def register(
             status_code=400, detail="User already exists"
         ) from e
     else:
-        background_tasks.add_task(email_sender.send_activation_email, user.email, token)
+        background_tasks.add_task(
+            email_sender.send_activation_email, user.email, token
+        )
 
     return UserRegistrationResponseSchema.model_validate(user)
+
 
 # TODO: check if user is_active
 @router.post(
@@ -71,10 +71,8 @@ async def register(
 )
 async def login_user(
     data: UserLoginRequestSchema,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> UserLoginResponseSchema:
-    service = AuthService(db, jwt_manager)
     try:
         tokens = await service.login_user(data.login, data.password)
         return UserLoginResponseSchema(**tokens)
@@ -92,10 +90,8 @@ async def login_user(
 )
 async def refresh(
     data: TokenRefreshRequestSchema,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> TokenRefreshResponseSchema:
-    service = AuthService(db, jwt_manager)
     try:
         result = await service.refresh_tokens(data.refresh_token)
         return TokenRefreshResponseSchema(**result)
@@ -114,12 +110,10 @@ async def refresh(
 )
 async def logout_user(
     user_data: LogoutRequestSchema,
-    db: Annotated[AsyncSession, Depends(get_db)],
-    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     access_token: Annotated[str, Depends(get_token)],
     current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
 ) -> MessageResponseSchema:
-    service = AuthService(db, jwt_manager)
     try:
         await service.logout_user(user_data.refresh_token, access_token)
     except SQLAlchemyError as e:
@@ -137,12 +131,10 @@ async def logout_user(
     "logging out from every session",
 )
 async def revoke_all_tokens(
+service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     current_user: Annotated[UserModel, Depends(get_current_user)],
-    db: Annotated[AsyncSession, Depends(get_db)],
-    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
 ) -> MessageResponseSchema:
     """"""
-    service = AuthService(db, jwt_manager)
     try:
         await service.logout_from_all_sessions(current_user)
     except SQLAlchemyError as e:

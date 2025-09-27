@@ -5,7 +5,7 @@ from typing import Optional
 import aiosmtplib
 from pydantic import EmailStr, SecretStr, AnyUrl
 
-from src.core.email.interface import EmailSenderInterface
+from .interface import EmailSenderInterface
 
 
 logger = logging.getLogger(__name__)
@@ -20,13 +20,17 @@ class EmailSenderManager(EmailSenderInterface):
         from_email: EmailStr,
         use_tls: bool,
         app_url: AnyUrl,
-        email_app_password: Optional[SecretStr] = None
+        email_app_password: Optional[SecretStr] = None,
     ):
         self._email_host = email_host
         self._email_port = email_port
         self._email_user = email_host_user
         self._from_email = from_email
-        self._app_password = email_app_password.get_secret_value() if email_app_password else None
+        self._app_password = (
+            email_app_password.get_secret_value()
+            if email_app_password
+            else None
+        )
         self._use_tls = use_tls
         self._app_url = app_url
 

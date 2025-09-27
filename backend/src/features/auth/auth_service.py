@@ -4,21 +4,25 @@ from sqlalchemy import select, or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models import UserModel, RefreshTokenModel, ActivationTokenModel
+from src.adapters.postgres.models import (
+    UserModel,
+    RefreshTokenModel,
+    ActivationTokenModel,
+)
 from src.core.exceptions.exceptions import UserNotFoundError
 from src.core.security import generate_secure_token
 from src.core.security.jwt_manager import JWTAuthInterface
+from src.features.auth.interface import AuthServiceInterface
 
 
-class AuthService:
+class AuthService(AuthServiceInterface):
     def __init__(self, db: AsyncSession, jwt_manager: JWTAuthInterface):
         self.db = db
         self.jwt_manager = jwt_manager
 
     async def register_user(
-            self, email: str, username: str, password: str
+        self, email: str, username: str, password: str
     ) -> Tuple[UserModel, str]:
-
         query = select(UserModel).where(
             or_(UserModel.email == email, UserModel.username == username)
         )
@@ -27,7 +31,9 @@ class AuthService:
         if existing_user:
             raise IntegrityError("User already exists", None, None)  # type: ignore[arg-type]
 
-        user = UserModel.create(email=email, username=username, new_password=password)
+        user = UserModel.create(
+            email=email, username=username, new_password=password
+        )
 
         token = generate_secure_token()
         activation_token = ActivationTokenModel.create(user.id, token, 1)

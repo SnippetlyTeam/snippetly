@@ -3,8 +3,7 @@ from typing import Annotated
 from fastapi.params import Depends
 
 from src.core.config import Settings, get_settings
-from src.core.email.email_sender import EmailSenderManager
-from src.core.email.interface import EmailSenderInterface
+from src.core.email import EmailSenderInterface, EmailSenderManager
 
 
 async def get_email_sender(
