@@ -51,7 +51,6 @@ services:
       - db
     command: uv run alembic upgrade head
 
-
   frontend:
     build:
       context: ./frontend
@@ -62,6 +61,14 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+  # ONLY for dev environment, have to be moved to docker-compose.dev.yml
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   pgdata_dev:
