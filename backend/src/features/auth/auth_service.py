@@ -1,11 +1,13 @@
-import jwt
+from typing import Tuple
+
 from sqlalchemy import select, or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models import UserModel, RefreshTokenModel
-from src.core.security.jwt_manager import JWTAuthInterface
+from src.adapters.postgres.models import UserModel, RefreshTokenModel, ActivationTokenModel
 from src.core.exceptions.exceptions import UserNotFoundError
+from src.core.security import generate_secure_token
+from src.core.security.jwt_manager import JWTAuthInterface
 
 
 class AuthService:
@@ -14,8 +16,9 @@ class AuthService:
         self.jwt_manager = jwt_manager
 
     async def register_user(
-        self, email: str, username: str, password: str
-    ) -> UserModel:
+            self, email: str, username: str, password: str
+    ) -> Tuple[UserModel, str]:
+
         query = select(UserModel).where(
             or_(UserModel.email == email, UserModel.username == username)
         )
@@ -24,15 +27,18 @@ class AuthService:
         if existing_user:
             raise IntegrityError("User already exists", None, None)  # type: ignore[arg-type]
 
-        user = UserModel.create(
-            email=email, username=username, new_password=password
-        )
-        self.db.add(user)
+        user = UserModel.create(email=email, username=username, new_password=password)
+
+        token = generate_secure_token()
+        activation_token = ActivationTokenModel.create(user.id, token, 1)
+        user.activation_token = activation_token
+
+        self.db.add_all([user, activation_token])
 
         try:
             await self.db.commit()
             await self.db.refresh(user)
-            return user
+            return user, token
         except IntegrityError as e:
             await self.db.rollback()
             raise IntegrityError("User already exists", None, e) from e

@@ -1,9 +1,14 @@
+import logging
 from email.message import EmailMessage
+from typing import Optional
 
 import aiosmtplib
 from pydantic import EmailStr, SecretStr, AnyUrl
 
 from src.core.email.interface import EmailSenderInterface
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmailSenderManager(EmailSenderInterface):
@@ -13,15 +18,15 @@ class EmailSenderManager(EmailSenderInterface):
         email_port: int,
         email_host_user: EmailStr,
         from_email: EmailStr,
-        app_password: SecretStr,
         use_tls: bool,
         app_url: AnyUrl,
+        email_app_password: Optional[SecretStr] = None
     ):
         self._email_host = email_host
         self._email_port = email_port
         self._email_user = email_host_user
         self._from_email = from_email
-        self._app_password = app_password.get_secret_value()
+        self._app_password = email_app_password.get_secret_value() if email_app_password else None
         self._use_tls = use_tls
         self._app_url = app_url
 
@@ -32,14 +37,28 @@ class EmailSenderManager(EmailSenderInterface):
         message["Subject"] = subject
         message.set_content(body)
 
-        await aiosmtplib.send(
-            message,
-            hostname=self._email_host,
-            port=self._email_port,
-            start_tls=self._use_tls,
-            username=self._email_user,
-            password=self._app_password,
-        )
+        try:
+            await aiosmtplib.send(
+                message,
+                hostname=self._email_host,
+                port=self._email_port,
+                start_tls=self._use_tls,
+                username=self._email_user,
+                password=self._app_password,
+                timeout=10.0,
+            )
+        except aiosmtplib.SMTPAuthenticationError as e:
+            logger.error(f"SMTP auth failed: {e}")
+            raise
+        except aiosmtplib.SMTPRecipientsRefused as e:
+            logger.warning(f"Recipient refused: {e.recipients}")
+            raise
+        except (aiosmtplib.SMTPConnectError, OSError, TimeoutError) as e:
+            logger.error(f"SMTP connection error: {e}")
+            raise
+        except aiosmtplib.SMTPException as e:
+            logger.error(f"SMTP general error: {e}")
+            raise
 
     async def send_activation_email(self, email: EmailStr, token: str) -> None:
         subject = "Activate your account"

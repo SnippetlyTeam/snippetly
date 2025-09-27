@@ -1,7 +1,7 @@
 from typing import Annotated
 
 import jwt
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,9 @@ from src.api.v1.schemas.auth import (
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_token, get_current_user
+from src.core.dependencies.email import get_email_sender
 from src.core.dependencies.token_manager import get_jwt_manager
+from src.core.email.interface import EmailSenderInterface
 from src.core.exceptions.exceptions import (
     UserNotFoundError,
     AuthenticationError,
@@ -42,18 +44,23 @@ async def register(
     data: UserRegistrationRequestSchema,
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+    email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
+    background_tasks: BackgroundTasks
 ) -> UserRegistrationResponseSchema:
     service = AuthService(db, jwt_manager)
     try:
-        user = await service.register_user(
+        user, token = await service.register_user(
             data.email, data.username, data.password
         )
-        return UserRegistrationResponseSchema.model_validate(user)
+
     except IntegrityError as e:
         raise HTTPException(
             status_code=400, detail="User already exists"
         ) from e
+    else:
+        background_tasks.add_task(email_sender.send_activation_email, user.email, token)
 
+    return UserRegistrationResponseSchema.model_validate(user)
 
 # TODO: check if user is_active
 @router.post(
