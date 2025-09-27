@@ -14,6 +14,7 @@ from src.api.v1.schemas.auth import (
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
     LogoutRequestSchema,
+    ActivationRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_token, get_current_user
@@ -26,6 +27,8 @@ from src.core.exceptions import (
     AuthenticationError,
     UserAlreadyExistsError,
     UserNotActiveError,
+    ActivationTokenNotFoundError,
+    ActivationTokenExpiredError,
 )
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth import AuthServiceInterface
@@ -61,6 +64,34 @@ async def register(
     return UserRegistrationResponseSchema.model_validate(user)
 
 
+# TODO: resend activation token
+@router.post(
+    "/activate",
+    status_code=200,
+    summary="Activate user's account",
+    description="Activates user account using activation token, "
+    "that was given in email",
+)
+async def activate_account(
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    data: ActivationRequestSchema,
+) -> MessageResponseSchema:
+    try:
+        await service.activate_account(data.activation_token)
+    except ActivationTokenNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except ActivationTokenExpiredError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong during account activation",
+        ) from e
+    return MessageResponseSchema(
+        message="Account has been activated successfully"
+    )
+
+
 @router.post(
     "/login",
     summary="Log in via username or email",
@@ -73,7 +104,6 @@ async def login_user(
 ) -> UserLoginResponseSchema:
     try:
         tokens = await service.login_user(data.login, data.password)
-        return UserLoginResponseSchema(**tokens)
     except UserNotFoundError as e:
         raise HTTPException(
             status_code=404, detail="Invalid credentials"
@@ -85,6 +115,7 @@ async def login_user(
             status_code=500,
             detail="Something went wrong during refresh token creation",
         ) from e
+    return UserLoginResponseSchema(**tokens)
 
 
 @router.post(
@@ -99,11 +130,11 @@ async def refresh(
 ) -> TokenRefreshResponseSchema:
     try:
         result = await service.refresh_tokens(data.refresh_token)
-        return TokenRefreshResponseSchema(**result)
     except AuthenticationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
     except UserNotFoundError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
+    return TokenRefreshResponseSchema(**result)
 
 
 @router.post(
@@ -139,7 +170,6 @@ async def revoke_all_tokens(
     service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     current_user: Annotated[UserModel, Depends(get_current_user)],
 ) -> MessageResponseSchema:
-    """"""
     try:
         await service.logout_from_all_sessions(current_user)
     except SQLAlchemyError as e:

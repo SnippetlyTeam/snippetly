@@ -26,6 +26,19 @@ class AuthServiceInterface(ABC):
         pass
 
     @abstractmethod
+    async def activate_account(self, token: str) -> None:
+        """
+        Activate new user's account by token
+
+        :param token: Activation Token
+        :type: str
+        :return: None
+        :raises ActivationTokenNotFoundError: If token was not found
+                ActivationTokenExpiredError: If token is expired
+                SQLAlchemyError: If user activation went wrong
+        """
+
+    @abstractmethod
     async def login_user(self, email_or_username: str, password: str) -> dict:
         """
         Authenticate user and return access and refresh tokens.

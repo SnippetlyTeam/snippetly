@@ -14,3 +14,11 @@ class UserAlreadyExistsError(Exception):
 
 class UserNotActiveError(Exception):
     pass
+
+
+class ActivationTokenNotFoundError(Exception):
+    pass
+
+
+class ActivationTokenExpiredError(Exception):
+    pass

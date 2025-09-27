@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Tuple
 
 from sqlalchemy import select, or_
@@ -14,6 +15,8 @@ from src.core.exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
     UserNotActiveError,
+    ActivationTokenNotFoundError,
+    ActivationTokenExpiredError,
 )
 from src.core.security import generate_secure_token
 from src.core.security.jwt_manager import JWTAuthInterface
@@ -61,6 +64,36 @@ class AuthService(AuthServiceInterface):
             await self.db.commit()
             await self.db.refresh(user)
             return user, token
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
+
+    async def activate_account(self, token: str) -> None:
+        query = (
+            select(UserModel, ActivationTokenModel)
+            .join(ActivationTokenModel)
+            .where(ActivationTokenModel.token == token)
+        )
+        result = await self.db.execute(query)
+        row = result.one_or_none()
+
+        if not row:
+            raise ActivationTokenNotFoundError(
+                "Activation token was not found"
+            )
+
+        user, token_model = row
+
+        if token_model.expires_at < datetime.now(timezone.utc):
+            raise ActivationTokenExpiredError("Activation token has expired")
+
+        user.is_active = True
+
+        await self.db.delete(token_model)
+
+        try:
+            await self.db.commit()
+            await self.db.refresh(user)
         except SQLAlchemyError:
             await self.db.rollback()
             raise
