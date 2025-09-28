@@ -5,18 +5,13 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import (
     UserModel,
     ActivationTokenModel,
     PasswordResetTokenModel,
 )
 from src.core.config import Settings
-from src.core.exceptions import (
-    TokenNotFoundError,
-    UserAlreadyExistsError,
-    TokenExpiredError,
-    UserNotFoundError,
-)
 from src.core.security import generate_secure_token
 from src.features.auth import UserServiceInterface
 
@@ -37,9 +32,9 @@ class UserService(UserServiceInterface):
 
         if existing_user:
             if existing_user.email == email:
-                raise UserAlreadyExistsError("This email is taken.")
+                raise exc.UserAlreadyExistsError("This email is taken.")
             if existing_user.username == username:
-                raise UserAlreadyExistsError("This username is taken.")
+                raise exc.UserAlreadyExistsError("This username is taken.")
 
         user = UserModel.create(
             email=email, username=username, new_password=password
@@ -70,12 +65,12 @@ class UserService(UserServiceInterface):
         row = result.one_or_none()
 
         if not row:
-            raise TokenNotFoundError("Activation token was not found")
+            raise exc.TokenNotFoundError("Activation token was not found")
 
         user, token_model = row
 
         if token_model.expires_at < datetime.now(timezone.utc):
-            raise TokenExpiredError("Activation token has expired")
+            raise exc.TokenExpiredError("Activation token has expired")
 
         user.is_active = True
 
@@ -88,13 +83,13 @@ class UserService(UserServiceInterface):
             await self.db.rollback()
             raise
 
-    async def reset_password_token(self, email: str) -> str:
+    async def reset_password_token(self, email: str) -> Tuple[UserModel, str]:
         query = select(UserModel).where(UserModel.email == email)
         result = await self.db.execute(query)
         user = result.scalar_one_or_none()
 
         if not user:
-            raise UserNotFoundError
+            raise exc.UserNotFoundError
 
         token = generate_secure_token()
         password_reset_token = PasswordResetTokenModel.create(
@@ -111,8 +106,6 @@ class UserService(UserServiceInterface):
             await self.db.rollback()
             raise
 
-
-
     async def reset_password_complete(
         self, email: str, password: str, token: str
     ) -> None:
@@ -125,12 +118,12 @@ class UserService(UserServiceInterface):
         row = result.one_or_none()
 
         if not row:
-            raise TokenNotFoundError("Invalid password reset token")
+            raise exc.TokenNotFoundError("Password reset token was not found")
 
         user, token_model = row
 
         if token_model.expires_at < datetime.now(timezone.utc):
-            raise TokenExpiredError("Password reset token has expired")
+            raise exc.TokenExpiredError("Password reset token has expired")
 
         user.password = password
         await self.db.delete(token_model)

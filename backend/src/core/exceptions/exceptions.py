@@ -7,8 +7,6 @@ class AuthenticationError(Exception):
 
 
 class UserAlreadyExistsError(Exception):
-    """Raised when email or username is already taken."""
-
     pass
 
 

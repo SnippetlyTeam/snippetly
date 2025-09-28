@@ -9,13 +9,10 @@ from sqlalchemy import delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel, RefreshTokenModel
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
-from src.core.exceptions import (
-    UserNotFoundError,
-    AuthenticationError,
-)
 from .interface import JWTAuthInterface
 
 
@@ -115,11 +112,11 @@ class JWTAuthManager(JWTAuthInterface):
                 token=refresh_token, is_refresh=True
             )
         except jwt.InvalidTokenError as e:
-            raise AuthenticationError("Invalid refresh token") from e
+            raise exc.AuthenticationError("Invalid refresh token") from e
 
         user = await db.get(UserModel, payload.get("user_id"))
         if not user:
-            raise UserNotFoundError("User not found")
+            raise exc.UserNotFoundError
 
         user_data = {
             "id": user.id,
