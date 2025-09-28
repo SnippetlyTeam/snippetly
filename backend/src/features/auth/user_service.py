@@ -118,7 +118,7 @@ class UserService(UserServiceInterface):
         row = result.one_or_none()
 
         if not row:
-            raise exc.TokenNotFoundError("Invalid password reset token")
+            raise exc.TokenNotFoundError("Password reset token was not found")
 
         user, token_model = row
 

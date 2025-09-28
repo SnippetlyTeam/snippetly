@@ -29,7 +29,7 @@ router = APIRouter(prefix="/auth", tags=["Password Reset"])
     responses={
         404: aggregate_examples(
             description="Not Found",
-            examples={"not_found": "Invalid password reset token"},
+            examples={"not_found": "Password reset token was not found"},
         ),
         400: aggregate_examples(
             description="Bad Request",
