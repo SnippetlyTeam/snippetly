@@ -2,15 +2,12 @@ from sqlalchemy import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import (
     UserModel,
     RefreshTokenModel,
 )
 from src.core.config import Settings
-from src.core.exceptions import (
-    UserNotFoundError,
-    UserNotActiveError,
-)
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth.auth_interface import AuthServiceInterface
 
@@ -37,10 +34,10 @@ class AuthService(AuthServiceInterface):
         user = result.scalar_one_or_none()
 
         if not user or not user.verify_password(password):
-            raise UserNotFoundError("Invalid credentials")
+            raise exc.UserNotFoundError("Invalid credentials")
 
         if not user.is_active:
-            raise UserNotActiveError("User account is not activated")
+            raise exc.UserNotActiveError("User account is not activated")
 
         await self.db.refresh(user, ["id", "username", "email", "is_admin"])
 
@@ -99,5 +96,6 @@ class AuthService(AuthServiceInterface):
             exp = access_payload["exp"]
             await self.jwt_manager.add_to_blacklist(jti, exp)
 
+    # TODO: catch errors with Redis
     async def logout_from_all_sessions(self, user: UserModel) -> None:
         await self.jwt_manager.revoke_all_user_tokens(self.db, user.id)

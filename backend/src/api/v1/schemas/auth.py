@@ -14,7 +14,7 @@ from src.core.security.validation import (
 
 
 class EmailMixin(BaseModel):
-    email: EmailStr
+    email: EmailStr = Field(..., max_length=255)
 
     @field_serializer("email")
     def serialize_email(self, value: str) -> str:
@@ -51,7 +51,7 @@ class PasswordResetRequestSchema(EmailMixin, BaseModel):
 
 
 class PasswordResetCompletionSchema(EmailMixin, PasswordMixin, BaseModel):
-    password_reset_token: str
+    password_reset_token: str = Field(...)
 
 
 class UserLoginRequestSchema(PasswordMixin, BaseModel):
@@ -64,15 +64,15 @@ class UserLoginRequestSchema(PasswordMixin, BaseModel):
 
 
 class TokenRefreshRequestSchema(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(..., max_length=512)
 
 
 class LogoutRequestSchema(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(..., max_length=512)
 
 
 class ActivationRequestSchema(BaseModel):
-    activation_token: str
+    activation_token: str = Field(..., max_length=64)
 
 
 # --- Response ---

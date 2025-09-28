@@ -1,102 +1,31 @@
 from typing import Annotated
 
 import jwt
-from click.formatting import measure_table
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Body
+from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
+from src.api.docs.openapi import aggregate_examples
 from src.api.v1.schemas.auth import (
-    UserRegistrationResponseSchema,
-    UserRegistrationRequestSchema,
     UserLoginRequestSchema,
     UserLoginResponseSchema,
     TokenRefreshRequestSchema,
     TokenRefreshResponseSchema,
     LogoutRequestSchema,
-    ActivationRequestSchema,
-    PasswordResetRequestSchema,
-    PasswordResetCompletionSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import (
     get_token,
     get_current_user,
     get_auth_service,
-    get_user_service,
 )
-from src.core.dependencies.email import get_email_sender
 from src.core.dependencies.token_manager import get_jwt_manager
-from src.core.email import EmailSenderInterface
-from src.core.exceptions import (
-    UserNotFoundError,
-    AuthenticationError,
-    UserAlreadyExistsError,
-    UserNotActiveError,
-    TokenNotFoundError,
-    TokenExpiredError,
-)
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth import AuthServiceInterface, UserServiceInterface
+from src.features.auth import AuthServiceInterface
 
-router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-@router.post(
-    "/register",
-    summary="Register New User",
-    status_code=201,
-    description="Register a new user with email, username, and password",
-)
-async def register(
-    data: UserRegistrationRequestSchema,
-    service: Annotated[UserServiceInterface, Depends(get_user_service)],
-    email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
-    background_tasks: BackgroundTasks,
-) -> UserRegistrationResponseSchema:
-    try:
-        user, token = await service.register_user(
-            data.email, data.username, data.password
-        )
-    except UserAlreadyExistsError as e:
-        raise HTTPException(status_code=409, detail=str(e)) from e
-    except SQLAlchemyError as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
-    else:
-        background_tasks.add_task(
-            email_sender.send_activation_email, user.email, token
-        )
-
-    return UserRegistrationResponseSchema.model_validate(user)
-
-
-# TODO: resend activation token
-@router.post(
-    "/activate",
-    status_code=200,
-    summary="Activate user's account",
-    description="Activates user account using activation token, "
-    "that was given in email",
-)
-async def activate_account(
-    service: Annotated[UserServiceInterface, Depends(get_user_service)],
-    data: ActivationRequestSchema,
-) -> MessageResponseSchema:
-    try:
-        await service.activate_account(data.activation_token)
-    except TokenNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except TokenExpiredError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail="Something went wrong during account activation",
-        ) from e
-    return MessageResponseSchema(
-        message="Account has been activated successfully"
-    )
+router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post(
@@ -104,6 +33,22 @@ async def activate_account(
     summary="Log in via username or email",
     status_code=200,
     description="Authenticate a user and return access/refresh tokens",
+    responses={
+        404: aggregate_examples(
+            description="Not Found",
+            examples={"not_found": "Invalid credentials"},
+        ),
+        403: aggregate_examples(
+            description="Forbidden",
+            examples={"forbidden": "User account is not activated"},
+        ),
+        500: aggregate_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Something went wrong during refresh token creation"
+            },
+        ),
+    },
 )
 async def login_user(
     data: UserLoginRequestSchema,
@@ -111,11 +56,11 @@ async def login_user(
 ) -> UserLoginResponseSchema:
     try:
         tokens = await service.login_user(data.login, data.password)
-    except UserNotFoundError as e:
+    except exc.UserNotFoundError as e:
         raise HTTPException(
             status_code=404, detail="Invalid credentials"
         ) from e
-    except UserNotActiveError as e:
+    except exc.UserNotActiveError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     except SQLAlchemyError as e:
         raise HTTPException(
@@ -130,6 +75,16 @@ async def login_user(
     summary="Refresh token",
     status_code=200,
     description="Refresh an access token using a valid refresh token",
+    responses={
+        401: aggregate_examples(
+            description="Unauthorized",
+            examples={"auth_error": "Invalid refresh token"},
+        ),
+        404: aggregate_examples(
+            description="Not Found",
+            examples={"not_found": "User was not found"},
+        ),
+    },
 )
 async def refresh(
     data: TokenRefreshRequestSchema,
@@ -137,10 +92,12 @@ async def refresh(
 ) -> TokenRefreshResponseSchema:
     try:
         result = await service.refresh_tokens(data.refresh_token)
-    except AuthenticationError as e:
+    except exc.AuthenticationError as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
-    except UserNotFoundError as e:
-        raise HTTPException(status_code=401, detail=str(e)) from e
+    except exc.UserNotFoundError as e:
+        raise HTTPException(
+            status_code=404, detail="User was not found"
+        ) from e
     return TokenRefreshResponseSchema(**result)
 
 
@@ -150,6 +107,12 @@ async def refresh(
     status_code=200,
     summary="User Logout",
     description="Logout a user by revoking their refresh and access tokens",
+    responses={
+        500: aggregate_examples(
+            description="Internal Server Error",
+            examples={"internal_server": "Failed to log out. Try again"},
+        ),
+    },
 )
 async def logout_user(
     user_data: LogoutRequestSchema,
@@ -171,7 +134,15 @@ async def logout_user(
     summary="Logout from all sessions",
     status_code=200,
     description="Revoke all tokens of the current user, "
-    "logging out from every session",
+                "logging out from every session",
+    responses={
+        500: aggregate_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Failed to log out from every sessions. Try again"
+            },
+        ),
+    },
 )
 async def revoke_all_tokens(
     service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
@@ -187,55 +158,6 @@ async def revoke_all_tokens(
     return MessageResponseSchema(
         message="Logged out from every session successfully"
     )
-
-
-@router.post("/reset-password/request")
-async def reset_password_request(
-    data: PasswordResetRequestSchema,
-    service: Annotated[UserServiceInterface, Depends(get_user_service)],
-    email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
-    background_tasks: BackgroundTasks,
-) -> MessageResponseSchema:
-    message = (
-        "If an account with that email exists, "
-        "we've sent password reset instructions. "
-        "Please check your inbox"
-    )
-    try:
-        user, reset_token = await service.reset_password_token(data.email)
-    except UserNotFoundError:
-        return MessageResponseSchema(message=message)
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500, detail="Something went wrong"
-        ) from e
-    else:
-        background_tasks.add_task(
-            email_sender.send_password_reset_email, data.email, reset_token
-        )
-    return MessageResponseSchema(message=message)
-
-
-@router.post("/reset-password/complete")
-async def reset_password_complete(
-    data: PasswordResetCompletionSchema,
-    service: Annotated[UserServiceInterface, Depends(get_user_service)],
-) -> MessageResponseSchema:
-    try:
-        await service.reset_password_complete(
-            data.email, data.password, data.password_reset_token
-        )
-    except TokenNotFoundError as e:
-        raise HTTPException(status_code=404, detail=str(e)) from e
-    except TokenExpiredError as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500,
-            detail="Something went wrong during password reset",
-        ) from e
-
-    return MessageResponseSchema(message="Password has been successfully changed")
 
 
 @router.get("/test-access-token/")
