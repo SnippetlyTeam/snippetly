@@ -1,41 +1,30 @@
-import jwt
 from sqlalchemy import select, or_
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models import UserModel, RefreshTokenModel
+from src.adapters.postgres.models import (
+    UserModel,
+    RefreshTokenModel,
+)
+from src.core.config import Settings
+from src.core.exceptions import (
+    UserNotFoundError,
+    UserNotActiveError,
+)
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.exceptions.exceptions import UserNotFoundError
+from src.features.auth.auth_interface import AuthServiceInterface
 
 
-class AuthService:
-    def __init__(self, db: AsyncSession, jwt_manager: JWTAuthInterface):
+class AuthService(AuthServiceInterface):
+    def __init__(
+        self,
+        db: AsyncSession,
+        jwt_manager: JWTAuthInterface,
+        settings: Settings,
+    ):
         self.db = db
         self.jwt_manager = jwt_manager
-
-    async def register_user(
-        self, email: str, username: str, password: str
-    ) -> UserModel:
-        query = select(UserModel).where(
-            or_(UserModel.email == email, UserModel.username == username)
-        )
-        result = await self.db.execute(query)
-        existing_user = result.scalar_one_or_none()
-        if existing_user:
-            raise IntegrityError("User already exists", None, None)  # type: ignore[arg-type]
-
-        user = UserModel.create(
-            email=email, username=username, new_password=password
-        )
-        self.db.add(user)
-
-        try:
-            await self.db.commit()
-            await self.db.refresh(user)
-            return user
-        except IntegrityError as e:
-            await self.db.rollback()
-            raise IntegrityError("User already exists", None, e) from e
+        self.settings = settings
 
     async def login_user(self, email_or_username: str, password: str) -> dict:
         query = select(UserModel).where(
@@ -50,6 +39,9 @@ class AuthService:
         if not user or not user.verify_password(password):
             raise UserNotFoundError("Invalid credentials")
 
+        if not user.is_active:
+            raise UserNotActiveError("User account is not activated")
+
         await self.db.refresh(user, ["id", "username", "email", "is_admin"])
 
         user_data = {
@@ -63,7 +55,7 @@ class AuthService:
 
         try:
             new_refresh_token = RefreshTokenModel.create(
-                user.id, refresh_token, 7
+                user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
             )
             self.db.add(new_refresh_token)
             await self.db.commit()
@@ -80,10 +72,7 @@ class AuthService:
         }
 
     async def refresh_tokens(self, refresh_token: str) -> dict:
-        result = await self.jwt_manager.refresh_tokens(self.db, refresh_token)
-        if not result:
-            raise UserNotFoundError("Invalid refresh token")
-        return result
+        return await self.jwt_manager.refresh_tokens(self.db, refresh_token)
 
     async def logout_user(self, refresh_token: str, access_token: str) -> None:
         query = select(RefreshTokenModel).where(

@@ -1,9 +1,13 @@
+import os
 from functools import lru_cache
-from .settings import Settings, DevelopmentSettings
+from .settings import Settings, DevelopmentSettings, ProductionSettings
 
 
 def _build_settings() -> Settings:
-    # will be updated when new settings presets appear
+    env = os.getenv("ENVIRONMENT", "development")
+
+    if env == "production":
+        return ProductionSettings()
     return DevelopmentSettings()
 
 

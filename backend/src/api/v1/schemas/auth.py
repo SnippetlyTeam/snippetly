@@ -46,6 +46,14 @@ class UserRegistrationRequestSchema(
     pass
 
 
+class PasswordResetRequestSchema(EmailMixin, BaseModel):
+    pass
+
+
+class PasswordResetCompletionSchema(EmailMixin, PasswordMixin, BaseModel):
+    password_reset_token: str
+
+
 class UserLoginRequestSchema(PasswordMixin, BaseModel):
     login: str = Field(..., min_length=3, max_length=40)
 
@@ -61,6 +69,10 @@ class TokenRefreshRequestSchema(BaseModel):
 
 class LogoutRequestSchema(BaseModel):
     refresh_token: str
+
+
+class ActivationRequestSchema(BaseModel):
+    activation_token: str
 
 
 # --- Response ---

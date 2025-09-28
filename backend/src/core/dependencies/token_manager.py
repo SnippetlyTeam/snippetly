@@ -5,8 +5,7 @@ from redis.asyncio.client import Redis
 
 from src.core.config import Settings, get_settings
 from src.core.dependencies.redis import get_redis_client
-from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.security.jwt_manager.token_manager import JWTAuthManager
+from src.core.security.jwt_manager import JWTAuthInterface, JWTAuthManager
 
 
 async def get_jwt_manager(

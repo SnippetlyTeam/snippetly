@@ -12,8 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.postgres.models import UserModel, RefreshTokenModel
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
-from src.core.security.jwt_manager import JWTAuthInterface
-from src.core.exceptions.exceptions import UserNotFoundError
+from src.core.exceptions import (
+    UserNotFoundError,
+    AuthenticationError,
+)
+from .interface import JWTAuthInterface
 
 
 class JWTAuthManager(JWTAuthInterface):
@@ -107,9 +110,12 @@ class JWTAuthManager(JWTAuthInterface):
     async def refresh_tokens(
         self, db: AsyncSession, refresh_token: str
     ) -> Optional[dict]:
-        payload = await self.verify_token(token=refresh_token, is_refresh=True)
-        if not payload:
-            raise jwt.InvalidTokenError("Invalid refresh token")
+        try:
+            payload = await self.verify_token(
+                token=refresh_token, is_refresh=True
+            )
+        except jwt.InvalidTokenError as e:
+            raise AuthenticationError("Invalid refresh token") from e
 
         user = await db.get(UserModel, payload.get("user_id"))
         if not user:
