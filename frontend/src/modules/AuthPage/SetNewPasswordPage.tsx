@@ -3,7 +3,7 @@ import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 
-type Status = 'Weak' | 'Medium' | 'Strong'
+type Status = 'Weak' | 'Medium' | 'Strong';
 
 const SetNewPasswordPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -82,28 +82,41 @@ const SetNewPasswordPage: React.FC = () => {
     changePasswordStatus(newValue);
     setPasswordErrorContent('');
 
-    if (newValue !== passwordConfirmInputValue) {
-      setPasswordConfirmErrorContent(errorMessages.passwordMismatch);
-    } else {
-      setPasswordConfirmErrorContent('');
+    if (passwordConfirmInputValue) {
+      if (newValue !== passwordConfirmInputValue) {
+        setPasswordConfirmErrorContent(errorMessages.passwordMismatch);
+      } else {
+        setPasswordConfirmErrorContent('');
+      }
     }
   }
 
   function handlePasswordConfirmInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const newValue = event.target.value;
     setPasswordConfirmInputValue(newValue);
-    if (passwordInputValue !== newValue) {
+    if (!newValue) {
+      setPasswordConfirmErrorContent(errorMessages.passwordConfirmEmpty);
+    } else if (passwordInputValue !== newValue) {
       setPasswordConfirmErrorContent(errorMessages.passwordMismatch);
     } else {
       setPasswordConfirmErrorContent('');
     }
   }
 
-  function handleFormSubmit() {
-    setPasswordErrorContent(checkErrors(passwordInputValue));
+  function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const passwordError = checkErrors(passwordInputValue);
+    setPasswordErrorContent(passwordError);
 
     if (!passwordConfirmInputValue) {
       setPasswordConfirmErrorContent(errorMessages.passwordConfirmEmpty);
+      return;
+    }
+
+    if (!passwordError && passwordInputValue !== passwordConfirmInputValue) {
+      setPasswordConfirmErrorContent(errorMessages.passwordMismatch);
+      return;
     }
   }
 
@@ -136,6 +149,12 @@ const SetNewPasswordPage: React.FC = () => {
                 autoComplete="new-password"
                 value={passwordInputValue}
                 onChange={handlePasswordInputChange}
+                aria-describedby={
+                  passwordErrorContent
+                    ? "password-label password-error"
+                    : "password-label"
+                }
+                aria-invalid={passwordErrorContent ? "true" : undefined}
               />
               <button
                 className={styles.eye}
@@ -194,6 +213,12 @@ const SetNewPasswordPage: React.FC = () => {
                 autoComplete="new-password"
                 value={passwordConfirmInputValue}
                 onChange={handlePasswordConfirmInputChange}
+                aria-describedby={
+                  passwordConfirmErrorContent
+                    ? "confirmPassword-label confirmPassword-error"
+                    : "confirmPassword-label"
+                }
+                aria-invalid={passwordConfirmErrorContent ? "true" : undefined}
               />
               <button
                 className={styles.eye}
@@ -208,7 +233,12 @@ const SetNewPasswordPage: React.FC = () => {
             </div>
 
             {passwordConfirmErrorContent && (
-              <p className={styles.error}>
+              <p
+                className={styles.error}
+                id="confirmPassword-error"
+                role="alert"
+                aria-live="assertive"
+              >
                 {passwordConfirmErrorContent}
               </p>
             )}
@@ -218,10 +248,11 @@ const SetNewPasswordPage: React.FC = () => {
         <button
           type="submit"
           className={styles.button}
+          aria-label="Reset your password"
         >Reset Password</button>
       </form>
     </main>
-  )
-}
+  );
+};
 
 export default SetNewPasswordPage;
