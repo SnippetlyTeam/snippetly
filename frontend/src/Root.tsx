@@ -6,6 +6,8 @@ import SignUpPage from "./modules/AuthPage/SignUpPage";
 import NotFoundPage from "./modules/NotFoundPage/NotFoundPage";
 import PasswordResetPage from "./modules/AuthPage/PasswordResetPage";
 import SetNewPasswordPage from "./modules/AuthPage/SetNewPasswordPage";
+import FinishRegistrationPage from "./modules/AuthPage/FinishRegistrationPage";
+
 
 export const Root = () => (
   <Router>
@@ -16,6 +18,10 @@ export const Root = () => (
         <Route path="sign-up" element={<SignUpPage />} />
         <Route path="password-reset" element={<PasswordResetPage />} />
         <Route path="set-new-password" element={<SetNewPasswordPage />} />
+        <Route path="activate-account">
+          <Route index element={<FinishRegistrationPage />} />
+          <Route path=":token" element={<FinishRegistrationPage />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

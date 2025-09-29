@@ -6,7 +6,7 @@ import CrossedEye from './CrossedEye';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
+
   const [emailInputValue, setEmailInputValue] = useState('');
   const [passwordInputValue, setPasswordInputValue] = useState('');
 
@@ -29,7 +29,7 @@ const SignInPage: React.FC = () => {
     }
   }
 
-  function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!emailInputValue.trim()) {
