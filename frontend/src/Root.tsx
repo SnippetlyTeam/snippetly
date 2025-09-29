@@ -5,6 +5,7 @@ import SignInPage from "./modules/AuthPage/SignInPage";
 import SignUpPage from "./modules/AuthPage/SignUpPage";
 import NotFoundPage from "./modules/NotFoundPage/NotFoundPage";
 import PasswordResetPage from "./modules/AuthPage/PasswordResetPage";
+import SetNewPasswordPage from "./modules/AuthPage/SetNewPasswordPage";
 
 export const Root = () => (
   <Router>
@@ -14,6 +15,7 @@ export const Root = () => (
         <Route path="sign-in" element={<SignInPage />} />
         <Route path="sign-up" element={<SignUpPage />} />
         <Route path="password-reset" element={<PasswordResetPage />} />
+        <Route path="set-new-password" element={<SetNewPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

@@ -121,3 +121,41 @@
   font-size: 14px;
   color: var(--color-red);
 }
+
+.strength {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &-Status {
+    @include set-transition(color, 0.4s);
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+
+    &-Weak {
+      color: #ef4444;
+    }
+    &-Medium {
+      color: #fb923c;
+    }
+    &-Strong {
+      color: #10b881;
+    }
+  }
+  &-Line {
+    @include set-transition(background-color, 0.4s);
+    height: 8px;
+    border-radius: 8px;
+
+    &-Weak {
+      background-color: #ef4444;
+    }
+    &-Medium {
+      background-color: #fb923c;
+    }
+    &-Strong {
+      background-color: #10b881;
+    }
+  }
+}

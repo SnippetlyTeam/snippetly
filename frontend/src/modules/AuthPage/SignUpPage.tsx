@@ -147,7 +147,6 @@ const SignUpPage: React.FC = () => {
                 aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
-                onMouseLeave={() => setIsPasswordVisible(false)}
               >
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
