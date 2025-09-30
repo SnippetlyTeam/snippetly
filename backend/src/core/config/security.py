@@ -21,9 +21,12 @@ class SecuritySettings(BaseAppSettings):
 class OAuthSettings(APISettings, BaseAppSettings):
     OAUTH_GOOGLE_CLIENT_SECRET: Optional[SecretStr] = None
     OAUTH_GOOGLE_CLIENT_ID: Optional[str] = None
-    BASE_GOOGLE_OAUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
-    REDIRECT_URI: Optional[str] = None
     OAUTH_GOOGLE_SCOPES: list = ["openid", "profile", "email"]
+
+    BASE_GOOGLE_OAUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
+    GOOGLE_TOKEN_URL: str = "https://oauth2.googleapis.com/token"
+
+    REDIRECT_URI: Optional[str] = None
 
     def model_post_init(self, context: Any, /) -> None:
         if self.REDIRECT_URI is None:
