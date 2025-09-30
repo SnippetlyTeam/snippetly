@@ -7,23 +7,25 @@ import NotFoundPage from "./modules/NotFoundPage/NotFoundPage";
 import PasswordResetPage from "./modules/AuthPage/PasswordResetPage";
 import SetNewPasswordPage from "./modules/AuthPage/SetNewPasswordPage";
 import FinishRegistrationPage from "./modules/AuthPage/FinishRegistrationPage";
-
+import { AppProvider } from "./contexts/AppContext";
 
 export const Root = () => (
   <Router>
-    <Routes>
-      <Route path="/" element={<App />}>
-        <Route index element={<LandingPage />} />
-        <Route path="sign-in" element={<SignInPage />} />
-        <Route path="sign-up" element={<SignUpPage />} />
-        <Route path="password-reset" element={<PasswordResetPage />} />
-        <Route path="set-new-password" element={<SetNewPasswordPage />} />
-        <Route path="activate-account">
-          <Route index element={<FinishRegistrationPage />} />
-          <Route path=":token" element={<FinishRegistrationPage />} />
+    <AppProvider>
+      <Routes>
+        <Route path="/" element={<App />}>
+          <Route index element={<LandingPage />} />
+          <Route path="sign-in" element={<SignInPage />} />
+          <Route path="sign-up" element={<SignUpPage />} />
+          <Route path="password-reset" element={<PasswordResetPage />} />
+          <Route path="set-new-password" element={<SetNewPasswordPage />} />
+          <Route path="activate-account">
+            <Route index element={<FinishRegistrationPage />} />
+            <Route path=":token" element={<FinishRegistrationPage />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </AppProvider>
   </Router>
 )
