@@ -7,10 +7,9 @@ from src.core.config import get_settings
 settings = get_settings()
 app = FastAPI(title="Snippetly - API", version="1.0.0", debug=settings.DEBUG)
 
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_URL],
     allow_methods=["*"],
     allow_headers=["*"],
 )

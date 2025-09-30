@@ -21,6 +21,8 @@ class SecuritySettings(BaseAppSettings):
 class OAuthSettings(APISettings, BaseAppSettings):
     OAUTH_GOOGLE_CLIENT_SECRET: Optional[SecretStr] = None
     OAUTH_GOOGLE_CLIENT_ID: Optional[str] = None
+    OAUTH_SSL: bool = False
+
     OAUTH_GOOGLE_SCOPES: list = ["openid", "profile", "email"]
 
     BASE_GOOGLE_OAUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
