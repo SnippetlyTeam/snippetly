@@ -1,8 +1,10 @@
 import secrets
+from typing import Optional, Any
 
 from pydantic import SecretStr
 
-from src.core.config.config import BaseAppSettings
+from .api import APISettings
+from .config import BaseAppSettings
 
 
 class SecuritySettings(BaseAppSettings):
@@ -14,3 +16,15 @@ class SecuritySettings(BaseAppSettings):
     ACCESS_TOKEN_LIFE_MINUTES: int = 30
     ACTIVATION_TOKEN_LIFE: int = 1
     PASSWORD_RESET_TOKEN_LIFE: int = 1
+
+
+class OAuthSettings(APISettings, BaseAppSettings):
+    OAUTH_GOOGLE_CLIENT_SECRET: Optional[SecretStr] = None
+    OAUTH_GOOGLE_CLIENT_ID: Optional[str] = None
+    BASE_GOOGLE_OAUTH_URL: str = "https://accounts.google.com/o/oauth2/v2/auth"
+    REDIRECT_URI: Optional[str] = None
+    OAUTH_GOOGLE_SCOPES: list = ["openid", "profile", "email"]
+
+    def model_post_init(self, context: Any, /) -> None:
+        if self.REDIRECT_URI is None:
+            self.REDIRECT_URI = f"{self.FRONTEND_URL}/auth/google"

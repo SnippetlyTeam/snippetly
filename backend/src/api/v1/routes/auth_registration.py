@@ -71,7 +71,7 @@ async def register(
     status_code=200,
     summary="Activate user's account",
     description="Activates user account using activation token, "
-                "that was given in email",
+    "that was given in email",
     responses={
         404: create_error_examples(
             description="Not Found",

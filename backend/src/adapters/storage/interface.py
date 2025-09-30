@@ -4,7 +4,9 @@ from typing import Union
 
 class StorageInterface(ABC):
     @abstractmethod
-    def upload_file(self, file_name: str, file_data: Union[bytes, bytearray]) -> None:
+    def upload_file(
+        self, file_name: str, file_data: Union[bytes, bytearray]
+    ) -> None:
         """
         Uploads a file to the storage.
 

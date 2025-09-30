@@ -134,7 +134,7 @@ async def logout_user(
     summary="Logout from all sessions",
     status_code=200,
     description="Revoke all tokens of the current user, "
-                "logging out from every session",
+    "logging out from every session",
     responses={
         500: create_error_examples(
             description="Internal Server Error",

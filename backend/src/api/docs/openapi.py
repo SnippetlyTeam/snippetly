@@ -32,5 +32,7 @@ def create_error_examples(
     examples: dict[str, str],
     model: type = ErrorResponseSchema,
 ) -> dict:
-    error_examples = {name: {"detail": detail} for name, detail in examples.items()}
+    error_examples = {
+        name: {"detail": detail} for name, detail in examples.items()
+    }
     return create_json_examples(description, error_examples, model)
