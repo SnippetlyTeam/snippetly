@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './AuthPage.module.scss';
 import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
@@ -6,12 +6,14 @@ import CrossedEye from './CrossedEye';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  
+
   const [emailInputValue, setEmailInputValue] = useState('');
   const [passwordInputValue, setPasswordInputValue] = useState('');
 
   const [isEmailError, setIsEmailError] = useState(false);
   const [isPasswordError, setIsPasswordError] = useState(false);
+
+  const navigate = useNavigate();
 
   function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setEmailInputValue(event.target.value);
@@ -39,6 +41,24 @@ const SignInPage: React.FC = () => {
     if (!passwordInputValue.trim()) {
       setIsPasswordError(true);
     }
+
+    if (isPasswordError || isEmailError) return;
+
+    fetch('http://localhost:8000/api/v1/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        login: emailInputValue,
+        password: passwordInputValue
+      })
+    })
+      .then(response => {
+        if (response.status === 200) {
+          navigate('/');
+        }
+      });
   }
 
   return (

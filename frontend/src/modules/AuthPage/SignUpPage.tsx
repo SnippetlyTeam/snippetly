@@ -1,14 +1,31 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './AuthPage.module.scss';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+type SignUpForm = {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
+
 const SignUpPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [serverEmailError, setServerEmailError] = useState('');
+  const [serverUsernameError, setServerUsernameError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const serverErrors = {
+    emailTaken: 'This email is taken. Want to log in?',
+    usernameTaken: 'This username is taken.',
+  };
+
+  const navigate = useNavigate();
 
   const signupSchema = z.object({
     username: z.string()
@@ -22,23 +39,64 @@ const SignUpPage: React.FC = () => {
     confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match.',
-    path: ['confirmPassword']
+    path: ['confirmPassword'],
   });
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+    watch,
+  } = useForm<SignUpForm>({
     resolver: zodResolver(signupSchema),
   });
 
-  function handleFormSubmit() { }
+  const watchedFields = watch();
+
+  useEffect(() => {
+    if (serverEmailError) {
+      setServerEmailError('');
+    }
+  }, [watchedFields.email]);
+
+  useEffect(() => {
+    if (serverUsernameError) {
+      setServerUsernameError('');
+    }
+  }, [watchedFields.username]);
+
+  async function handleFormSubmit(form: SignUpForm) {
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+      if (response.status === 201) {
+        navigate('/activate-account');
+      } else {
+        if (data.detail && typeof data.detail === 'string') {
+          if (data.detail.includes('username')) {
+            setServerUsernameError(serverErrors.usernameTaken);
+          }
+          if (data.detail.includes('email')) {
+            setServerEmailError(serverErrors.emailTaken);
+          }
+        }
+      }
+    } catch (error) { }
+    finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
     <main className={styles.main}>
       <h2 id="sign-up-title">Sign Up</h2>
-
       <form
         noValidate
         action="#"
@@ -56,6 +114,7 @@ const SignUpPage: React.FC = () => {
               Username
             </label>
             <input
+              disabled={isLoading}
               {...register('username')}
               className={styles.input}
               maxLength={40}
@@ -70,7 +129,9 @@ const SignUpPage: React.FC = () => {
               }
               aria-invalid={errors.username ? "true" : undefined}
             />
-
+            {serverUsernameError && (
+              <p className={styles.error}>{serverUsernameError}</p>
+            )}
             {errors.username && (
               <p
                 className={styles.error}
@@ -92,6 +153,7 @@ const SignUpPage: React.FC = () => {
               Email
             </label>
             <input
+              disabled={isLoading}
               {...register('email')}
               className={styles.input}
               id="email"
@@ -105,7 +167,9 @@ const SignUpPage: React.FC = () => {
               }
               aria-invalid={errors.email ? "true" : undefined}
             />
-
+            {serverEmailError && (
+              <p className={styles.error}>{serverEmailError}</p>
+            )}
             {errors.email && (
               <p
                 className={styles.error}
@@ -127,11 +191,12 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
+                disabled={isLoading}
                 {...register('password')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
                 id="password"
-                placeholder={'Create your password'}
+                placeholder="Create your password"
                 maxLength={30}
                 autoComplete="new-password"
                 aria-describedby={
@@ -143,15 +208,15 @@ const SignUpPage: React.FC = () => {
               />
               <button
                 className={styles.eye}
-                type='button'
+                type="button"
                 aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
+                onMouseLeave={() => setIsPasswordVisible(false)}
               >
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
-
             {errors.password && (
               <p
                 className={styles.error}
@@ -175,11 +240,12 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
+                disabled={isLoading}
                 {...register('confirmPassword')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
                 id="confirmPassword"
-                placeholder={'Confirm your password'}
+                placeholder="Confirm your password"
                 maxLength={30}
                 autoComplete="new-password"
                 aria-describedby={
@@ -191,7 +257,7 @@ const SignUpPage: React.FC = () => {
               />
               <button
                 className={styles.eye}
-                type='button'
+                type="button"
                 aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                 onMouseDown={() => setIsPasswordVisible(true)}
                 onMouseUp={() => setIsPasswordVisible(false)}
@@ -200,7 +266,6 @@ const SignUpPage: React.FC = () => {
                 {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
               </button>
             </div>
-
             {errors.confirmPassword && (
               <p
                 className={styles.error}
@@ -213,18 +278,19 @@ const SignUpPage: React.FC = () => {
             )}
           </div>
         </div>
-
         <button
           type="submit"
           className={styles.button}
-        >Sign Up</button>
-
+          disabled={isLoading}
+        >
+          Sign Up
+        </button>
         <p className={styles.text}>
-          Have an account? <Link to='/sign-in'>Sign In</Link>
+          Have an account? <Link to="/sign-in">Sign In</Link>
         </p>
       </form>
     </main>
-  )
-}
+  );
+};
 
 export default SignUpPage;
