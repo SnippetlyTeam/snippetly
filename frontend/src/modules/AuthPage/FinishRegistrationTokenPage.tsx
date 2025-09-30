@@ -19,7 +19,7 @@ const FinishRegistrationTokenPage = () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        activation_tolen: token
+        activation_token: token
       })
     })
       .then(response => {
