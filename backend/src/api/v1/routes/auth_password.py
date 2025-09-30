@@ -5,7 +5,7 @@ from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
-from src.api.docs.openapi import aggregate_examples
+from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.auth import (
     PasswordResetCompletionSchema,
     PasswordResetRequestSchema,
@@ -27,15 +27,15 @@ router = APIRouter(prefix="/auth", tags=["Password Reset"])
     summary="Reset Password Completion",
     description="Change password using password reset token",
     responses={
-        404: aggregate_examples(
+        404: create_error_examples(
             description="Not Found",
             examples={"not_found": "Password reset token was not found"},
         ),
-        400: aggregate_examples(
+        400: create_error_examples(
             description="Bad Request",
             examples={"bad_request": "Password reset token has expired"},
         ),
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={
                 "internal_server": "Something went wrong during password reset"
@@ -72,7 +72,7 @@ async def reset_password_complete(
     summary="Request Password Reset",
     description="Reset password request, an email will be sent",
     responses={
-        500: aggregate_examples(
+        500: create_error_examples(
             "Internal Server Error",
             examples={
                 "internal_server": "Something went wrong during request processing"
