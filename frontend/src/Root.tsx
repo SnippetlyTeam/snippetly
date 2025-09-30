@@ -8,6 +8,7 @@ import PasswordResetPage from "./modules/AuthPage/PasswordResetPage";
 import SetNewPasswordPage from "./modules/AuthPage/SetNewPasswordPage";
 import FinishRegistrationPage from "./modules/AuthPage/FinishRegistrationPage";
 import { AppProvider } from "./contexts/AppContext";
+import FinishRegistrationTokenPage from "./modules/AuthPage/FinishRegistrationTokenPage";
 
 export const Root = () => (
   <Router>
@@ -21,7 +22,7 @@ export const Root = () => (
           <Route path="set-new-password" element={<SetNewPasswordPage />} />
           <Route path="activate-account">
             <Route index element={<FinishRegistrationPage />} />
-            <Route path=":token" element={<FinishRegistrationPage />} />
+            <Route path=":token" element={<FinishRegistrationTokenPage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
