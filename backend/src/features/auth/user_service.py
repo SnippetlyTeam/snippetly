@@ -23,7 +23,9 @@ class UserService(UserServiceInterface):
 
         self.user_repo = UserRepository(db)
         self.activation_token_repo = TokenRepository(db, ActivationTokenModel)
-        self.password_reset_token_repo = TokenRepository(db, PasswordResetTokenModel)
+        self.password_reset_token_repo = TokenRepository(
+            db, PasswordResetTokenModel
+        )
 
     async def register_user(
         self, email: str, username: str, password: str

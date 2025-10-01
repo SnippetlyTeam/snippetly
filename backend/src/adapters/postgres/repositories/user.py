@@ -11,8 +11,12 @@ class UserRepository:
         self._db = db
 
     # --- Create ---
-    async def create(self, email: str, username: str, password: str) -> UserModel:
-        user = UserModel.create(email=email, username=username, password=password)
+    async def create(
+        self, email: str, username: str, password: str
+    ) -> UserModel:
+        user = UserModel.create(
+            email=email, username=username, password=password
+        )
         self._db.add(user)
         return user
 
@@ -32,15 +36,16 @@ class UserRepository:
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_username_or_email(self, login: str) -> Optional[UserModel]:
+    async def get_by_login(self, login: str) -> Optional[UserModel]:
         query = select(UserModel).where(
             or_(UserModel.email == login, UserModel.username == login)
         )
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_email_or_username(self, email: str, username: str) -> Optional[UserModel]:
-        """Takes two different params"""
+    async def get_by_email_or_username(
+        self, email: str, username: str
+    ) -> Optional[UserModel]:
         query = select(UserModel).where(
             or_(UserModel.email == email, UserModel.username == username)
         )
