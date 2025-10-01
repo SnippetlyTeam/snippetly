@@ -25,6 +25,6 @@ async def google_oauth_callback(
     oauth_service: Annotated[
         OAuth2ManagerInterface, Depends(get_oauth_manager)
     ],
-    code: Annotated[str, Body(embed=True)]
+    code: Annotated[str, Body(embed=True)],
 ):
     return await oauth_service.handle_google_code(code)

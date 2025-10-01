@@ -5,4 +5,5 @@ from .exceptions import (
     AuthenticationError,
     TokenNotFoundError,
     TokenExpiredError,
+    InvalidPasswordError,
 )

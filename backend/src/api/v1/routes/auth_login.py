@@ -38,6 +38,13 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
             description="Not Found",
             examples={"not_found": "Invalid credentials"},
         ),
+        401: create_error_examples(
+            description="Unauthorized",
+            examples={
+                "unauthorized": "Entered Invalid password! Check your keyboard "
+                "layout or Caps Lock. Forgot your password?"
+            },
+        ),
         403: create_error_examples(
             description="Forbidden",
             examples={"forbidden": "User account is not activated"},
@@ -57,9 +64,9 @@ async def login_user(
     try:
         tokens = await service.login_user(data.login, data.password)
     except exc.UserNotFoundError as e:
-        raise HTTPException(
-            status_code=404, detail="Invalid credentials"
-        ) from e
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except exc.InvalidPasswordError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except exc.UserNotActiveError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     except SQLAlchemyError as e:
