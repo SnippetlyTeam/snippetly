@@ -61,6 +61,12 @@ const SignInPage: React.FC = () => {
       });
   }
 
+  function handleSignInWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+
+    window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
+  }
+
   return (
     <main className={styles.main}>
       <h2>Sign In</h2>
@@ -168,6 +174,10 @@ const SignInPage: React.FC = () => {
           className={styles.button}
           aria-label="Sign in to your account"
         >Sign In</button>
+
+        <button
+        onClick={handleSignInWithGoogle}
+           className={styles.google}>Sign In with Google</button>
 
         <p className={styles.text}>
           Need an account? <Link to='/sign-up'>Sign Up</Link>
