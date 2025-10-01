@@ -37,7 +37,7 @@ class UserService(UserServiceInterface):
                 raise exc.UserAlreadyExistsError("This username is taken.")
 
         user = UserModel.create(
-            email=email, username=username, new_password=password
+            email=email, username=username, password=password
         )
         token = generate_secure_token()
         activation_token = ActivationTokenModel.create(
