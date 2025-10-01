@@ -69,7 +69,7 @@ class EmailSenderManager(EmailSenderInterface):
         subject = "Activate your account"
         body = (
             f"Please click the link to activate your "
-            f"account: {self._app_url}/activate/{token}"
+            f"account: {self._app_url}/activate-account/{token}"
         )
         await self._send_email(email, subject, body)
 
