@@ -36,7 +36,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     responses={
         404: create_error_examples(
             description="Not Found",
-            examples={"not_found": "Invalid credentials"},
+            examples={
+                "not_found": "User with such email or username not registered."
+            },
         ),
         401: create_error_examples(
             description="Unauthorized",

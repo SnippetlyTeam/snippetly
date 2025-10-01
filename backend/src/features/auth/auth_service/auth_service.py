@@ -9,7 +9,7 @@ from src.adapters.postgres.models import (
 from src.adapters.postgres.repositories import UserRepository, TokenRepository
 from src.core.config import Settings
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth.auth_interface import AuthServiceInterface
+from src.features.auth.auth_service.auth_interface import AuthServiceInterface
 
 
 class AuthService(AuthServiceInterface):

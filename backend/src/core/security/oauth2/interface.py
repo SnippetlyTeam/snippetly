@@ -8,6 +8,6 @@ class OAuth2ManagerInterface(ABC):
         pass
 
     @abstractmethod
-    async def handle_google_code(self, code: str) -> str:
+    async def handle_google_code(self, code: str) -> dict:
         """Method for handling OAuth2 google auth code."""
         pass

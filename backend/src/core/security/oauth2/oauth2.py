@@ -1,6 +1,7 @@
 import urllib.parse
 
 import aiohttp
+import jwt
 
 from src.core.config import Settings
 from src.core.security.oauth2 import OAuth2ManagerInterface
@@ -35,7 +36,7 @@ class OAuth2Manager(OAuth2ManagerInterface):
         )
         return uri
 
-    async def handle_google_code(self, code: str) -> str:
+    async def handle_google_code(self, code: str) -> dict:
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 url=self.settings.GOOGLE_TOKEN_URL,
@@ -49,4 +50,14 @@ class OAuth2Manager(OAuth2ManagerInterface):
                 ssl=self.settings.OAUTH_SSL,
             ) as response:
                 res = await response.json()
-        return res
+        id_token = res["id_token"]
+        user_data = jwt.decode(
+            id_token, algorithms=["RS256"], options={"verify_signature": False}
+        )
+
+        return {
+            "email": user_data["email"],
+            "first_name": user_data["given_name"],
+            "last_name": user_data["family_name"],
+            "avatar_url": user_data["picture"],
+        }
