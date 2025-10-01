@@ -38,6 +38,7 @@ const FinishRegistrationTokenPage = () => {
         <>
           {isValid ? <h2 className={styles.success}>Registration Complete</h2> : <h2 className={`${styles.errorTitle} ${styles.error}`}>Registration Error</h2>}
 
+
           <div
             className={styles.form}
           >
