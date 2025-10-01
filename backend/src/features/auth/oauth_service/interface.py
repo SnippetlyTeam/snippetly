@@ -12,7 +12,8 @@ class OAuth2ServiceInterface(ABC):
         :return: Refresh, Access tokens
         :rtype: dict with keys:
             "refresh_token", "access_token", "token_type"
-        :raises SQLAlchemyError: If error occurred during:
+        :raises ValueError
+                SQLAlchemyError: If error occurred during:
                 - User creation
                 - Refresh token creation
         """

@@ -68,56 +68,75 @@ class OAuth2Service(OAuth2ServiceInterface):
         return profile
 
     async def login_user_via_oauth(self, code: str) -> dict:
-        data = await self.oauth_manager.handle_google_code(code)
-        email = data.get("email")
-        first_name = data.get("first_name")
-        last_name = data.get("last_name")
-        avatar_url = data.get("avatar_url")
+        try:
+            data = await self.oauth_manager.handle_google_code(code)
 
-        user = await self.user_repo.get_by_email(email)
+            email = data.get("email")
+            first_name = data.get("first_name", "")
+            last_name = data.get("last_name", "")
+            avatar_url = data.get("avatar_url", "")
 
-        if not user:
-            username = self._generate_username(email)
-            user = await self._create_user(email=email, username=username)
+            if not email:
+                raise ValueError("Email is required for OAuth login")
 
-            await self.db.flush()
+            user = await self.user_repo.get_by_email(email)
 
-            await self._create_profile(
-                user_id=user.id,
-                first_name=first_name,
-                last_name=last_name,
-                avatar_url=avatar_url,
+            if not user:
+                username = self._generate_username(email)
+                user = await self._create_user(email=email, username=username)
+
+                await self.db.flush()
+
+                await self._create_profile(
+                    user_id=user.id,
+                    first_name=first_name,
+                    last_name=last_name,
+                    avatar_url=avatar_url,
+                )
+
+                user.is_active = True
+
+                try:
+                    await self.db.commit()
+                    await self.db.refresh(user)
+                except SQLAlchemyError:
+                    await self.db.rollback()
+                    raise SQLAlchemyError(
+                        "Error occurred during user creation"
+                    )
+
+            if not user.is_active:
+                raise ValueError("User account is not activated")
+
+            user_data = {
+                "id": user.id,
+                "username": user.username,
+                "email": email,
+                "is_admin": user.is_admin,
+            }
+            refresh_token = self.jwt_manager.create_refresh_token(user_data)
+            access_token = await self.jwt_manager.create_access_token(
+                user_data
             )
-
-            user.is_active = True
 
             try:
+                await self.refresh_token_repo.create(
+                    user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
+                )
                 await self.db.commit()
-                await self.db.refresh(user)
             except SQLAlchemyError:
                 await self.db.rollback()
-                raise
+                raise SQLAlchemyError(
+                    "Error occurred during refresh token creation"
+                )
 
-        user_data = {
-            "id": user.id,
-            "username": user.username,
-            "email": email,
-            "is_admin": user.is_admin,
-        }
-        refresh_token = self.jwt_manager.create_refresh_token(user_data)
-        access_token = await self.jwt_manager.create_access_token(user_data)
+            return {
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer",
+            }
 
-        try:
-            await self.refresh_token_repo.create(
-                user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
-            )
-            await self.db.commit()
-        except SQLAlchemyError:
-            await self.db.rollback()
-            raise
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-        }
+        except ValueError as e:
+            raise ValueError(str(e)) from e
+        except SQLAlchemyError as e:
+            raise SQLAlchemyError(str(e)) from e

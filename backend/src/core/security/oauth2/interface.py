@@ -9,5 +9,14 @@ class OAuth2ManagerInterface(ABC):
 
     @abstractmethod
     async def handle_google_code(self, code: str) -> dict:
-        """Method for handling OAuth2 google auth code."""
+        """
+        Method for handling OAuth2 google auth code.
+
+        :param code: Google auth code
+        :type code: str
+        :return: dict with user data
+        :rtype: dict with keys:
+            "email", "first_name", "last_name", "avatar_url"
+        :raises ValueError
+        """
         pass
