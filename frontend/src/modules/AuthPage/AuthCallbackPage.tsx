@@ -23,9 +23,10 @@ const AuthCallbackPage: React.FC = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code })
     })
-      .then(() => {
+      .then((response) => {
         setIsSuccess(true);
         setIsAuthorized(true);
+        return response.json();
       })
       .catch(() => setIsSuccess(false))
       .finally(() => setIsLoading(false));

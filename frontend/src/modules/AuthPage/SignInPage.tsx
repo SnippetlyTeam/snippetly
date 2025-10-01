@@ -176,8 +176,11 @@ const SignInPage: React.FC = () => {
         >Sign In</button>
 
         <button
-        onClick={handleSignInWithGoogle}
-           className={styles.google}>Sign In with Google</button>
+          onClick={handleSignInWithGoogle}
+          className={styles.google}
+        >
+          Sign In with Google <img className={styles.googleIcon} src='./icons/google.webp' alt='Google' />
+        </button>
 
         <p className={styles.text}>
           Need an account? <Link to='/sign-up'>Sign Up</Link>
