@@ -75,7 +75,8 @@ async def reset_password_complete(
         500: create_error_examples(
             "Internal Server Error",
             examples={
-                "internal_server": "Something went wrong during request processing"
+                "internal_server": "Something went wrong during "
+                "request processing"
             },
         ),
     },

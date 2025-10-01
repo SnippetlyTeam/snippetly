@@ -3,10 +3,9 @@ from email.message import EmailMessage
 from typing import Optional
 
 import aiosmtplib
-from pydantic import EmailStr, SecretStr, AnyUrl
+from pydantic import EmailStr, SecretStr
 
 from .interface import EmailSenderInterface
-
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +15,10 @@ class EmailSenderManager(EmailSenderInterface):
         self,
         email_host: str,
         email_port: int,
-        email_host_user: EmailStr,
+        email_host_user: str,
         from_email: EmailStr,
         use_tls: bool,
-        app_url: AnyUrl,
+        app_url: str,
         email_app_password: Optional[SecretStr] = None,
     ):
         self._email_host = email_host

@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +35,8 @@ class TokenRepository:
             .where(self.token_model.token == token)
         )
         result = await self._db.execute(query)
-        return result.one_or_none()
+        row = result.one_or_none()
+        return cast(tuple | None, row)
 
     # --- Delete ---
     async def delete(self, token: str) -> None:

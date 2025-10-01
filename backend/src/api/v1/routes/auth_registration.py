@@ -84,7 +84,8 @@ async def register(
         500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Something went wrong during account activation"
+                "internal_server": "Something went wrong "
+                "during account activation"
             },
         ),
     },

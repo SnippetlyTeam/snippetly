@@ -1,2 +1,2 @@
 from .interface import OAuth2ManagerInterface
-from .oauth2 import OAuth2Manager
+from .oauth_manager import OAuth2Manager

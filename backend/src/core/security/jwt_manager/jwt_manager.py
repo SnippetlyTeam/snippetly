@@ -106,7 +106,7 @@ class JWTAuthManager(JWTAuthInterface):
 
     async def refresh_tokens(
         self, db: AsyncSession, refresh_token: str
-    ) -> Optional[dict]:
+    ) -> dict:
         user_repo = UserRepository(db)
         try:
             payload = await self.verify_token(
@@ -115,7 +115,7 @@ class JWTAuthManager(JWTAuthInterface):
         except jwt.InvalidTokenError as e:
             raise exc.AuthenticationError("Invalid refresh token") from e
 
-        user = await user_repo.get_by_id(payload.get("user_id"))
+        user = await user_repo.get_by_id(cast(int, payload.get("user_id")))
         if not user:
             raise exc.UserNotFoundError
 

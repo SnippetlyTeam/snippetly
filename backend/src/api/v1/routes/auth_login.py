@@ -43,8 +43,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
         401: create_error_examples(
             description="Unauthorized",
             examples={
-                "unauthorized": "Entered Invalid password! Check your keyboard "
-                "layout or Caps Lock. Forgot your password?"
+                "unauthorized": "Entered Invalid password! Check your "
+                "keyboard layout or Caps Lock. Forgot your password?"
             },
         ),
         403: create_error_examples(
@@ -54,7 +54,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
         500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Something went wrong during refresh token creation"
+                "internal_server": "Something went wrong during "
+                "refresh token creation"
             },
         ),
     },
@@ -148,7 +149,8 @@ async def logout_user(
         500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Failed to log out from every sessions. Try again"
+                "internal_server": "Failed to log out from every "
+                "sessions. Try again"
             },
         ),
     },

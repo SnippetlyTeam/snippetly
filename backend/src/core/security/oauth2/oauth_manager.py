@@ -13,7 +13,7 @@ class OAuth2Manager(OAuth2ManagerInterface):
 
     @staticmethod
     def _generate_oauth_redirect_uri(
-        client_id: str, redirect_uri, scopes, base_url
+        client_id: str, redirect_uri: str, scopes: list, base_url: str
     ) -> str:
         query_params = {
             "client_id": client_id,
@@ -46,7 +46,9 @@ class OAuth2Manager(OAuth2ManagerInterface):
                     url=self.settings.GOOGLE_TOKEN_URL,
                     data={
                         "client_id": self.settings.OAUTH_GOOGLE_CLIENT_ID,
-                        "client_secret": self.settings.OAUTH_GOOGLE_CLIENT_SECRET.get_secret_value(),
+                        "client_secret": (
+                            self.settings.OAUTH_GOOGLE_CLIENT_SECRET.get_secret_value()
+                        ),
                         "redirect_uri": self.settings.REDIRECT_URI,
                         "grant_type": "authorization_code",
                         "code": code,
@@ -73,6 +75,6 @@ class OAuth2Manager(OAuth2ManagerInterface):
             }
 
         except jwt.PyJWTError as e:
-            raise ValueError(f"JWT token decoding error: {e}")
+            raise ValueError(f"JWT token decoding error: {e}") from e
         except ValueError as e:
             raise ValueError(str(e)) from e

@@ -16,13 +16,14 @@ router = APIRouter(prefix="/auth", tags=["OAuth2"])
 @router.get(
     "/google/url",
     summary="Get Google OAuth redirect URL",
-    description="Returns the URL to redirect users to Google OAuth authentication page",
+    description="Returns the URL to redirect users to "
+    "Google OAuth authentication page",
 )
 def get_google_oauth_redirect_url(
     oauth_service: Annotated[
         OAuth2ManagerInterface, Depends(get_oauth_manager)
     ],
-):
+) -> RedirectResponse:
     uri = oauth_service.generate_google_oauth_redirect_uri()
     return RedirectResponse(url=uri)
 
@@ -36,7 +37,8 @@ def get_google_oauth_redirect_url(
             description="Internal Server Error",
             examples={
                 "user": "Error occurred during user creation",
-                "refresh_token": "Error occurred during refresh token creation",
+                "refresh_token": "Error occurred during "
+                "refresh token creation",
             },
         )
     },

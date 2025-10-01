@@ -57,7 +57,11 @@ class OAuth2Service(OAuth2ServiceInterface):
         return user
 
     async def _create_profile(
-        self, user_id: int, first_name: str, last_name: str, avatar_url
+        self,
+        user_id: int,
+        first_name: str,
+        last_name: str,
+        avatar_url: str,
     ) -> UserProfileModel:
         profile = await self.profile_repo.create(
             user_id=user_id,
@@ -99,11 +103,11 @@ class OAuth2Service(OAuth2ServiceInterface):
                 try:
                     await self.db.commit()
                     await self.db.refresh(user)
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     await self.db.rollback()
                     raise SQLAlchemyError(
                         "Error occurred during user creation"
-                    )
+                    ) from e
 
             if not user.is_active:
                 raise ValueError("User account is not activated")
@@ -124,11 +128,11 @@ class OAuth2Service(OAuth2ServiceInterface):
                     user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
                 )
                 await self.db.commit()
-            except SQLAlchemyError:
+            except SQLAlchemyError as e:
                 await self.db.rollback()
                 raise SQLAlchemyError(
                     "Error occurred during refresh token creation"
-                )
+                ) from e
 
             return {
                 "access_token": access_token,
