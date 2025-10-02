@@ -9,24 +9,39 @@ import SetNewPasswordPage from "./modules/AuthPage/SetNewPasswordPage";
 import FinishRegistrationPage from "./modules/AuthPage/FinishRegistrationPage";
 import { AppProvider } from "./contexts/AppContext";
 import FinishRegistrationTokenPage from "./modules/AuthPage/FinishRegistrationTokenPage";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export const Root = () => (
-  <Router>
-    <AppProvider>
-      <Routes>
-        <Route path="/" element={<App />}>
-          <Route index element={<LandingPage />} />
-          <Route path="sign-in" element={<SignInPage />} />
-          <Route path="sign-up" element={<SignUpPage />} />
-          <Route path="password-reset" element={<PasswordResetPage />} />
-          <Route path="set-new-password" element={<SetNewPasswordPage />} />
-          <Route path="activate-account">
-            <Route index element={<FinishRegistrationPage />} />
-            <Route path=":token" element={<FinishRegistrationTokenPage />} />
+  <QueryClientProvider client={queryClient}>
+    <Router>
+      <AppProvider>
+        <Routes>
+          <Route path="/" element={<App />}>
+            <Route index element={<LandingPage />} />
+            <Route path="sign-in" element={<SignInPage />} />
+            <Route path="sign-up" element={<SignUpPage />} />
+            <Route path="reset-password">
+              <Route index element={<PasswordResetPage />} />
+              <Route path=":token" element={<SetNewPasswordPage />} />
+            </Route>
+            <Route path="set-new-password" element={<SetNewPasswordPage />} />
+            <Route path="activate-account">
+              <Route index element={<FinishRegistrationPage />} />
+              <Route path=":token" element={<FinishRegistrationTokenPage />} />
+            </Route>
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
-    </AppProvider>
-  </Router>
+        </Routes>
+      </AppProvider>
+    </Router>
+  </QueryClientProvider>
 )
