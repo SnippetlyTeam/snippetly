@@ -1,8 +1,8 @@
 from typing import Optional
 
-from pydantic import EmailStr, SecretStr, AnyUrl
+from pydantic import EmailStr, SecretStr
 
-from src.core.config.config import BaseAppSettings
+from .config import BaseAppSettings
 
 
 class EmailSettings(BaseAppSettings):
@@ -12,6 +12,3 @@ class EmailSettings(BaseAppSettings):
     EMAIL_HOST_USER: str = ""
     FROM_EMAIL: EmailStr = "no-reply@example.com"
     USE_TLS: bool = False
-
-    # Temporarily here. Have to be changed to frontend URL
-    APP_URL: str = "http://localhost:5173"

@@ -5,7 +5,7 @@ from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
-from src.api.docs.openapi import aggregate_examples
+from src.api.docs.openapi import create_error_examples, create_json_examples
 from src.api.v1.schemas.auth import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
@@ -26,14 +26,14 @@ router = APIRouter(prefix="/auth", tags=["Registration"])
     status_code=201,
     description="Register a new user with email, username, and password",
     responses={
-        409: aggregate_examples(
+        409: create_json_examples(
             description="Conflict",
             examples={
-                "email_taken": "This email is taken.",
-                "username_taken": "This username is taken.",
+                "email_taken": {"email": "This email is taken."},
+                "username_taken": {"username": "This username is taken."},
             },
         ),
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={
                 "internal_server": "Error occurred during user registration."
@@ -73,18 +73,19 @@ async def register(
     description="Activates user account using activation token, "
     "that was given in email",
     responses={
-        404: aggregate_examples(
+        404: create_error_examples(
             description="Not Found",
             examples={"not_found": "Activation token was not found"},
         ),
-        400: aggregate_examples(
+        400: create_error_examples(
             description="Bad Request",
             examples={"expired": "Activation token has expired"},
         ),
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Something went wrong during account activation"
+                "internal_server": "Something went wrong "
+                "during account activation"
             },
         ),
     },

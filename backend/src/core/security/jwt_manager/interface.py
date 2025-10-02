@@ -33,9 +33,7 @@ class JWTAuthInterface(ABC):
         pass
 
     @abstractmethod
-    async def verify_token(
-        self, token: str, is_refresh: bool = False
-    ) -> Optional[dict]:
+    async def verify_token(self, token: str, is_refresh: bool = False) -> dict:
         """
          Verify a JWT token's validity, signature, expiration,
          and blacklist status.
@@ -46,7 +44,7 @@ class JWTAuthInterface(ABC):
                 is a refresh token (default: False)
         :type is_refresh: bool
         :return: Decoded payload as a dictionary if valid
-        :rtype: dict or None
+        :rtype: dict
         :raises jwt.InvalidTokenError: if token is expired,
                 invalid, missing jti, or blacklisted
         """
@@ -55,7 +53,7 @@ class JWTAuthInterface(ABC):
     @abstractmethod
     async def refresh_tokens(
         self, db: AsyncSession, refresh_token: str
-    ) -> Optional[dict]:
+    ) -> dict:
         """
         Create a new access token using a valid refresh token.
 
@@ -65,9 +63,9 @@ class JWTAuthInterface(ABC):
         :type refresh_token: str
         :return: Dictionary containing new access token
                 {"access_token": str} if successful
-        :rtype: dict or None
-        :raises AuthenticationError: if refresh token is invalid
-        :raises UserNotFoundError: if user does not exist in database
+        :rtype: dict
+        :raises AuthenticationError: If refresh token is invalid
+                UserNotFoundError: if user does not exist in database
         """
         pass
 

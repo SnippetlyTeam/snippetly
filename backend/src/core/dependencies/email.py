@@ -16,5 +16,5 @@ async def get_email_sender(
         from_email=settings.FROM_EMAIL,
         email_app_password=settings.EMAIL_APP_PASSWORD,
         use_tls=settings.USE_TLS,
-        app_url=settings.APP_URL,
+        app_url=settings.FRONTEND_URL,
     )

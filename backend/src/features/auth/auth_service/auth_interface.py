@@ -15,7 +15,8 @@ class AuthServiceInterface(ABC):
         :type password: str
         :return: Dictionary with access_token, refresh_token, and token_type
         :rtype: dict
-        :raises UserNotFoundError: if credentials are invalid
+        :raises UserNotFoundError: if user doesn't exist
+                InvalidPasswordError: If password is incorrect
                 UserNotActiveError: if is_active is False
         """
         pass

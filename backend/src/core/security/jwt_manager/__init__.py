@@ -1,2 +1,2 @@
 from .interface import JWTAuthInterface
-from .token_manager import JWTAuthManager
+from .jwt_manager import JWTAuthManager

@@ -1,13 +1,19 @@
 from pydantic_settings import SettingsConfigDict
 
-from src.core.config.email import EmailSettings
-from src.core.config.postgres import PostgresSQLSettings
-from src.core.config.redis import RedisSettings
-from src.core.config.security import SecuritySettings
+from .api import APISettings
+from .email import EmailSettings
+from .postgres import PostgresSQLSettings
+from .redis import RedisSettings
+from .security import SecuritySettings, OAuthSettings
 
 
 class Settings(
-    PostgresSQLSettings, SecuritySettings, RedisSettings, EmailSettings
+    PostgresSQLSettings,
+    SecuritySettings,
+    RedisSettings,
+    EmailSettings,
+    OAuthSettings,
+    APISettings,
 ):
     pass
 
