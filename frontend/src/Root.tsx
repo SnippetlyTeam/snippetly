@@ -33,7 +33,6 @@ export const Root = () => (
               <Route index element={<PasswordResetPage />} />
               <Route path=":token" element={<SetNewPasswordPage />} />
             </Route>
-            <Route path="set-new-password" element={<SetNewPasswordPage />} />
             <Route path="activate-account">
               <Route index element={<FinishRegistrationPage />} />
               <Route path=":token" element={<FinishRegistrationTokenPage />} />
