@@ -10,39 +10,68 @@ const SignInPage: React.FC = () => {
   const [emailInputValue, setEmailInputValue] = useState('');
   const [passwordInputValue, setPasswordInputValue] = useState('');
 
-  const [isEmailError, setIsEmailError] = useState(false);
-  const [isPasswordError, setIsPasswordError] = useState(false);
+  const [emailErrorContent, setEmailErrorContent] = useState('');
+  const [passwordErrorContent, setPasswordErrorContent] = useState('');
 
   const navigate = useNavigate();
+
+  const errors = {
+    emailEmpty: 'Email or Username: can’t be blank',
+    passwordEmpty: 'Password: can’t be blank',
+    emailNotFound: 'User with such email or username not registered.',
+    passwordWrong: 'Entered Invalid password! Check your keyboard layout or Caps Lock. Forgot your password?',
+  }
 
   function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setEmailInputValue(event.target.value);
 
-    if (isEmailError) {
-      setIsEmailError(false);
+    if (emailErrorContent) {
+      setEmailErrorContent('');
     }
   }
 
   function handlePasswordInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setPasswordInputValue(event.target.value);
 
-    if (isPasswordError) {
-      setIsPasswordError(false);
+    if (passwordErrorContent) {
+      setPasswordErrorContent('');
     }
+  }
+
+  function validatePassword() {
+    if (!passwordInputValue.trim()) {
+      setPasswordErrorContent(errors.passwordEmpty);
+      return false;
+    }
+
+    const hasCapital = /[A-Z]/.test(passwordInputValue);
+    const hasNumber = /[0-9]/.test(passwordInputValue);
+    const hasSpecial = /[^A-Za-z0-9]/.test(passwordInputValue);
+
+    if (!hasCapital || !hasNumber || !hasSpecial) {
+      setPasswordErrorContent(errors.passwordWrong);
+      return false;
+    }
+
+    setPasswordErrorContent('');
+    return true;
   }
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    let hasError = false;
+
     if (!emailInputValue.trim()) {
-      setIsEmailError(true);
+      setEmailErrorContent(errors.emailEmpty);
+      hasError = true;
     }
 
-    if (!passwordInputValue.trim()) {
-      setIsPasswordError(true);
+    if (!validatePassword()) {
+      hasError = true;
     }
 
-    if (isPasswordError || isEmailError) return;
+    if (hasError) return;
 
     fetch('http://localhost:8000/api/v1/auth/login', {
       method: 'POST',
@@ -55,10 +84,24 @@ const SignInPage: React.FC = () => {
       })
     })
       .then(response => {
-        if (response.status === 200) {
-          navigate('/');
+        switch (response.status) {
+          case 200:
+            navigate('/');
+            break;
+          case 403:
+            setPasswordErrorContent(errors.passwordWrong);
+            break;
+          case 404:
+            setEmailErrorContent(errors.emailNotFound);
+            break;
         }
-      });
+      })
+  }
+
+  function handleSignInWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+
+    window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
   }
 
   return (
@@ -91,21 +134,21 @@ const SignInPage: React.FC = () => {
               placeholder="Enter your username or email"
               onChange={handleEmailInputChange}
               aria-describedby={
-                isEmailError
+                emailErrorContent
                   ? "usernameOrEmail-label usernameOrEmail-error"
                   : "usernameOrEmail-label"
               }
-              aria-invalid={isEmailError ? "true" : undefined}
+              aria-invalid={emailErrorContent ? "true" : undefined}
             />
 
-            {isEmailError && (
+            {emailErrorContent && (
               <p
                 className={styles.error}
                 id="usernameOrEmail-error"
                 role="alert"
                 aria-live="assertive"
               >
-                Email or Username: can’t be blank
+                {emailErrorContent}
               </p>
             )}
           </div>
@@ -127,11 +170,11 @@ const SignInPage: React.FC = () => {
                 placeholder={'Enter your password'}
                 onChange={handlePasswordInputChange}
                 aria-describedby={
-                  isPasswordError
+                  passwordErrorContent
                     ? "password-label password-error"
                     : "password-label"
                 }
-                aria-invalid={isPasswordError ? "true" : undefined}
+                aria-invalid={passwordErrorContent ? "true" : undefined}
                 autoComplete="current-password"
               />
               <button
@@ -146,14 +189,14 @@ const SignInPage: React.FC = () => {
               </button>
             </div>
 
-            {isPasswordError && (
+            {passwordErrorContent && (
               <p
                 className={styles.error}
                 id="password-error"
                 role="alert"
                 aria-live="assertive"
               >
-                Password: can’t be blank
+                {passwordErrorContent}
               </p>
             )}
 
@@ -168,6 +211,13 @@ const SignInPage: React.FC = () => {
           className={styles.button}
           aria-label="Sign in to your account"
         >Sign In</button>
+
+        <button
+          onClick={handleSignInWithGoogle}
+          className={styles.google}
+        >
+          Sign In with Google <img className={styles.googleIcon} src='./icons/google.webp' alt='Google' />
+        </button>
 
         <p className={styles.text}>
           Need an account? <Link to='/sign-up'>Sign Up</Link>

@@ -5,12 +5,12 @@ from typing import Optional, cast
 import jwt
 from pydantic import SecretStr
 from redis.asyncio.client import Redis
-from sqlalchemy import delete
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
-from src.adapters.postgres.models import UserModel, RefreshTokenModel
+from src.adapters.postgres.models import RefreshTokenModel
+from src.adapters.postgres.repositories import UserRepository, TokenRepository
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
 from .interface import JWTAuthInterface
@@ -106,7 +106,8 @@ class JWTAuthManager(JWTAuthInterface):
 
     async def refresh_tokens(
         self, db: AsyncSession, refresh_token: str
-    ) -> Optional[dict]:
+    ) -> dict:
+        user_repo = UserRepository(db)
         try:
             payload = await self.verify_token(
                 token=refresh_token, is_refresh=True
@@ -114,7 +115,7 @@ class JWTAuthManager(JWTAuthInterface):
         except jwt.InvalidTokenError as e:
             raise exc.AuthenticationError("Invalid refresh token") from e
 
-        user = await db.get(UserModel, payload.get("user_id"))
+        user = await user_repo.get_by_id(cast(int, payload.get("user_id")))
         if not user:
             raise exc.UserNotFoundError
 
@@ -132,12 +133,9 @@ class JWTAuthManager(JWTAuthInterface):
     async def revoke_all_user_tokens(
         self, db: AsyncSession, user_id: int
     ) -> None:
+        refresh_repo = TokenRepository(db, RefreshTokenModel)
         try:
-            await db.execute(
-                delete(RefreshTokenModel).where(
-                    RefreshTokenModel.user_id == user_id
-                )
-            )
+            await refresh_repo.delete_by_user_id(user_id)
             await db.commit()
         except SQLAlchemyError:
             await db.rollback()

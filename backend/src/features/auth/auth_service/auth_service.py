@@ -1,4 +1,3 @@
-from sqlalchemy import select, or_
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,9 +6,10 @@ from src.adapters.postgres.models import (
     UserModel,
     RefreshTokenModel,
 )
+from src.adapters.postgres.repositories import UserRepository, TokenRepository
 from src.core.config import Settings
 from src.core.security.jwt_manager import JWTAuthInterface
-from src.features.auth.auth_interface import AuthServiceInterface
+from src.features.auth.auth_service.auth_interface import AuthServiceInterface
 
 
 class AuthService(AuthServiceInterface):
@@ -23,23 +23,25 @@ class AuthService(AuthServiceInterface):
         self.jwt_manager = jwt_manager
         self.settings = settings
 
-    async def login_user(self, email_or_username: str, password: str) -> dict:
-        query = select(UserModel).where(
-            or_(
-                UserModel.email == email_or_username,
-                UserModel.username == email_or_username,
-            )
-        )
-        result = await self.db.execute(query)
-        user = result.scalar_one_or_none()
+        self.user_repo = UserRepository(db)
+        self.refresh_token_repo = TokenRepository(db, RefreshTokenModel)
 
-        if not user or not user.verify_password(password):
-            raise exc.UserNotFoundError("Invalid credentials")
+    async def login_user(self, login: str, password: str) -> dict:
+        user = await self.user_repo.get_by_login(login)
+
+        if not user:
+            raise exc.UserNotFoundError(
+                "User with such email or username not registered."
+            )
+
+        if not user.verify_password(password):
+            raise exc.InvalidPasswordError(
+                "Entered Invalid password! Check your keyboard "
+                "layout or Caps Lock. Forgot your password?"
+            )
 
         if not user.is_active:
             raise exc.UserNotActiveError("User account is not activated")
-
-        await self.db.refresh(user, ["id", "username", "email", "is_admin"])
 
         user_data = {
             "id": user.id,
@@ -51,10 +53,9 @@ class AuthService(AuthServiceInterface):
         refresh_token = self.jwt_manager.create_refresh_token(user_data)
 
         try:
-            new_refresh_token = RefreshTokenModel.create(
+            await self.refresh_token_repo.create(
                 user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
             )
-            self.db.add(new_refresh_token)
             await self.db.commit()
         except SQLAlchemyError:
             await self.db.rollback()
@@ -72,19 +73,7 @@ class AuthService(AuthServiceInterface):
         return await self.jwt_manager.refresh_tokens(self.db, refresh_token)
 
     async def logout_user(self, refresh_token: str, access_token: str) -> None:
-        query = select(RefreshTokenModel).where(
-            RefreshTokenModel.token == refresh_token
-        )
-        result = await self.db.execute(query)
-        token = result.scalar_one_or_none()
-
-        if token:
-            try:
-                await self.db.delete(token)
-                await self.db.commit()
-            except SQLAlchemyError:
-                await self.db.rollback()
-                raise
+        token = await self.refresh_token_repo.get_by_token(refresh_token)
 
         access_payload = self.jwt_manager.decode_token(access_token)
         if (
@@ -95,6 +84,14 @@ class AuthService(AuthServiceInterface):
             jti = access_payload["jti"]
             exp = access_payload["exp"]
             await self.jwt_manager.add_to_blacklist(jti, exp)
+
+        if token:
+            try:
+                await self.db.delete(token)
+                await self.db.commit()
+            except SQLAlchemyError:
+                await self.db.rollback()
+                raise
 
     # TODO: catch errors with Redis
     async def logout_from_all_sessions(self, user: UserModel) -> None:
