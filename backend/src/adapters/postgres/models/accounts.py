@@ -1,7 +1,6 @@
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 
-from pydantic import EmailStr
 from sqlalchemy import (
     Integer,
     String,
@@ -92,11 +91,9 @@ class UserModel(Base):
         return verify_password(new_password, self._hashed_password)
 
     @classmethod
-    def create(
-        cls, email: EmailStr, username: str, new_password: str
-    ) -> "UserModel":
+    def create(cls, email: str, username: str, password: str) -> "UserModel":
         user = cls(email=email, username=username)
-        user.password = new_password
+        user.password = password
         return user
 
 

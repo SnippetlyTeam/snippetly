@@ -38,11 +38,9 @@ const FinishRegistrationTokenPage = () => {
         <>
           {isValid ? <h2 className={styles.success}>Registration Complete</h2> : <h2 className={`${styles.errorTitle} ${styles.error}`}>Registration Error</h2>}
 
-          <form
-            noValidate
-            action="#"
+
+          <div
             className={styles.form}
-            onSubmit={(event) => event.preventDefault()}
           >
             <div className={styles.inputs}>
               <div className={styles.inputsItem}>
@@ -62,7 +60,7 @@ const FinishRegistrationTokenPage = () => {
               content={isValid ? 'Go to Sign In' : 'Go to Sign Up'}
               onClick={() => { navigate(`/sign-${isValid ? 'In' : 'Up'}`) }}
             />
-          </form>
+          </div>
         </>
       )}
     </main>

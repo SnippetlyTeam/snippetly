@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
-from src.api.docs.openapi import aggregate_examples
+from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.auth import (
     UserLoginRequestSchema,
     UserLoginResponseSchema,
@@ -34,18 +34,28 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=200,
     description="Authenticate a user and return access/refresh tokens",
     responses={
-        404: aggregate_examples(
+        404: create_error_examples(
             description="Not Found",
-            examples={"not_found": "Invalid credentials"},
+            examples={
+                "not_found": "User with such email or username not registered."
+            },
         ),
-        403: aggregate_examples(
+        401: create_error_examples(
+            description="Unauthorized",
+            examples={
+                "unauthorized": "Entered Invalid password! Check your "
+                "keyboard layout or Caps Lock. Forgot your password?"
+            },
+        ),
+        403: create_error_examples(
             description="Forbidden",
             examples={"forbidden": "User account is not activated"},
         ),
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Something went wrong during refresh token creation"
+                "internal_server": "Something went wrong during "
+                "refresh token creation"
             },
         ),
     },
@@ -57,9 +67,9 @@ async def login_user(
     try:
         tokens = await service.login_user(data.login, data.password)
     except exc.UserNotFoundError as e:
-        raise HTTPException(
-            status_code=404, detail="Invalid credentials"
-        ) from e
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except exc.InvalidPasswordError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
     except exc.UserNotActiveError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     except SQLAlchemyError as e:
@@ -76,11 +86,11 @@ async def login_user(
     status_code=200,
     description="Refresh an access token using a valid refresh token",
     responses={
-        401: aggregate_examples(
+        401: create_error_examples(
             description="Unauthorized",
             examples={"auth_error": "Invalid refresh token"},
         ),
-        404: aggregate_examples(
+        404: create_error_examples(
             description="Not Found",
             examples={"not_found": "User was not found"},
         ),
@@ -108,7 +118,7 @@ async def refresh(
     summary="User Logout",
     description="Logout a user by revoking their refresh and access tokens",
     responses={
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Failed to log out. Try again"},
         ),
@@ -136,10 +146,11 @@ async def logout_user(
     description="Revoke all tokens of the current user, "
     "logging out from every session",
     responses={
-        500: aggregate_examples(
+        500: create_error_examples(
             description="Internal Server Error",
             examples={
-                "internal_server": "Failed to log out from every sessions. Try again"
+                "internal_server": "Failed to log out from every "
+                "sessions. Try again"
             },
         ),
     },

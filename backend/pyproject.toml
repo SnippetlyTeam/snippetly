@@ -18,6 +18,7 @@ dependencies = [
     "uvicorn>=0.36.0",
     "bcrypt>=4.3.0",
     "aiosmtplib>=4.0.2",
+    "aiohttp>=3.12.15",
 ]
 
 [dependency-groups]

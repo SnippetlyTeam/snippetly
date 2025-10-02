@@ -20,3 +20,7 @@ class TokenNotFoundError(Exception):
 
 class TokenExpiredError(Exception):
     pass
+
+
+class InvalidPasswordError(Exception):
+    pass
