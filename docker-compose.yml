@@ -60,6 +60,8 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+    tty: true
+    command: sh -c "npm run dev -- --host 0.0.0.0"
     restart: unless-stopped
 
   # ONLY for dev environment, have to be moved to docker-compose.dev.yml

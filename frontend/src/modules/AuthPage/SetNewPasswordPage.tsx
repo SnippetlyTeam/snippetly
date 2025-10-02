@@ -2,6 +2,8 @@ import styles from './AuthPage.module.scss';
 import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
+import { useNavigate, useParams } from 'react-router-dom';
+import MainButton from '../../components/MainButton/MainButton';
 
 type Status = 'Weak' | 'Medium' | 'Strong';
 
@@ -16,6 +18,12 @@ const SetNewPasswordPage: React.FC = () => {
 
   const [passwordInputValue, setPasswordInputValue] = useState('');
   const [passwordConfirmInputValue, setPasswordConfirmInputValue] = useState('');
+
+  const [isSuccess, setIsSuccess] = useState<boolean | null>(null);
+
+  const navigate = useNavigate();
+
+  const { token } = useParams();
 
   const errorMessages = {
     passwordEmpty: 'New password is required',
@@ -118,139 +126,174 @@ const SetNewPasswordPage: React.FC = () => {
       setPasswordConfirmErrorContent(errorMessages.passwordMismatch);
       return;
     }
+
+    fetch('http://localhost:8000/api/v1/auth/reset-password/complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        password: passwordInputValue,
+        email: 'tus@gmail.com',
+        password_reset_token: token
+      })
+    }).then(response => {
+      if (response.status === 200) {
+        setIsSuccess(true);
+        return;
+      }
+      setIsSuccess(false);
+    })
   }
 
   return (
     <main className={styles.main}>
       <h2>Set New Password</h2>
 
-      <form
-        noValidate
-        action="#"
-        className={styles.form}
-        onSubmit={handleFormSubmit}
-      >
-        <div className={styles.inputs}>
-          <div className={styles.inputsItem}>
-            <label
-              htmlFor="password"
-              className={styles.inputsTitle}
-              id="password-label"
-            >
-              Password
-            </label>
-            <div className={styles.container}>
-              <input
-                className={styles.input}
-                type={isPasswordVisible ? 'text' : 'password'}
-                id="password"
-                placeholder={'Enter new password'}
-                maxLength={30}
-                autoComplete="new-password"
-                value={passwordInputValue}
-                onChange={handlePasswordInputChange}
-                aria-describedby={
-                  passwordErrorContent
-                    ? "password-label password-error"
-                    : "password-label"
-                }
-                aria-invalid={passwordErrorContent ? "true" : undefined}
-              />
-              <button
-                className={styles.eye}
-                type='button'
-                aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-                onMouseDown={() => setIsPasswordVisible(true)}
-                onMouseUp={() => setIsPasswordVisible(false)}
-                onMouseLeave={() => setIsPasswordVisible(false)}
-              >
-                {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
-              </button>
-            </div>
+      {isSuccess !== null ?
+        isSuccess ? (
+          <div className={styles.form}>
+            Your password has been reset successfully
 
-            {passwordErrorContent && (
-              <p
-                className={styles.error}
-                id="password-error"
-                role="alert"
-                aria-live="assertive"
-              >
-                {passwordErrorContent}
-              </p>
-            )}
+            <MainButton
+              content='Go to Sign In'
+              onClick={() => navigate('/sign-in')}
+            />
+          </div>
+        ) : (
+          <div className={styles.form}>
+            Something went wrong. Please try again later.
+          </div>
+        )
+        : (
+          <form
+            noValidate
+            action="#"
+            className={styles.form}
+            onSubmit={handleFormSubmit}
+          >
+            <div className={styles.inputs}>
+              <div className={styles.inputsItem}>
+                <label
+                  htmlFor="password"
+                  className={styles.inputsTitle}
+                  id="password-label"
+                >
+                  Password
+                </label>
+                <div className={styles.container}>
+                  <input
+                    className={styles.input}
+                    type={isPasswordVisible ? 'text' : 'password'}
+                    id="password"
+                    placeholder={'Enter new password'}
+                    maxLength={30}
+                    autoComplete="new-password"
+                    value={passwordInputValue}
+                    onChange={handlePasswordInputChange}
+                    aria-describedby={
+                      passwordErrorContent
+                        ? "password-label password-error"
+                        : "password-label"
+                    }
+                    aria-invalid={passwordErrorContent ? "true" : undefined}
+                  />
+                  <button
+                    className={styles.eye}
+                    type='button'
+                    aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                    onMouseDown={() => setIsPasswordVisible(true)}
+                    onMouseUp={() => setIsPasswordVisible(false)}
+                    onMouseLeave={() => setIsPasswordVisible(false)}
+                  >
+                    {isPasswordVisible ? <UncrossedEye /> : <CrossedEye />}
+                  </button>
+                </div>
 
-            {passwordInputValue && (
-              <div className={styles.strength}>
-                <div
-                  className={`
+                {passwordErrorContent && (
+                  <p
+                    className={styles.error}
+                    id="password-error"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    {passwordErrorContent}
+                  </p>
+                )}
+
+                {passwordInputValue && (
+                  <div className={styles.strength}>
+                    <div
+                      className={`
                     ${styles[`strength-Line-${passwordStatus}`]}
                     ${styles[`strength-Line`]}
                   `}></div>
-                <p
-                  className={`
+                    <p
+                      className={`
                     ${styles['strength-Status']} 
                     ${styles[`strength-Status-${passwordStatus}`]}
                   `}
-                >{passwordStatus}</p>
+                    >{passwordStatus}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className={styles.inputsItem}>
-            <label
-              htmlFor="confirmPassword"
-              className={styles.inputsTitle}
-              id="confirmPassword-label"
-            >
-              Confirm password
-            </label>
-            <div className={styles.container}>
-              <input
-                className={styles.input}
-                type={isPasswordConfirmVisible ? 'text' : 'password'}
-                id="confirmPassword"
-                placeholder={'Confirm new password'}
-                maxLength={30}
-                autoComplete="new-password"
-                value={passwordConfirmInputValue}
-                onChange={handlePasswordConfirmInputChange}
-                aria-describedby={
-                  passwordConfirmErrorContent
-                    ? "confirmPassword-label confirmPassword-error"
-                    : "confirmPassword-label"
-                }
-                aria-invalid={passwordConfirmErrorContent ? "true" : undefined}
-              />
-              <button
-                className={styles.eye}
-                type='button'
-                aria-label={isPasswordConfirmVisible ? "Hide password" : "Show password"}
-                onMouseDown={() => setIsPasswordConfirmVisible(true)}
-                onMouseUp={() => setIsPasswordConfirmVisible(false)}
-                onMouseLeave={() => setIsPasswordConfirmVisible(false)}
-              >
-                {isPasswordConfirmVisible ? <UncrossedEye /> : <CrossedEye />}
-              </button>
+              <div className={styles.inputsItem}>
+                <label
+                  htmlFor="confirmPassword"
+                  className={styles.inputsTitle}
+                  id="confirmPassword-label"
+                >
+                  Confirm password
+                </label>
+                <div className={styles.container}>
+                  <input
+                    className={styles.input}
+                    type={isPasswordConfirmVisible ? 'text' : 'password'}
+                    id="confirmPassword"
+                    placeholder={'Confirm new password'}
+                    maxLength={30}
+                    autoComplete="new-password"
+                    value={passwordConfirmInputValue}
+                    onChange={handlePasswordConfirmInputChange}
+                    aria-describedby={
+                      passwordConfirmErrorContent
+                        ? "confirmPassword-label confirmPassword-error"
+                        : "confirmPassword-label"
+                    }
+                    aria-invalid={passwordConfirmErrorContent ? "true" : undefined}
+                  />
+                  <button
+                    className={styles.eye}
+                    type='button'
+                    aria-label={isPasswordConfirmVisible ? "Hide password" : "Show password"}
+                    onMouseDown={() => setIsPasswordConfirmVisible(true)}
+                    onMouseUp={() => setIsPasswordConfirmVisible(false)}
+                    onMouseLeave={() => setIsPasswordConfirmVisible(false)}
+                  >
+                    {isPasswordConfirmVisible ? <UncrossedEye /> : <CrossedEye />}
+                  </button>
+                </div>
+
+                {passwordConfirmErrorContent && (
+                  <p
+                    className={styles.error}
+                    id="confirmPassword-error"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    {passwordConfirmErrorContent}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {passwordConfirmErrorContent && (
-              <p
-                className={styles.error}
-                id="confirmPassword-error"
-                role="alert"
-                aria-live="assertive"
-              >
-                {passwordConfirmErrorContent}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className={styles.button}
-          aria-label="Reset your password"
-        >Reset Password</button>
-      </form>
+            <button
+              type="submit"
+              className={styles.button}
+              aria-label="Reset your password"
+            >Reset Password</button>
+          </form>
+        )}
     </main>
   );
 };

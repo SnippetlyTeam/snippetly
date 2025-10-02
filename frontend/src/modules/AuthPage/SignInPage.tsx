@@ -200,7 +200,7 @@ const SignInPage: React.FC = () => {
               </p>
             )}
 
-            <Link to='/password-reset' id="forgot-password-link">
+            <Link to='/reset-password' id="forgot-password-link">
               Forgot the password?
             </Link>
           </div>
