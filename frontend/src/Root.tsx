@@ -11,6 +11,8 @@ import { AppProvider } from "./contexts/AppContext";
 import FinishRegistrationTokenPage from "./modules/AuthPage/FinishRegistrationTokenPage";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AuthCallbackPage from "./modules/AuthPage/AuthCallbackPage";
+import SnippetsPage from "./modules/SnippetsPage/SnippetsPage";
+import SnippetDetailsPage from "./modules/SnippetDetailsPage/SnippetDetailsPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,6 +50,8 @@ export const Root = () => (
               <Route index element={<FinishRegistrationPage />} />
               <Route path=":token" element={<FinishRegistrationTokenPage />} />
             </Route>
+            <Route path="snippets" element={<SnippetsPage />} />
+            <Route path="snippets/:snippetId" element={<SnippetDetailsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
