@@ -28,11 +28,7 @@ services:
     image: mongo:7-jammy
     container_name: snippetly-mongodb
     env_file:
-      - ./backend/.env.sample
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB}
+      - ./backend/.env
     ports:
       - "27017:27017"
     volumes:
