@@ -2,6 +2,7 @@ from pydantic_settings import SettingsConfigDict
 
 from .api import APISettings
 from .email import EmailSettings
+from .mongo import MongoDBSettings
 from .postgres import PostgresSQLSettings
 from .redis import RedisSettings
 from .security import SecuritySettings, OAuthSettings
@@ -14,6 +15,7 @@ class Settings(
     EmailSettings,
     OAuthSettings,
     APISettings,
+    MongoDBSettings
 ):
     pass
 
