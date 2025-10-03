@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         PasswordResetTokenModel,
         RefreshTokenModel,
     )
+    from ..snippets import SnippetModel, SnippetFavoritesModel
 
 
 class UserModel(Base):
@@ -72,6 +73,14 @@ class UserModel(Base):
     )
     refresh_tokens: Mapped[list["RefreshTokenModel"]] = relationship(
         "RefreshTokenModel", back_populates="user", cascade="all"
+    )
+    snippets: Mapped[list["SnippetModel"]] = relationship(
+        "SnippetModel", back_populates="user", cascade="all, delete-orphan"
+    )
+    favorite_snippets: Mapped[list["SnippetFavoritesModel"]] = relationship(
+        "SnippetFavoritesModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     def __repr__(self) -> str:
