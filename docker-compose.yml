@@ -13,14 +13,14 @@ services:
   redis:
     image: redis:7-alpine
     container_name: snippetly-redis
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     ports:
       - "6379:6379"
     volumes:
       - redisdata_dev:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
       interval: 5s
       retries: 5
 
