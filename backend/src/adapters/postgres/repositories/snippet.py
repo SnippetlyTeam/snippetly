@@ -66,7 +66,9 @@ class SnippetRepository:
         result = await self._db.execute(query)
         return result.scalars().all()
 
-    async def get_by_user(self, user_id: int) -> Optional[Sequence[SnippetModel]]:
+    async def get_by_user(
+        self, user_id: int
+    ) -> Optional[Sequence[SnippetModel]]:
         query = select(SnippetModel).where(SnippetModel.user_id == user_id)
         result = await self._db.execute(query)
         return result.scalars().all()
@@ -84,7 +86,9 @@ class SnippetRepository:
         snippet: SnippetModel | None = result.scalar_one_or_none()
 
         if snippet is None:
-            raise exc.SnippetNotFoundError(f"Snippet with this UUID was not found")
+            raise exc.SnippetNotFoundError(
+                f"Snippet with this UUID was not found"
+            )
 
         if title is not None:
             snippet.title = title

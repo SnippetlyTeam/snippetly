@@ -15,7 +15,7 @@ class Settings(
     EmailSettings,
     OAuthSettings,
     APISettings,
-    MongoDBSettings
+    MongoDBSettings,
 ):
     pass
 
