@@ -24,6 +24,26 @@ services:
       interval: 5s
       retries: 5
 
+  mongodb:
+    image: mongo:7-jammy
+    container_name: snippetly-mongodb
+    env_file:
+      - ./backend/.env.sample
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata_dev:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     env_file:
       - ./backend/.env
@@ -36,6 +56,7 @@ services:
     depends_on:
       - db
       - redis
+      - mongodb
     restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
@@ -75,6 +96,7 @@ services:
 volumes:
   pgdata_dev:
   redisdata_dev:
+  mongodata_dev:
 
 networks:
   default:
