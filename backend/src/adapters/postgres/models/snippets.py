@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Table,
     Column,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -37,6 +38,7 @@ SnippetsTagsTable = Table(
         ForeignKey("tags.id", ondelete="CASCADE"),
         primary_key=True,
     ),
+    UniqueConstraint("snippet_id", "tag_id", name="uq_snippet_tag"),
 )
 
 
@@ -69,7 +71,9 @@ class SnippetModel(Base):
         nullable=False,
     )
 
-    mongodb_id: Mapped[str] = mapped_column(String(24), nullable=False, unique=True)
+    mongodb_id: Mapped[str] = mapped_column(
+        String(24), nullable=False, unique=True
+    )
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
@@ -80,11 +84,47 @@ class SnippetModel(Base):
     tags: Mapped[list["TagModel"]] = relationship(
         "TagModel", secondary=SnippetsTagsTable, back_populates="snippets"
     )
+    favorited_by: Mapped[list["SnippetFavoritesModel"]] = relationship(
+        "SnippetFavoritesModel", back_populates="snippet"
+    )
 
     def __repr__(self) -> str:
         return (
             f"<SnippetModel(id={self.id}, title={self.title}, "
             f"language={self.language}, is_private={self.is_private})>"
+        )
+
+
+class SnippetFavoritesModel(Base):
+    __tablename__ = "snippet_favorites"
+
+    id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    snippet_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("snippets.id", ondelete="CASCADE"), nullable=False
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "snippet_id", name="uq_user_snippet_favorite"
+        ),
+    )
+
+    user: Mapped["UserModel"] = relationship(
+        "UserModel", back_populates="favorite_snippets"
+    )
+    snippet: Mapped[SnippetModel] = relationship(
+        "SnippetModel", back_populates="favorited_by"
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<SnippetFavoritesModel(id={self.id}, "
+            f"user_id={self.user_id}, snippet_id={self.snippet_id})>"
         )
 
 

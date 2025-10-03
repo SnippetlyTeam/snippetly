@@ -4,7 +4,7 @@ from typing import Optional, Tuple, cast
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models.accounts import TokenBaseModel, UserModel
+from src.adapters.postgres.models import TokenBaseModel, UserModel
 
 
 class TokenRepository:
