@@ -20,5 +20,6 @@ class MongoDBSettings(BaseAppSettings):
                 host=self.MONGODB_HOST,
                 port=self.MONGODB_PORT,
                 path=self.MONGO_DB,
+                query="authSource=admin",
             )
         )

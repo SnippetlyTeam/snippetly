@@ -6,4 +6,5 @@ from .exceptions import (
     TokenNotFoundError,
     TokenExpiredError,
     InvalidPasswordError,
+    SnippetNotFoundError,
 )

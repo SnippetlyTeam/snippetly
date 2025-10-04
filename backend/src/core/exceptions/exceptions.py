@@ -24,3 +24,7 @@ class TokenExpiredError(Exception):
 
 class InvalidPasswordError(Exception):
     pass
+
+
+class SnippetNotFoundError(Exception):
+    pass

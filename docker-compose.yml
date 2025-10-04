@@ -13,15 +13,31 @@ services:
   redis:
     image: redis:7-alpine
     container_name: snippetly-redis
-    command: ["redis-server", "--appendonly", "yes"]
+    command: [ "redis-server", "--appendonly", "yes" ]
     ports:
       - "6379:6379"
     volumes:
       - redisdata_dev:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      test: [ "CMD-SHELL", "redis-cli ping || exit 1" ]
       interval: 5s
+      retries: 5
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: snippetly-mongodb
+    env_file:
+      - ./backend/.env
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata_dev:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   backend:
@@ -36,6 +52,7 @@ services:
     depends_on:
       - db
       - redis
+      - mongodb
     restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
@@ -75,6 +92,7 @@ services:
 volumes:
   pgdata_dev:
   redisdata_dev:
+  mongodata_dev:
 
 networks:
   default:
