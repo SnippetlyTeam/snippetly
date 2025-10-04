@@ -18,7 +18,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
 
-app = FastAPI(title="Snippetly - API", version="1.0.0", debug=settings.DEBUG, lifespan=lifespan)
+app = FastAPI(
+    title="Snippetly - API",
+    version="1.0.0",
+    debug=settings.DEBUG,
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,

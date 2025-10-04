@@ -1,9 +1,12 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
+from fastapi.requests import Request
+
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
+    GetSnippetsResponseSchema,
 )
 
 
@@ -28,14 +31,16 @@ class SnippetServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_snippets(self) -> dict:
+    async def get_snippets(
+        self, request: Request, page: int, per_page: int
+    ) -> GetSnippetsResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
         list of Snippets with pagination
 
         :return: Snippets with pagination
-        :rtype: dict with keys:
-            "list", "prev_page", "next_page", "total_pages", "total_items"
+        :rtype: GetSnippetsResponseSchema
+        :raises SQLAlchemyError: If error occurred during SnippetModel get
         """
         pass
 

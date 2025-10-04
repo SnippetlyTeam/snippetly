@@ -5,9 +5,10 @@ from uuid import UUID
 from pydantic import BaseModel
 
 from src.adapters.postgres.models import LanguageEnum
+from .common import BaseListSchema
 
 
-# --- Base Models ---
+# --- Requests ---
 class BaseSnippetSchema(BaseModel):
     title: str
     language: LanguageEnum
@@ -20,12 +21,9 @@ class SnippetCreateSchema(BaseSnippetSchema):
     user_id: int
 
 
-# --- Requests ---
-
-
 # --- Responses ---
-class GetSnippetsResponseSchema(BaseModel):
-    items: List[BaseSnippetSchema]
+class GetSnippetsResponseSchema(BaseListSchema):
+    snippets: List[BaseSnippetSchema]
 
 
 class SnippetResponseSchema(BaseSnippetSchema):

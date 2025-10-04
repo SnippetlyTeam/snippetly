@@ -1,8 +1,8 @@
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from sqlalchemy import select, delete, Sequence
+from sqlalchemy import select, delete, Sequence, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
@@ -61,6 +61,18 @@ class SnippetRepository:
         return snippet
 
     # --- Read ---
+    async def get_snippets_paginated(
+        self, offset: int, limit: int
+    ) -> Tuple[Sequence[SnippetModel], int]:
+        total = await self._db.scalar(
+            select(func.count())
+            .select_from(SnippetModel)
+            .where(SnippetModel.is_private is False)
+        )
+        query = select(SnippetModel).where(SnippetModel.is_private is False)
+        result = await self._db.execute(query.offset(offset).limit(limit))
+        return result.scalars().all(), total
+
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:
         query = select(SnippetModel).where(SnippetModel.uuid == uuid)
         result = await self._db.execute(query)
@@ -110,3 +122,5 @@ class SnippetRepository:
     async def delete(self, uuid: UUID) -> None:
         query = delete(SnippetModel).where(SnippetModel.uuid == uuid)
         await self._db.execute(query)
+
+    # --- Aggregate ---
