@@ -87,7 +87,7 @@ class SnippetRepository:
 
         if snippet is None:
             raise exc.SnippetNotFoundError(
-                f"Snippet with this UUID was not found"
+                "Snippet with this UUID was not found"
             )
 
         if title is not None:
