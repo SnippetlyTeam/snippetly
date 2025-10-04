@@ -145,4 +145,7 @@ class TagModel(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<TagModel(id={self.id}, name={self.name}, created_at={self.created_at})>"
+        return (
+            f"<TagModel(id={self.id}, "
+            f"name={self.name}, created_at={self.created_at})>"
+        )
