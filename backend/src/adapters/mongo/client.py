@@ -10,5 +10,5 @@ settings = get_settings()
 async def init_mongo_client() -> None:
     client: AsyncMongoClient = AsyncMongoClient(settings.mongodb_url)
     await init_beanie(
-        database=client.db_name, document_models=[SnippetDocument]
+        database=client.snippetly, document_models=[SnippetDocument]
     )

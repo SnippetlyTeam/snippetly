@@ -20,3 +20,6 @@ class SnippetDocument(Document):
     @before_event(Update)
     def set_updated_at(self) -> None:
         self.updated_at = datetime.now(timezone.utc)
+
+    class Settings:
+        name = "snippets"
