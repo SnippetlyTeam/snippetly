@@ -1,6 +1,13 @@
 from typing import Optional
 
 from beanie import PydanticObjectId
+from pydantic import ValidationError
+from pymongo.errors import (
+    DuplicateKeyError,
+    ConnectionFailure,
+    ServerSelectionTimeoutError,
+    PyMongoError,
+)
 
 from .documents import SnippetDocument
 
@@ -14,14 +21,28 @@ class SnippetDocumentRepository:
     async def create(
         content: str, description: Optional[str] = None
     ) -> SnippetDocument:
-        snippet = SnippetDocument(content=content, description=description)
-        return await snippet.insert()
+        try:
+            snippet = SnippetDocument(content=content, description=description)
+            return await snippet.insert()
+        except ValidationError as e:
+            raise ValidationError("Invalid document data") from e
+        except DuplicateKeyError as e:
+            raise DuplicateKeyError("Document already exists") from e
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionError("MongoDB connection failed") from e
+        except PyMongoError as e:
+            raise RuntimeError("MongoDB operation failed") from e
 
     # --- Read ---
     async def get_by_id(
         self, _id: PydanticObjectId
     ) -> Optional[SnippetDocument]:
-        return await self.document.get(_id)
+        try:
+            return await self.document.get(_id)
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionError("MongoDB connection failed") from e
+        except PyMongoError as e:
+            raise RuntimeError("MongoDB operation failed") from e
 
     # --- Update ---
     async def update(
@@ -30,15 +51,36 @@ class SnippetDocumentRepository:
         content: Optional[str] = None,
         description: Optional[str] = None,
     ) -> Optional[SnippetDocument]:
-        snippet = await self.get_by_id(_id)
-        if snippet:
-            snippet.content = content
-            snippet.description = description
-            await snippet.save()
-        return snippet
+        try:
+            snippet = await self.get_by_id(_id)
+            if snippet:
+                snippet.content = content
+                snippet.description = description
+                await snippet.save()
+            return snippet
+        except ValidationError as e:
+            raise ValidationError("Invalid document data") from e
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionError("MongoDB connection failed") from e
+        except PyMongoError as e:
+            raise RuntimeError("MongoDB operation failed") from e
 
     # --- Delete ---
     async def delete(self, _id: PydanticObjectId) -> None:
-        snippet = await self.get_by_id(_id)
-        if snippet:
-            await snippet.delete()
+        try:
+            snippet = await self.get_by_id(_id)
+            if snippet:
+                await snippet.delete()
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionError("MongoDB connection failed") from e
+        except PyMongoError as e:
+            raise RuntimeError("MongoDB operation failed") from e
+
+    @staticmethod
+    async def delete_document(document: SnippetDocument) -> None:
+        try:
+            await document.delete()
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionError("MongoDB connection failed") from e
+        except PyMongoError as e:
+            raise RuntimeError("MongoDB operation failed") from e

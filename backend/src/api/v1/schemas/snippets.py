@@ -12,15 +12,12 @@ class BaseSnippetSchema(BaseModel):
     title: str
     language: LanguageEnum
     is_private: bool
-    user_id: int
-
-
-class SnippetSchema(BaseSnippetSchema):
     content: str
     description: str
-    uuid: UUID
-    created_at: datetime
-    updated_at: datetime
+
+
+class SnippetCreateSchema(BaseSnippetSchema):
+    user_id: int
 
 
 # --- Requests ---
@@ -29,3 +26,10 @@ class SnippetSchema(BaseSnippetSchema):
 # --- Responses ---
 class GetSnippetsResponseSchema(BaseModel):
     items: List[BaseSnippetSchema]
+
+
+class SnippetResponseSchema(BaseSnippetSchema):
+    user_id: int
+    uuid: UUID
+    created_at: datetime
+    updated_at: datetime

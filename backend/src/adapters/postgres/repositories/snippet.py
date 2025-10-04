@@ -1,6 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
+from beanie import PydanticObjectId
 from sqlalchemy import select, delete, Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,9 +19,15 @@ class SnippetRepository:
         title: str,
         language: LanguageEnum,
         is_private: bool,
+        mongodb_id: PydanticObjectId,
+        user_id: int,
     ) -> SnippetModel:
         snippet = SnippetModel(
-            title=title, language=language, is_private=is_private
+            title=title,
+            language=language,
+            is_private=is_private,
+            mongodb_id=str(mongodb_id),
+            user_id=user_id,
         )
         self._db.add(snippet)
         return snippet

@@ -38,3 +38,6 @@ psql:
 
 prune:
 	$(COMPOSE) down -v
+
+mongo:
+	docker exec -it snippetly-mongodb mongosh -u $${MONGO_USER:-snippetly} -p $${MONGO_PASSWORD:-mongodb} --authenticationDatabase admin

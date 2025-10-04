@@ -1,11 +1,24 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.adapters.mongo.client import init_mongo_client
 from src.api.v1.routes import v1_router
 from src.core.config import get_settings
 
 settings = get_settings()
-app = FastAPI(title="Snippetly - API", version="1.0.0", debug=settings.DEBUG)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    await init_mongo_client()
+    print("MongoDB Initialized")
+    yield
+
+
+app = FastAPI(title="Snippetly - API", version="1.0.0", debug=settings.DEBUG, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,8 +28,3 @@ app.add_middleware(
 )
 
 app.include_router(v1_router, prefix="/api")
-
-
-@app.get("/hello/")
-def hello_world() -> dict:
-    return {"msg": "Hello world!"}

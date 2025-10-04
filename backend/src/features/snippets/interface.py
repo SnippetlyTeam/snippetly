@@ -1,23 +1,29 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
+from src.api.v1.schemas.snippets import (
+    SnippetCreateSchema,
+    SnippetResponseSchema,
+)
+
 
 class SnippetServiceInterface(ABC):
     @abstractmethod
-    async def create_snippet(self, data: dict) -> dict:
+    async def create_snippet(
+        self, data: SnippetCreateSchema
+    ) -> SnippetResponseSchema:
         """
         Method that creates snippet in PostgreSQL & MongoDB
         using data from payload
 
         :param data:
-        :type: dict with keys:
-            "title", "language", "is_private", "content", "description"
+        :type: SnippetCreateSchema
         :return: SnippetSchema
-        :rtype: dict with keys:
-                "title", "language", "is_private", "content",
-                "description", "uuid", "created_at", "updated_at"
+        :rtype: SnippetResponseSchema
         :raises SQLAlchemyError: If error occurred during SnippetModel creation
                 PyMongoError: If error occurred during SnippetDocument creation
+                ValidationError: If during document creation
+                validation error occurred
         """
         pass
 
