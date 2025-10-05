@@ -1,9 +1,11 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from fastapi.requests import Request
+from sqlalchemy.exc import SQLAlchemyError
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.snippets import (
     BaseSnippetSchema,
@@ -42,6 +44,7 @@ async def create_snippet(
     "/",
     summary="Get all snippets",
     description="Get all snippets, if access token provided",
+    dependencies=[Depends(get_current_user)],
 )
 async def get_all_snippets(
     snippet_service: Annotated[
@@ -53,13 +56,28 @@ async def get_all_snippets(
         10, ge=1, le=20, description="Number of items per page"
     ),
 ) -> GetSnippetsResponseSchema:
-    return await snippet_service.get_snippets(request, page, per_page)
+    try:
+        return await snippet_service.get_snippets(request, page, per_page)
+    except SQLAlchemyError:
+        raise HTTPException(status_code=500, detail="Something went wrong")
 
 
 @router.get(
-    "/{uuid}", summary="Get Snippet details", description="Get Snippet by UUID"
+    "/{uuid}",
+    summary="Get Snippet details",
+    description="Get Snippet by UUID",
+    dependencies=[Depends(get_current_user)],
 )
-async def get_snippet(uuid: UUID): ...
+async def get_snippet(
+    uuid: UUID,
+    snippet_service: Annotated[
+        SnippetServiceInterface, Depends(get_snippet_service)
+    ],
+) -> SnippetResponseSchema:
+    try:
+        return await snippet_service.get_snippet_by_uuid(uuid)
+    except exc.SnippetNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
 
 
 @router.patch(

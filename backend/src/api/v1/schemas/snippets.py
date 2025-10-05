@@ -22,8 +22,12 @@ class SnippetCreateSchema(BaseSnippetSchema):
 
 
 # --- Responses ---
+class SnippetListItemSchema(BaseSnippetSchema):
+    uuid: UUID
+
+
 class GetSnippetsResponseSchema(BaseListSchema):
-    snippets: List[BaseSnippetSchema]
+    snippets: List[SnippetListItemSchema]
 
 
 class SnippetResponseSchema(BaseSnippetSchema):

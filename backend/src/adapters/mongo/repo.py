@@ -31,14 +31,12 @@ class SnippetDocumentRepository:
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             raise ConnectionError("MongoDB connection failed") from e
         except PyMongoError as e:
-            raise RuntimeError("MongoDB operation failed") from e
+            raise PyMongoError("MongoDB operation failed") from e
 
     # --- Read ---
-    async def get_by_id(
-        self, _id: PydanticObjectId
-    ) -> Optional[SnippetDocument]:
+    async def get_by_id(self, _id: str) -> Optional[SnippetDocument]:
         try:
-            return await self.document.get(_id)
+            return await self.document.get(PydanticObjectId(_id))
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             raise ConnectionError("MongoDB connection failed") from e
         except PyMongoError as e:
@@ -47,7 +45,7 @@ class SnippetDocumentRepository:
     # --- Update ---
     async def update(
         self,
-        _id: PydanticObjectId,
+        _id: str,
         content: Optional[str] = None,
         description: Optional[str] = None,
     ) -> Optional[SnippetDocument]:
@@ -66,7 +64,7 @@ class SnippetDocumentRepository:
             raise RuntimeError("MongoDB operation failed") from e
 
     # --- Delete ---
-    async def delete(self, _id: PydanticObjectId) -> None:
+    async def delete(self, _id: str) -> None:
         try:
             snippet = await self.get_by_id(_id)
             if snippet:

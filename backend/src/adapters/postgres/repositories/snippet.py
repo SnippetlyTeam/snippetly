@@ -67,16 +67,16 @@ class SnippetRepository:
         total = await self._db.scalar(
             select(func.count())
             .select_from(SnippetModel)
-            .where(SnippetModel.is_private is False)
+            .where(SnippetModel.is_private.is_(False))
         )
-        query = select(SnippetModel).where(SnippetModel.is_private is False)
+        query = select(SnippetModel).where(SnippetModel.is_private.is_(False))
         result = await self._db.execute(query.offset(offset).limit(limit))
         return result.scalars().all(), total
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:
         query = select(SnippetModel).where(SnippetModel.uuid == uuid)
         result = await self._db.execute(query)
-        return result.one_or_none()
+        return result.scalar_one_or_none()
 
     async def get_snippets_by_language(
         self, language: LanguageEnum
@@ -122,5 +122,3 @@ class SnippetRepository:
     async def delete(self, uuid: UUID) -> None:
         query = delete(SnippetModel).where(SnippetModel.uuid == uuid)
         await self._db.execute(query)
-
-    # --- Aggregate ---

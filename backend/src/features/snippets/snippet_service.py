@@ -7,15 +7,18 @@ from pymongo.errors import PyMongoError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.core.exceptions as exc
 from src.adapters.mongo.repo import SnippetDocumentRepository
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
     GetSnippetsResponseSchema,
-    BaseSnippetSchema,
+    SnippetListItemSchema,
 )
 from .interface import SnippetServiceInterface
+from ...adapters.mongo.documents import SnippetDocument
+from ...adapters.postgres.models import SnippetModel
 
 
 class SnippetService(SnippetServiceInterface):
@@ -48,6 +51,22 @@ class SnippetService(SnippetServiceInterface):
 
         return prev_page, next_page
 
+    @staticmethod
+    def _build_snippet_response(
+        snippet: SnippetModel, document: SnippetDocument
+    ) -> SnippetResponseSchema:
+        return SnippetResponseSchema(
+            uuid=snippet.uuid,
+            user_id=snippet.user_id,
+            title=snippet.title,
+            language=snippet.language,
+            is_private=snippet.is_private,
+            content=document.content if document else "",
+            description=document.description if document else "",
+            created_at=snippet.created_at,
+            updated_at=snippet.updated_at,
+        )
+
     # TODO: create with tags
     async def create_snippet(
         self, data: SnippetCreateSchema
@@ -74,17 +93,7 @@ class SnippetService(SnippetServiceInterface):
             await self._doc_repo.delete_document(document)
             raise
 
-        snippet_data = SnippetResponseSchema(
-            uuid=snippet_model.uuid,
-            user_id=snippet_model.user_id,
-            title=snippet_model.title,
-            language=snippet_model.language,
-            is_private=snippet_model.is_private,
-            content=document.content,
-            description=document.description,
-            created_at=snippet_model.created_at,
-            updated_at=snippet_model.updated_at,
-        )
+        snippet_data = self._build_snippet_response(snippet_model, document)
 
         return snippet_data
 
@@ -111,12 +120,13 @@ class SnippetService(SnippetServiceInterface):
                     document = None
 
                 snippet_list.append(
-                    BaseSnippetSchema(
+                    SnippetListItemSchema(
                         title=snippet.title,
                         language=snippet.language,
                         is_private=snippet.is_private,
                         content=document.content if document else "",
                         description=document.description if document else "",
+                        uuid=snippet.uuid,
                     )
                 )
         except SQLAlchemyError:
@@ -132,7 +142,14 @@ class SnippetService(SnippetServiceInterface):
             total_pages=(total + per_page - 1) // per_page,
         )
 
-    async def get_snippet_by_uuid(self, uuid: UUID) -> dict: ...
+    async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:
+        snippet = await self._model_repo.get_by_uuid(uuid)
+        if not snippet:
+            raise exc.SnippetNotFoundError(
+                "Snippet with this UUID was not found"
+            )
+        document = await self._doc_repo.get_by_id(snippet.mongodb_id)
+        return self._build_snippet_response(snippet, document)
 
     async def update_snippet(self, uuid: UUID, data: dict) -> dict: ...
 
