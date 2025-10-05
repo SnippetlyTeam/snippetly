@@ -52,8 +52,10 @@ class SnippetDocumentRepository:
         try:
             snippet = await self.get_by_id(_id)
             if snippet:
-                snippet.content = content
-                snippet.description = description
+                if content:
+                    snippet.content = content
+                if description:
+                    snippet.description = description
                 await snippet.save()
             return snippet
         except ValidationError as e:

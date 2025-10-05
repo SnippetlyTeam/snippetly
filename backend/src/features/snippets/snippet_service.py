@@ -10,13 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import src.core.exceptions as exc
 from src.adapters.mongo.documents import SnippetDocument
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.models import SnippetModel
+from src.adapters.postgres.models import SnippetModel, UserModel
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
     GetSnippetsResponseSchema,
     SnippetListItemSchema,
+    SnippetUpdateRequestSchema,
 )
 from .interface import SnippetServiceInterface
 
@@ -151,6 +152,76 @@ class SnippetService(SnippetServiceInterface):
         document = await self._doc_repo.get_by_id(snippet.mongodb_id)
         return self._build_snippet_response(snippet, document)
 
-    async def update_snippet(self, uuid: UUID, data: dict) -> dict: ...
+    async def _update_sql_snippet(
+        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
+    ) -> None:
+        for field, value in data.model_dump(exclude_unset=True).items():
+            if hasattr(snippet, field) and value is not None:
+                setattr(snippet, field, value)
 
-    async def delete_snippet(self, uuid: UUID) -> dict: ...
+        try:
+            await self._db.commit()
+            await self._db.refresh(snippet)
+        except SQLAlchemyError:
+            await self._db.rollback()
+            raise
+
+    async def _update_mongo_document(
+        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
+    ) -> SnippetDocument:
+        document = await self._doc_repo.get_by_id(snippet.mongodb_id)
+        if not document:
+            raise exc.SnippetNotFoundError("Snippet document not found")
+
+        update_data = {}
+        if data.content is not None:
+            update_data["content"] = data.content
+        if data.description is not None:
+            update_data["description"] = data.description
+
+        if update_data:
+            await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
+        return updated_doc
+
+    async def update_snippet(
+        self, uuid: UUID, data: SnippetUpdateRequestSchema, user: UserModel
+    ) -> SnippetResponseSchema:
+        snippet = await self._model_repo.get_by_uuid(uuid)
+        if not snippet:
+            raise exc.SnippetNotFoundError(
+                "Snippet with this UUID was not found"
+            )
+        if snippet.user_id != user.id and not user.is_admin:
+            raise exc.NoPermissionError(
+                "User have no permission to update snippet"
+            )
+
+        await self._update_sql_snippet(snippet, data)
+        document = await self._update_mongo_document(snippet, data)
+
+        return self._build_snippet_response(snippet, document)
+
+    async def delete_snippet(self, uuid: UUID, user: UserModel) -> None:
+        snippet = await self._model_repo.get_by_uuid(uuid)
+        if not snippet:
+            raise exc.SnippetNotFoundError(
+                "Snippet with this UUID was not found"
+            )
+        if snippet.user_id != user.id and not user.is_admin:
+            raise exc.NoPermissionError(
+                "User have no permission to delete snippet"
+            )
+
+        doc_id = snippet.mongodb_id
+        try:
+            await self._model_repo.delete(uuid)
+            await self._db.commit()
+        except SQLAlchemyError:
+            await self._db.rollback()
+            raise
+
+        try:
+            await self._doc_repo.delete(doc_id)
+        except PyMongoError:
+            raise

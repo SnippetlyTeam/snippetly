@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -19,6 +19,14 @@ class BaseSnippetSchema(BaseModel):
 
 class SnippetCreateSchema(BaseSnippetSchema):
     user_id: int
+
+
+class SnippetUpdateRequestSchema(BaseModel):
+    title: Optional[str] = None
+    language: Optional[LanguageEnum] = None
+    is_private: Optional[bool] = None
+    content: Optional[str] = None
+    description: Optional[str] = None
 
 
 # --- Responses ---

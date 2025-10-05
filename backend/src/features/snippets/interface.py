@@ -3,10 +3,12 @@ from uuid import UUID
 
 from fastapi.requests import Request
 
+from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
     GetSnippetsResponseSchema,
+    SnippetUpdateRequestSchema,
 )
 
 
@@ -60,33 +62,38 @@ class SnippetServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def update_snippet(self, uuid: UUID, data: dict) -> dict:
+    async def update_snippet(
+        self, uuid: UUID, data: SnippetUpdateRequestSchema, user_id: UserModel
+    ) -> SnippetResponseSchema:
         """
         Method that updates Snippet by UUID using data dict
 
         :param uuid: UUID of Snippet
         :type: UUID
         :param data: Snippet data
-        :type: dict with optional keys:
-        "title", "language", "is_private", "content", "description",
-        :return: dict with keys:
-                "title", "language", "is_private", "content",
-                "description", "uuid", "created_at", "updated_at"
-        :raises: SnippetNotFound: If Snippet was not found in db
+        :type: SnippetUpdateRequestSchema
+        :param user_id: User that expected to be Snippet owner or admin
+        :type: int
+        :return: SnippetResponseSchema
+        :raises: SnippetNotFoundError: If Snippet was not found in db
+                NoPermissionError: If user is not an admin or a snippet owner
                 SQLAlchemyError: If error occurred during model update
                 PymongoError: If error occurred during document update
         """
         pass
 
     @abstractmethod
-    async def delete_snippet(self, uuid: UUID) -> None:
+    async def delete_snippet(self, uuid: UUID, user: UserModel) -> None:
         """
         Method that delete Snippet by UUID in PostgreSQL & MongoDB
 
         :param uuid: UUID of Snippet
         :type: UUID
+        :param user: User that expected to be Snippet owner or admin
+        :type: UserModel
         :return: None
         :raises SnippetNotFound: If Snippet was not found in db
+                NoPermissionError: If user is not an admin or a snippet owner
                 SQLAlchemyError: If error occurred during model deletion
                 PyMongoError: If error occurred during document deletion
         """
