@@ -8,7 +8,9 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
+from src.adapters.mongo.documents import SnippetDocument
 from src.adapters.mongo.repo import SnippetDocumentRepository
+from src.adapters.postgres.models import SnippetModel
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
@@ -17,8 +19,6 @@ from src.api.v1.schemas.snippets import (
     SnippetListItemSchema,
 )
 from .interface import SnippetServiceInterface
-from ...adapters.mongo.documents import SnippetDocument
-from ...adapters.postgres.models import SnippetModel
 
 
 class SnippetService(SnippetServiceInterface):

@@ -29,7 +29,7 @@ class SnippetDocumentRepository:
         except DuplicateKeyError as e:
             raise DuplicateKeyError("Document already exists") from e
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionError("MongoDB connection failed") from e
+            raise ConnectionFailure("MongoDB connection failed") from e
         except PyMongoError as e:
             raise PyMongoError("MongoDB operation failed") from e
 

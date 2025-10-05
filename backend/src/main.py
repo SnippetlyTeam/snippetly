@@ -7,14 +7,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.adapters.mongo.client import init_mongo_client
 from src.api.v1.routes import v1_router
 from src.core.config import get_settings
+from src.core.utils.logger import setup_logger, logger
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    setup_logger()
+    logger.info("Logger Initialized")
     await init_mongo_client()
-    print("MongoDB Initialized")
+    logger.info("MongoDB Initialized")
     yield
 
 

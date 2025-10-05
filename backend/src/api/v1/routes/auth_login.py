@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
+import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
 from src.api.docs.openapi import create_error_examples
@@ -112,40 +113,24 @@ async def refresh(
 
 
 @router.post(
-    "/logout/",
-    response_model=MessageResponseSchema,
-    status_code=200,
-    summary="User Logout",
-    description="Logout a user by revoking their refresh and access tokens",
-    responses={
-        500: create_error_examples(
-            description="Internal Server Error",
-            examples={"internal_server": "Failed to log out. Try again"},
-        ),
-    },
-)
-async def logout_user(
-    user_data: LogoutRequestSchema,
-    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
-    access_token: Annotated[str, Depends(get_token)],
-    current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
-) -> MessageResponseSchema:
-    try:
-        await service.logout_user(user_data.refresh_token, access_token)
-    except SQLAlchemyError as e:
-        raise HTTPException(
-            status_code=500, detail="Failed to log out. Try again"
-        ) from e
-    return MessageResponseSchema(message="Logged out successfully")
-
-
-@router.post(
     "/revoke-all-tokens",
     summary="Logout from all sessions",
     status_code=200,
     description="Revoke all tokens of the current user, "
     "logging out from every session",
     responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -169,6 +154,46 @@ async def revoke_all_tokens(
     return MessageResponseSchema(
         message="Logged out from every session successfully"
     )
+
+
+@router.post(
+    "/logout/",
+    response_model=MessageResponseSchema,
+    status_code=200,
+    summary="User Logout",
+    description="Logout a user by revoking their refresh and access tokens",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={"internal_server": "Failed to log out. Try again"},
+        ),
+    },
+)
+async def logout_user(
+    user_data: LogoutRequestSchema,
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    access_token: Annotated[str, Depends(get_token)],
+    current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
+) -> MessageResponseSchema:
+    try:
+        await service.logout_user(user_data.refresh_token, access_token)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to log out. Try again"
+        ) from e
+    return MessageResponseSchema(message="Logged out successfully")
 
 
 @router.get("/test-access-token/")
