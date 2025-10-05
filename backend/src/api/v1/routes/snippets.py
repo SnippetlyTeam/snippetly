@@ -83,7 +83,7 @@ async def create_snippet(
 
 @router.get(
     "/",
-    summary="Get all snippets",
+    summary="Get all NOT private snippets",
     description="Get all snippets, if access token provided",
     dependencies=[Depends(get_current_user)],
     responses={
@@ -106,10 +106,10 @@ async def create_snippet(
     },
 )
 async def get_all_snippets(
+    request: Request,
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
-    request: Request,
     page: int = Query(1, ge=1, description="Page number (1-based index)"),
     per_page: int = Query(
         10, ge=1, le=20, description="Number of items per page"
@@ -234,7 +234,7 @@ async def update_snippet(
             description="Internal Server Error",
             examples={"internal_server": "Failed to delete snippet"},
         ),
-    }
+    },
 )
 async def delete_snippet(
     uuid: UUID,
@@ -243,7 +243,9 @@ async def delete_snippet(
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
 ) -> MessageResponseSchema:
-    message = MessageResponseSchema(message="Snippet has been deleted successfully")
+    message = MessageResponseSchema(
+        message="Snippet has been deleted successfully"
+    )
     try:
         await snippet_service.delete_snippet(uuid, user)
     except exc.SnippetNotFoundError:
@@ -252,5 +254,7 @@ async def delete_snippet(
         raise HTTPException(status_code=403, detail=str(e)) from e
     except (SQLAlchemyError, PyMongoError) as e:
         logger.error(f"Database error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to delete snippet") from e
+        raise HTTPException(
+            status_code=500, detail="Failed to delete snippet"
+        ) from e
     return message
