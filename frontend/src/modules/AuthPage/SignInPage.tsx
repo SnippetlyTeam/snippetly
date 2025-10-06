@@ -3,6 +3,7 @@ import styles from './AuthPage.module.scss';
 import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -14,6 +15,8 @@ const SignInPage: React.FC = () => {
   const [passwordErrorContent, setPasswordErrorContent] = useState('');
 
   const navigate = useNavigate();
+
+  const { setAccessToken } = useAuthContext();
 
   const errors = {
     emailEmpty: 'Email or Username: can’t be blank',
@@ -86,8 +89,7 @@ const SignInPage: React.FC = () => {
       .then(response => {
         switch (response.status) {
           case 200:
-            navigate('/');
-            break;
+            return response.json();
           case 403:
             setPasswordErrorContent(errors.passwordWrong);
             break;
@@ -95,6 +97,11 @@ const SignInPage: React.FC = () => {
             setEmailErrorContent(errors.emailNotFound);
             break;
         }
+      })
+      .then(data => {
+        setAccessToken(data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token)
+        navigate('/');
       })
   }
 
