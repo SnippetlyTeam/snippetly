@@ -1,14 +1,22 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './Snippet.module.scss';
+import type { SnippetType } from '../../types/SnippetType';
 
-const Snippet = () => {
+type Props = {
+  snippet: SnippetType,
+}
+
+const Snippet: React.FC<Props> = ({ snippet }) => {
   const navigate = useNavigate();
 
   return (
-    <div 
+    <div
       className={styles.snippet}
-      onClick={() => navigate(`/snippets/2`)}
-    ></div>
+      onClick={() => navigate(`/snippets/${snippet.uuid}`)}
+    >
+      <h3>{snippet.title}</h3>
+      <p>{snippet.description}</p>
+    </div>
   );
 }
 

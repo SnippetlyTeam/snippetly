@@ -14,7 +14,11 @@ const PublicOnlyRoute = () => {
     );
   }
   if (isAuthenticated) {
-    return <Navigate to="/snippets" replace />;
+    return <Navigate
+      to="/snippets"
+      replace
+      state={{ message: 'You are already signed in.' }}
+    />;
   }
 
   return <Outlet />;

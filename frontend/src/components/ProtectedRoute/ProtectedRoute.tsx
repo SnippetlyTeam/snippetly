@@ -9,13 +9,17 @@ const ProtectedRoute = () => {
   if (isTokenLoading) {
     return (
       <main className={styles.main}>
-        <Loader/>
+        <Loader />
       </main>
-    ); 
+    );
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/sign-in" replace />;
+    return <Navigate
+      to="/sign-in"
+      replace
+      state={{ message: 'You must be signed in to view this page.' }}
+    />;
   }
 
   return <Outlet />;
