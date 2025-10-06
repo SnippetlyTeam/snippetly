@@ -1,0 +1,39 @@
+.main {
+  @include page-padding-inline;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 18px;
+}
+
+.head {
+  &Content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.snippets {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.input {
+  border: 1px solid var(--color-accent);
+  background-color: var(--secondary-bg-color);
+  border-radius: 6px;
+  width: 300px;
+  box-sizing: border-box;
+  font-size: 16px;
+  padding: 8px 40px 8px 16px;
+  color: var(--color-white);
+  outline: none;
+
+  &:focus {
+    border: 1px solid var(--color-accent-hover);
+    box-shadow: 0 0 0 1px var(--color-accent-hover);
+  }
+}
