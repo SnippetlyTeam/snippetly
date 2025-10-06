@@ -1,0 +1,15 @@
+.snippet {
+  @include set-transition(background-color);
+
+  background-color: var(--secondary-bg-color);
+  height: 120px;
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--snippet-hover-bg-color);
+  }
+}

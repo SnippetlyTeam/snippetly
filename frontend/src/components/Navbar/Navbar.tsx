@@ -21,7 +21,7 @@ const Navbar: React.FC = () => {
         </li>
         <li className={styles.listItem}>
           <NavLink
-            to='/'
+            to='/snippets'
             className={({ isActive }) =>
               `${styles.link} ${isActive ? styles.activeLink : ''}`
             }

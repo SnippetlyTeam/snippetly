@@ -1,6 +1,8 @@
+import styles from './SnippetDetailsPage.module.scss';
+
 const SnippetDetailsPage = () => {
   return (
-    <main></main>
+    <main className={styles.main}></main>
   )
 }
 
