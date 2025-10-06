@@ -28,3 +28,7 @@ class InvalidPasswordError(Exception):
 
 class SnippetNotFoundError(Exception):
     pass
+
+
+class NoPermissionError(Exception):
+    pass

@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import select, delete, Sequence
+from beanie import PydanticObjectId
+from sqlalchemy import select, delete, Sequence, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
@@ -18,9 +19,15 @@ class SnippetRepository:
         title: str,
         language: LanguageEnum,
         is_private: bool,
+        mongodb_id: PydanticObjectId,
+        user_id: int,
     ) -> SnippetModel:
         snippet = SnippetModel(
-            title=title, language=language, is_private=is_private
+            title=title,
+            language=language,
+            is_private=is_private,
+            mongodb_id=str(mongodb_id),
+            user_id=user_id,
         )
         self._db.add(snippet)
         return snippet
@@ -54,10 +61,22 @@ class SnippetRepository:
         return snippet
 
     # --- Read ---
+    async def get_snippets_paginated(
+        self, offset: int, limit: int
+    ) -> Tuple[Sequence[SnippetModel], int]:
+        total = await self._db.scalar(
+            select(func.count())
+            .select_from(SnippetModel)
+            .where(SnippetModel.is_private.is_(False))
+        )
+        query = select(SnippetModel).where(SnippetModel.is_private.is_(False))
+        result = await self._db.execute(query.offset(offset).limit(limit))
+        return result.scalars().all(), total
+
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:
         query = select(SnippetModel).where(SnippetModel.uuid == uuid)
         result = await self._db.execute(query)
-        return result.one_or_none()
+        return result.scalar_one_or_none()
 
     async def get_snippets_by_language(
         self, language: LanguageEnum
