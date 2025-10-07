@@ -65,7 +65,7 @@ const SnippetsPage = () => {
                 }),
               })
                 .then(response => response.json())
-                .then(data => setSnippets(prev => [...prev, data]));
+                .then(data => setSnippets(prev => [data, ...prev]));
             }}
           />
         </div>

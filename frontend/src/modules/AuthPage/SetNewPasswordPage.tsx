@@ -4,6 +4,8 @@ import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainButton from '../../components/MainButton/MainButton';
+import { resetComplete } from '../../api/authClient';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 type Status = 'Weak' | 'Medium' | 'Strong';
 
@@ -24,6 +26,7 @@ const SetNewPasswordPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { token } = useParams();
+  const { email } = useAuthContext();
 
   const errorMessages = {
     passwordEmpty: 'New password is required',
@@ -127,23 +130,14 @@ const SetNewPasswordPage: React.FC = () => {
       return;
     }
 
-    fetch('http://localhost:8000/api/v1/auth/reset-password/complete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        password: passwordInputValue,
-        email: 'tus@gmail.com',
-        password_reset_token: token
+    resetComplete(passwordInputValue, email, token)
+      .then(response => {
+        if (response.status === 200) {
+          setIsSuccess(true);
+          return;
+        }
+        setIsSuccess(false);
       })
-    }).then(response => {
-      if (response.status === 200) {
-        setIsSuccess(true);
-        return;
-      }
-      setIsSuccess(false);
-    })
   }
 
   return (

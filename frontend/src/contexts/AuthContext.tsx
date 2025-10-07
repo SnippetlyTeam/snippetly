@@ -7,6 +7,8 @@ type AuthContextType = {
   isTokenLoading: boolean;
   setAccessToken: (token: string | null) => void;
   refreshAuthToken: () => Promise<string | null>;
+  email: string;
+  setEmail: (email: string) => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -21,6 +23,10 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 
   const setAccessToken = (token: string | null) => setAccessTokenState(token);
 
+  const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+
+  const [email, setEmail] = useState<string>('');
+
   const refreshAuthToken = async (): Promise<string | null> => {
     const storedRefreshToken = localStorage.getItem('refresh_token');
 
@@ -30,7 +36,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/refresh', {
+      const response = await fetch(`${SERVER_BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: {
           'accept': 'application/json',
@@ -70,6 +76,8 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     accessToken,
     isAuthenticated: !!accessToken,
     isTokenLoading,
+    email,
+    setEmail,
     setAccessToken,
     refreshAuthToken
   };

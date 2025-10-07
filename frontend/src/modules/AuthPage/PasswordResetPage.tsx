@@ -3,12 +3,16 @@ import styles from './AuthPage.module.scss';
 
 import { useState } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
+import { resetRequest } from '../../api/authClient';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const PasswordResetPage: React.FC = () => {
   const [emailInputValue, setEmailInputValue] = useState('');
   const [isSent, setIsSent] = useState(false);
 
   const navigate = useNavigate();
+
+  const { setEmail } = useAuthContext();
 
   const [errorContent, setErrorContent] = useState('');
 
@@ -54,15 +58,9 @@ const PasswordResetPage: React.FC = () => {
 
     if (hasError) return;
 
-    fetch('http://localhost:8000/api/v1/auth/reset-password/request', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        email: emailInputValue
-      })
-    })
+    setEmail(emailInputValue);
+
+    resetRequest(emailInputValue)
       .then(response => {
         if (response.status === 202) {
           setIsSent(true);

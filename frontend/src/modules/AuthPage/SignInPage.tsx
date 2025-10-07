@@ -4,6 +4,7 @@ import { useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { login } from '../../api/authClient';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -76,31 +77,25 @@ const SignInPage: React.FC = () => {
 
     if (hasError) return;
 
-    fetch('http://localhost:8000/api/v1/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        login: emailInputValue,
-        password: passwordInputValue
-      })
-    })
+    login(emailInputValue, passwordInputValue)
       .then(response => {
         switch (response.status) {
           case 200:
-            return response.json();
+            return response.data;
           case 403:
             setPasswordErrorContent(errors.passwordWrong);
-            break;
+            return null;
           case 404:
             setEmailErrorContent(errors.emailNotFound);
-            break;
+            return null;
+          default:
+            return null;
         }
       })
       .then(data => {
+        if (!data) return;
         setAccessToken(data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token)
+        localStorage.setItem('refresh_token', data.refresh_token);
         navigate('/');
       })
   }

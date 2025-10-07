@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './AuthPage.module.scss';
 import { useEffect, useState } from 'react';
+import { activate } from '../../api/authClient';
 
 const FinishRegistrationTokenPage = () => {
   const navigate = useNavigate();
@@ -13,15 +14,7 @@ const FinishRegistrationTokenPage = () => {
   useEffect(() => {
     setIsLoading(true);
 
-    fetch('http://localhost:8000/api/v1/auth/activate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        activation_token: token
-      })
-    })
+    activate(token)
       .then(response => {
         if (response.status === 200) {
           setIsValid(true);
