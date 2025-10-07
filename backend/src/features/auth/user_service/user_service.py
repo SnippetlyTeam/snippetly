@@ -141,3 +141,24 @@ class UserService(UserServiceInterface):
         except SQLAlchemyError:
             await self.db.rollback()
             raise
+
+    async def change_password(
+        self, user: UserModel, old_password: str, new_password: str
+    ) -> None:
+        if not user.verify_password(old_password):
+            raise exc.InvalidPasswordError(
+                "Entered Invalid password! Check your keyboard "
+                "layout or Caps Lock. Forgot your password?"
+            )
+
+        if old_password == new_password:
+            raise exc.InvalidPasswordError(
+                "New password cannot be the same as old password!"
+            )
+
+        user.password = new_password
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise

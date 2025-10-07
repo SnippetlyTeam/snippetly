@@ -87,3 +87,23 @@ class UserServiceInterface(ABC):
                 SQLAlchemyError: If error occurred during deletion
                 or creation new token
         """
+
+    @abstractmethod
+    async def change_password(
+        self, user: UserModel, old_password: str, new_password: str
+    ) -> None:
+        """
+        Method for changing User's password if
+        old password provided and doesn't match the new password
+
+        :param user: User requesting change
+        :type: UserModel
+        :param old_password: Old user's password
+        :type: str
+        :param new_password: New user's password
+        :type: str
+        :return: None
+        :raises InvalidPasswordError: If old password is incorrect
+                and new password the same as old one
+                SQLAlchemyError: If error occurred during new password save
+        """

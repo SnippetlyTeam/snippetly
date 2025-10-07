@@ -75,6 +75,16 @@ class ActivationRequestSchema(BaseModel):
     activation_token: str = Field(..., max_length=64)
 
 
+class ChangePasswordRequestSchema(BaseModel):
+    old_password: str = Field(..., min_length=8, max_length=30)
+    new_password: str = Field(..., min_length=8, max_length=30)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        return password_validation(value)
+
+
 # --- Response ---
 class UserRegistrationResponseSchema(
     EmailBaseSchema, UsernameMixin, BaseModel
