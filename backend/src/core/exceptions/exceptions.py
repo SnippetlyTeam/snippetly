@@ -32,3 +32,7 @@ class SnippetNotFoundError(Exception):
 
 class NoPermissionError(Exception):
     pass
+
+
+class ProfileNotFoundError(Exception):
+    pass
