@@ -15,6 +15,7 @@ import SnippetsPage from "./modules/SnippetsPage/SnippetsPage";
 import SnippetDetailsPage from "./modules/SnippetDetailsPage/SnippetDetailsPage";
 import PublicOnlyRoute from "./components/PublicOnlyRoute/PublicOnlyRoute";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +66,8 @@ export const Root = () => (
           </Route>
         </Routes>
       </AuthProvider>
+
+      <Toaster />
     </Router>
   </QueryClientProvider>
 )

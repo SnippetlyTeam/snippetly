@@ -18,7 +18,11 @@ const ProtectedRoute = () => {
     return <Navigate
       to="/sign-in"
       replace
-      state={{ message: 'You must be signed in to view this page.' }}
+      state={{ 
+        title: 'Sign In Required',
+        message: `You must be signed in to view this page.\nPlease sign in to continue.`,
+        type: 'info'
+      }}
     />;
   }
 

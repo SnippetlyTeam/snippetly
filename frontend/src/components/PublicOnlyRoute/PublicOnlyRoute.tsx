@@ -17,7 +17,11 @@ const PublicOnlyRoute = () => {
     return <Navigate
       to="/snippets"
       replace
-      state={{ message: 'You are already signed in.' }}
+      state={{
+        title: 'Already Signed In',
+        message: 'You are already signed in and cannot access this page.',
+        type: 'info'
+      }}
     />;
   }
 

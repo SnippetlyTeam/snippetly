@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
     email,
     setEmail,
     setAccessToken,
-    refreshAuthToken
+    refreshAuthToken,
   };
 
   if (isTokenLoading) {

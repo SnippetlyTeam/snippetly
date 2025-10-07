@@ -39,7 +39,14 @@ const AuthCallbackPage: React.FC = () => {
         setAccessToken(data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
 
-        navigate('/snippets', { replace: true });
+        navigate('/snippets', {
+          replace: true,
+          state: {
+            title: 'Signed In Successfully',
+            message: 'You have signed in with Google.',
+            type: 'success',
+          }
+        });
       } catch (err: any) {
         setError(err.message || 'An error occurred during authentication.');
       } finally {

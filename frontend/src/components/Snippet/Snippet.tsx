@@ -14,8 +14,9 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
       className={styles.snippet}
       onClick={() => navigate(`/snippets/${snippet.uuid}`)}
     >
-      <h3>{snippet.title}</h3>
-      <p>{snippet.description}</p>
+      <h3 className={styles.title}>{snippet.title}</h3>
+      <p className={styles.language}>Language: {snippet.language}</p>
+      
     </div>
   );
 }

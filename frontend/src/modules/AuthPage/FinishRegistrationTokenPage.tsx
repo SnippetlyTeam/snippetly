@@ -51,7 +51,21 @@ const FinishRegistrationTokenPage = () => {
 
             <MainButton
               content={isValid ? 'Go to Sign In' : 'Go to Sign Up'}
-              onClick={() => { navigate(`/sign-${isValid ? 'In' : 'Up'}`) }}
+              onClick={() => {
+                navigate(`/sign-${isValid ? 'in' : 'up'}`, {
+                  state: isValid
+                    ? {
+                        title: 'Registration Complete',
+                        message: 'Your account is now active. Please sign in to continue.',
+                        type: 'success'
+                      }
+                    : {
+                        title: 'Activation Failed',
+                        message: 'The activation link is invalid or expired. Please sign up again or contact support.',
+                        type: 'error'
+                      }
+                });
+              }}
             />
           </div>
         </>

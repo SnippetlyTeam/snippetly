@@ -5,41 +5,89 @@ import Snippet from '../../components/Snippet/Snippet';
 import type { SnippetType } from '../../types/SnippetType';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
+import { getAll } from '../../api/snippetsClient';
+import toast, { type Toast } from 'react-hot-toast';
+import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {
   const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
   const [searchInputValue, setSearchInputValue] = useState('');
-  const { accessToken } = useAuthContext();
+  const { accessToken, isTokenLoading, isAuthenticated } = useAuthContext();
 
   const [data, setData] = useState<{} | null>(null);
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchSnippets = async () => {
+    if (!accessToken) {
+      setData({ snippets: [] });
+      setSnippets([]);
+      setIsLoading(false);
+      return;
+    }
     try {
-      const response = await fetch(`${SERVER_BASE_URL}/api/v1/snippets`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch snippets');
+      const response = await getAll(accessToken);
+
+      setData(response.data);
+      if (Array.isArray(response.data)) {
+        setSnippets(response.data);
+      } else if (response.data && Array.isArray(response.data.snippets)) {
+        setSnippets(response.data.snippets);
+      } else {
+        setSnippets([]);
       }
-      const result = await response.json();
-      setData(result);
-      setSnippets(result.snippets)
     } catch (error) {
       setData({ snippets: [] });
+      setSnippets([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchSnippets();
-  }, []);
+    if (isTokenLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (accessToken) {
+      setIsLoading(true);
+      fetchSnippets();
+    }
+
+  }, [isTokenLoading, accessToken, isAuthenticated]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (
+      location.state &&
+      (location.state.title || location.state.message || location.state.type)
+    ) {
+      const { title = '', message = '', type = 'info' } = location.state || {};
+
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={title}
+          message={message}
+          type={type}
+        />
+      ), {
+        duration: 2500,
+      });
+
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   return (
     <main className={styles.main}>

@@ -1,10 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './AuthPage.module.scss';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { login } from '../../api/authClient';
+import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import toast, { type Toast } from 'react-hot-toast';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -96,7 +98,14 @@ const SignInPage: React.FC = () => {
         if (!data) return;
         setAccessToken(data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
-        navigate('/');
+        navigate('/snippets', {
+          replace: true,
+          state: {
+            title: 'Signed In Successfully',
+            message: 'You have signed in.',
+            type: 'success'
+          }
+        });
       })
   }
 
@@ -105,6 +114,31 @@ const SignInPage: React.FC = () => {
 
     window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
   }
+
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state && (
+      location.state.title ||
+      location.state.message ||
+      location.state.type
+    )) {
+      const { title = '', message = '', type = 'info' } = location.state || {};
+
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={title}
+          message={message}
+          type={type}
+        />
+      ), {
+        duration: 2500,
+      });
+
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   return (
     <main className={styles.main}>
