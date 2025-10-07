@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.adapters.postgres.models import UserProfileModel
+from src.api.v1.schemas.profiles import ProfileUpdateRequestSchema
 
 
 class ProfileServiceInterface(ABC):
@@ -19,7 +20,7 @@ class ProfileServiceInterface(ABC):
 
     @abstractmethod
     async def update_profile(
-        self, user_id: int, data: dict
+        self, user_id: int, data: ProfileUpdateRequestSchema
     ) -> UserProfileModel:
         """
         Method for updating user's profile
@@ -27,6 +28,7 @@ class ProfileServiceInterface(ABC):
         :param user_id: User's, requesting profile update, id
         :type: int
         :param data: schema with profile update data
+        :type: ProfileUpdateRequestSchema
         :return: Updated user profile record
         :rtype: UserProfileModel
         :raises SQLAlchemyError: If error occurred during profile update

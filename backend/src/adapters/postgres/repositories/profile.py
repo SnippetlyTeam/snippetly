@@ -44,7 +44,7 @@ class UserProfileRepository:
         profile = result.scalar_one_or_none()
         if profile is None:
             raise exc.ProfileNotFoundError(
-                "Profile with this user_id was not found"
+                "Profile with this user ID was not found"
             )
         return profile
 
@@ -71,6 +71,7 @@ class UserProfileRepository:
         if info:
             profile.info = info
 
+        self._db.add(profile)
         return profile
 
     async def update_avatar_url(
@@ -79,6 +80,7 @@ class UserProfileRepository:
         profile: UserProfileModel | None = await self.get_by_user_id(user_id)
 
         profile.avatar_url = avatar_url
+        self._db.add(profile)
         return profile
 
     # --- Delete ---

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -22,11 +22,11 @@ class SnippetCreateSchema(BaseSnippetSchema):
 
 
 class SnippetUpdateRequestSchema(BaseModel):
-    title: str = Field(None, max_length=255)
+    title: Optional[str] = Field(None, max_length=255)
     language: LanguageEnum = Field(None)
-    is_private: bool = Field(None)
-    content: str = Field(None)
-    description: str = Field(None)
+    is_private: Optional[bool] = Field(None)
+    content: Optional[str] = Field(None)
+    description: Optional[str] = Field(None)
 
 
 # --- Responses ---
