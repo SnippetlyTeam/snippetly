@@ -6,6 +6,7 @@ import CrossedEye from './CrossedEye';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { register as registerRequest } from '../../api/authClient';
 
 type SignUpForm = {
   username: string;
@@ -68,14 +69,8 @@ const SignUpPage: React.FC = () => {
   async function handleFormSubmit(form: SignUpForm) {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json();
+      const response = await registerRequest(form.username, form.email, form.password);
+      const data = await response.data;
       if (response.status === 201) {
         navigate('/activate-account');
       } else {
