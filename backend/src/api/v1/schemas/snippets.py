@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.adapters.postgres.models import LanguageEnum
 from .common import BaseListSchema
@@ -22,11 +22,11 @@ class SnippetCreateSchema(BaseSnippetSchema):
 
 
 class SnippetUpdateRequestSchema(BaseModel):
-    title: Optional[str] = None
-    language: Optional[LanguageEnum] = None
-    is_private: Optional[bool] = None
-    content: Optional[str] = None
-    description: Optional[str] = None
+    title: str = Field(None, max_length=255)
+    language: LanguageEnum = Field(None)
+    is_private: bool = Field(None)
+    content: str = Field(None)
+    description: str = Field(None)
 
 
 # --- Responses ---

@@ -13,6 +13,7 @@ from src.adapters.postgres.models import RefreshTokenModel
 from src.adapters.postgres.repositories import UserRepository, TokenRepository
 from src.adapters.redis import blacklist as redis_blacklist
 from src.adapters.redis import common as redis_common
+from src.core.utils.logger import logger
 from .interface import JWTAuthInterface
 
 
@@ -97,10 +98,12 @@ class JWTAuthManager(JWTAuthInterface):
 
         jti = payload.get("jti")
         if not jti:
-            raise jwt.InvalidTokenError("Token missing jti claim")
+            logger.error("Token missing jti claim")
+            raise jwt.InvalidTokenError("Invalid token")
 
         if await self.is_blacklisted(jti):
-            raise jwt.InvalidTokenError("Token is blacklisted")
+            logger.error("Token is blacklisted")
+            raise jwt.InvalidTokenError("Invalid token")
 
         return cast(dict, payload)
 

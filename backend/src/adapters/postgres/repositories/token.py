@@ -4,7 +4,11 @@ from typing import Optional, Tuple, cast
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.models import TokenBaseModel, UserModel
+from src.adapters.postgres.models import (
+    TokenBaseModel,
+    UserModel,
+    ActivationTokenModel,
+)
 
 
 class TokenRepository:
@@ -37,6 +41,15 @@ class TokenRepository:
         result = await self._db.execute(query)
         row = result.one_or_none()
         return cast(tuple | None, row)
+
+    async def get_by_user(
+        self, user_id: int
+    ) -> Optional[ActivationTokenModel]:
+        query = select(ActivationTokenModel).where(
+            self.token_model.user_id == user_id
+        )
+        result = await self._db.execute(query)
+        return result.scalar_one_or_none()
 
     # --- Delete ---
     async def delete(self, token: str) -> None:

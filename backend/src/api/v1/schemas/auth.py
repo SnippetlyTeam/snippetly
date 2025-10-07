@@ -13,7 +13,7 @@ from src.core.security.validation import (
 )
 
 
-class EmailMixin(BaseModel):
+class EmailBaseSchema(BaseModel):
     email: EmailStr = Field(..., max_length=255)
 
     @field_serializer("email")
@@ -41,16 +41,16 @@ class UsernameMixin(BaseModel):
 
 # --- Request ---
 class UserRegistrationRequestSchema(
-    EmailMixin, UsernameMixin, PasswordMixin, BaseModel
+    EmailBaseSchema, UsernameMixin, PasswordMixin, BaseModel
 ):
     pass
 
 
-class PasswordResetRequestSchema(EmailMixin, BaseModel):
+class PasswordResetRequestSchema(EmailBaseSchema, BaseModel):
     pass
 
 
-class PasswordResetCompletionSchema(EmailMixin, PasswordMixin, BaseModel):
+class PasswordResetCompletionSchema(EmailBaseSchema, PasswordMixin, BaseModel):
     password_reset_token: str = Field(...)
 
 
@@ -76,7 +76,9 @@ class ActivationRequestSchema(BaseModel):
 
 
 # --- Response ---
-class UserRegistrationResponseSchema(EmailMixin, UsernameMixin, BaseModel):
+class UserRegistrationResponseSchema(
+    EmailBaseSchema, UsernameMixin, BaseModel
+):
     id: int
     model_config = ConfigDict(from_attributes=True)
 

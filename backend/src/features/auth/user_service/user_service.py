@@ -56,6 +56,31 @@ class UserService(UserServiceInterface):
             await self.db.rollback()
             raise
 
+    async def new_activation_token(self, email: str) -> ActivationTokenModel:
+        user = await self.user_repo.get_by_email(email)
+        if not user:
+            raise exc.UserNotFoundError
+
+        if user.is_active:
+            raise ValueError
+
+        existing_token = await self.activation_token_repo.get_by_user(user.id)
+        if existing_token:
+            await self.activation_token_repo.delete(existing_token.token)
+
+        token = generate_secure_token()
+        new_token = await self.activation_token_repo.create(
+            user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
+        )
+
+        try:
+            await self.db.commit()
+            await self.db.refresh(new_token)
+            return new_token
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
+
     async def activate_account(self, token: str) -> None:
         result = await self.activation_token_repo.get_with_user(token)
         if not result:

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, ActivationTokenModel
 
 
 class UserServiceInterface(ABC):
@@ -72,3 +72,18 @@ class UserServiceInterface(ABC):
                 SQLAlchemyError: If database error occurred
         """
         pass
+
+    @abstractmethod
+    async def new_activation_token(self, email: str) -> ActivationTokenModel:
+        """
+        Method for creating a new activation token and deleting old one
+
+        :param email: User's email address
+        :type: str
+        :return: Activation Token
+        :rtype: ActivationTokenModel
+        :raises UserNotFoundError: If user was not found
+                ValueError: If user is activated
+                SQLAlchemyError: If error occurred during deletion
+                or creation new token
+        """
