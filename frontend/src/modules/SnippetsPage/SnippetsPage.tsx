@@ -97,24 +97,7 @@ const SnippetsPage = () => {
           <MainButton
             content='Create New'
             style={{ width: '150px' }}
-            onClick={() => {
-              fetch(`${SERVER_BASE_URL}/api/v1/snippets/create`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${accessToken}`,
-                },
-                body: JSON.stringify({
-                  title: 'Untitled',
-                  language: 'python',
-                  is_private: false,
-                  content: 'string',
-                  description: 'string',
-                }),
-              })
-                .then(response => response.json())
-                .then(data => setSnippets(prev => [data, ...prev]));
-            }}
+            onClick={() => navigate('/snippets/new')}
           />
         </div>
 

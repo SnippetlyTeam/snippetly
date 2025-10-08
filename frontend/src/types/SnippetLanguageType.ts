@@ -1,0 +1,1 @@
+export type SnippetLanguageType = 'js' | 'jsx' | 'py';

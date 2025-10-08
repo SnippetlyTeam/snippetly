@@ -101,11 +101,7 @@ const SignUpPage: React.FC = () => {
       >
         <div className={styles.inputs}>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="username"
-              className={styles.inputsTitle}
-              id="username-label"
-            >
+            <label htmlFor="username" id="username-label">
               Username
             </label>
             <input
@@ -140,11 +136,7 @@ const SignUpPage: React.FC = () => {
             )}
           </div>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="email"
-              className={styles.inputsTitle}
-              id="email-label"
-            >
+            <label htmlFor="email" id="email-label">
               Email
             </label>
             <input
@@ -177,11 +169,7 @@ const SignUpPage: React.FC = () => {
             )}
           </div>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="password"
-              className={styles.inputsTitle}
-              id="password-label"
-            >
+            <label htmlFor="password" id="password-label">
               Password
             </label>
             <div className={styles.container}>
@@ -226,11 +214,7 @@ const SignUpPage: React.FC = () => {
             )}
           </div>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="confirmPassword"
-              className={styles.inputsTitle}
-              id="confirmPassword-label"
-            >
+            <label htmlFor="confirmPassword" id="confirmPassword-label">
               Confirm password
             </label>
             <div className={styles.container}>

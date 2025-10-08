@@ -1,8 +1,11 @@
 .snippet {
   @include set-transition(background-color);
 
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 140px;
   background-color: var(--secondary-bg-color);
-  height: 120px;
   width: 300px;
   border-radius: 8px;
   box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.12);
@@ -12,6 +15,12 @@
   &:hover {
     background-color: var(--snippet-hover-bg-color);
   }
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .title {
@@ -25,4 +34,31 @@
   font-size: 14px;
   margin: 0;
   padding: 0;
+}
+
+.content {
+  position: relative;
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  font-size: 12px;
+  height: 48px;
+  overflow: hidden;
+  white-space: pre-wrap;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    pointer-events: none;
+    background: linear-gradient(to top, #1e1e1e, transparent);
+    z-index: 1;
+  }
+  padding: 12px;
+}
+
+.line {
+  border: 1px solid var(--notification-color);
 }

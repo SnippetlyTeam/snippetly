@@ -155,7 +155,6 @@ const SignInPage: React.FC = () => {
           <div className={styles.inputsItem}>
             <label
               htmlFor="usernameOrEmail"
-              className={styles.inputsTitle}
               id="usernameOrEmail-label"
             >
               Email or username
@@ -189,11 +188,7 @@ const SignInPage: React.FC = () => {
             )}
           </div>
           <div className={styles.inputsItem}>
-            <label
-              htmlFor="password"
-              className={styles.inputsTitle}
-              id="password-label"
-            >
+            <label htmlFor="password" id="password-label">
               Password
             </label>
             <div className={styles.container}>

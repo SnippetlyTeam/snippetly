@@ -14,7 +14,19 @@ const LandingPage: React.FC = () => {
         </p>
       </div>
 
-      <CodeEditor />
+      <CodeEditor startValue={
+        [
+          '// Save and share your favorite code snippets!',
+          'function saveSnippet(snippet) {',
+          '  if (!snippet) {',
+          '    console.log("Oops! No snippet to save.");',
+          '    return;',
+          '  }',
+          '  console.log(`Snippet saved: "${snippet}"`);',
+          '}',
+          '',
+          "saveSnippet(\"console.log('Hello, snippets!');\");"
+        ].join('\n')} />
       <MainButton content='Start Coding' />
     </main>
   )

@@ -170,7 +170,6 @@ const SetNewPasswordPage: React.FC = () => {
               <div className={styles.inputsItem}>
                 <label
                   htmlFor="password"
-                  className={styles.inputsTitle}
                   id="password-label"
                 >
                   Password
@@ -234,7 +233,6 @@ const SetNewPasswordPage: React.FC = () => {
               <div className={styles.inputsItem}>
                 <label
                   htmlFor="confirmPassword"
-                  className={styles.inputsTitle}
                   id="confirmPassword-label"
                 >
                   Confirm password

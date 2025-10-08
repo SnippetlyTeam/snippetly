@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { SnippetType } from '../types/SnippetType';
+import type { NewSnippetType } from '../types/NewSnippetType';
 
 const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
 
@@ -25,8 +26,8 @@ export const getById = (uuid: string, token: string): Promise<AxiosResponse<Snip
   );
 };
 
-export const create = (snippet: SnippetType, token: string): Promise<AxiosResponse<SnippetType>> => {
-  return snippetsClient.post<SnippetType>(
+export const create = (snippet: NewSnippetType, token: string | null): Promise<AxiosResponse<SnippetType>> => {
+  return snippetsClient.post(
     '/create',
     snippet,
     { headers: { 'Authorization': `Bearer ${token}` } },
@@ -35,7 +36,7 @@ export const create = (snippet: SnippetType, token: string): Promise<AxiosRespon
 
 export const update = (
   uuid: string,
-  snippet: Partial<SnippetType>,
+  snippet: Partial<NewSnippetType>,
   token: string,
 ): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.patch<SnippetType>(
