@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
           '}',
           '',
           "saveSnippet(\"console.log('Hello, snippets!');\");"
-        ].join('\n')} language='js' />
+        ].join('\n')} language='javascript' />
       <MainButton content='Start Coding' />
     </main>
   )

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './SnippetsPage.module.scss';
 import Snippet from '../../components/Snippet/Snippet';
@@ -11,8 +11,6 @@ import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {
-  const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
-
   const [searchInputValue, setSearchInputValue] = useState('');
   const { accessToken, isTokenLoading, isAuthenticated } = useAuthContext();
 

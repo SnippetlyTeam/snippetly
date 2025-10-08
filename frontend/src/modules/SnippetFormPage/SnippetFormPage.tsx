@@ -1,72 +1,114 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './SnippetFormPage.module.scss';
 import CodeEditor from '../../components/CodeEditor/CodeEditor';
-import type { SnippetLanguageType } from '../../types/SnippetLanguageType';
 import MainButton from '../../components/MainButton/MainButton';
 import { create, getById, update } from '../../api/snippetsClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useParams } from 'react-router-dom';
 import { Loader } from '../../components/Loader';
+import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
+import type { NewSnippetType } from '../../types/NewSnippetType';
+import type { SnippetType } from '../../types/SnippetType';
+import { useMutation } from '@tanstack/react-query';
 
 const SnippetFormPage = () => {
   const { snippetId } = useParams();
   const isEditMode = !!snippetId;
+  const languages: string[] = ['JavaScript', 'Python'];
+
+  const emptySnippet: NewSnippetType = {
+    title: '',
+    language: languages[0],
+    is_private: false,
+    content: '',
+    description: '',
+  }
 
   const [isLanguageDropDownOpen, setIsLanguageDropdownOpen] = useState(false);
-  const languages: string[] = ['JavaScript', 'Python'];
   const { accessToken } = useAuthContext();
 
-  const [title, setTitle] = useState('');
-  const [language, setLanguage] = useState(languages[0]);
-  const [content, setContent] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [description, setDescription] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const {
+    mutate: createSnippet,
+    isPending: isCreating,
+  } = useMutation({
+    mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
+    onSuccess: (response) => setSnippet(response.data),
+  });
+
+  const {
+    mutate: updateSnippet,
+    isPending: isUpdating,
+  } = useMutation({
+    mutationFn: (newSnippet: NewSnippetType) => {
+      return update(snippetId as string, newSnippet, accessToken)
+    },
+    onSuccess: (response) => {
+      setSnippet(response.data);
+    },
+  });
+
+  useOnClickOutside(dropdownRef as React.RefObject<HTMLElement>, () => {
+    setIsLanguageDropdownOpen(false);
+  });
+
+  const [snippet, setSnippet] = useState<NewSnippetType | SnippetType>(emptySnippet);
+
   const [isLoading, setIsLoading] = useState(isEditMode);
 
   function handleLanguageChange(lang: string) {
-    setLanguage(lang);
+    setSnippet(prev => ({
+      ...prev,
+      language: lang
+    }));
     setIsLanguageDropdownOpen(false);
   }
 
-  function formatLanguage(language: string): SnippetLanguageType {
-    switch (language) {
+  function formatLanguage(language: string): string {
+    switch (language.toLowerCase()) {
+      case 'javascript':
+        return 'JavaScript';
+      case 'python':
+        return 'Python';
       case 'JavaScript':
-        return 'js';
+        return 'javascript';
       case 'Python':
-        return 'py';
+        return 'python';
       default:
-        return 'js';
+        return 'javascript';
     }
   }
 
-  function validateForm() {
-    if (!title) {
-      return false;
-    }
-
-    if (!content) {
-      return false;
-    }
-
-    return true;
+  function handleContentChange(value: string) {
+    setSnippet(prev => ({
+      ...prev,
+      content: value,
+    }));
   }
 
   async function handleSnippetSave(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    if (!snippet) return;
+
     if (isEditMode) {
-      await update(snippetId, {
-        title,
-      }, accessToken);
+      updateSnippet({
+        title: snippet.title,
+        language: snippet.language.toLowerCase(),
+        is_private: snippet.is_private,
+        content: snippet.content,
+        description: snippet.description,
+      });
       return;
     }
 
-    await create({
-      title,
-      language: language.toLowerCase(),
-      is_private: isPrivate,
-      content,
-      description,
-    }, accessToken);
+    createSnippet({
+      title: snippet.title,
+      language: snippet.language.toLowerCase(),
+      is_private: snippet.is_private,
+      content: snippet.content,
+      description: snippet.description,
+    });
   }
 
   useEffect(() => {
@@ -74,11 +116,7 @@ const SnippetFormPage = () => {
       getById(snippetId, accessToken)
         .then(response => {
           if (response.status === 200) {
-            setTitle(response.data.title);
-            setLanguage(response.data.language);
-            setIsPrivate(response.data.is_private);
-            setContent(response.data.content);
-            setDescription(response.data.description);
+            setSnippet(response.data);
           }
         })
         .finally(() => {
@@ -102,8 +140,20 @@ const SnippetFormPage = () => {
               type="text"
               id='title'
               placeholder='Enter snippet title'
-              value={title}
-              onChange={event => setTitle(event.target.value)}
+              value={snippet.title ?? ''}
+              onChange={event =>
+                setSnippet(prev =>
+                  prev
+                    ? { ...prev, title: event.target.value }
+                    : {
+                      title: event.target.value,
+                      language: '',
+                      is_private: false,
+                      content: '',
+                      description: '',
+                    }
+                )
+              }
               required
             />
           </div>
@@ -111,16 +161,16 @@ const SnippetFormPage = () => {
           <div className={styles.container}>
             <div className={styles.formItem}>
               <label htmlFor="language">Language</label>
-              <div className={styles.dropdown}>
+              <div ref={dropdownRef} className={styles.dropdown}>
                 <button
                   type="button"
                   className={`
-              ${styles.dropdownTrigger} 
-              ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
-            `}
+                    ${styles.dropdownTrigger} 
+                    ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
+                  `}
                   onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
                 >
-                  {language}
+                  {formatLanguage(snippet.language)}
                 </button>
 
                 {isLanguageDropDownOpen && (
@@ -153,13 +203,16 @@ const SnippetFormPage = () => {
           <div className={styles.fromItem}>
             <label htmlFor="code">Code</label>
             <CodeEditor
-              value={content}
-              setValue={setContent}
-              language={formatLanguage(language)}
+              value={snippet.content}
+              onChange={handleContentChange}
+              language={formatLanguage(snippet.language)}
             />
           </div>
 
-          <MainButton content='Save Snippet' type="submit" />
+          <MainButton
+            content={(isCreating || isUpdating) ? <Loader buttonContent /> : 'Save Snippet'}
+            type="submit"
+          />
         </form>
       )}
     </main>

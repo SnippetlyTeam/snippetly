@@ -1,7 +1,16 @@
 import styles from './Loader.module.scss';
 
-export const Loader = () => (
+type Props = {
+  buttonContent?: boolean
+}
+
+export const Loader: React.FC<Props> = ({ buttonContent }) => (
   <div className={styles.loader}>
-    <div className={styles.loaderContent} />
+    <div
+      className={`
+        ${styles.loaderContent} 
+        ${buttonContent ? styles.buttonContent : ''}
+      `}
+    />
   </div>
 );

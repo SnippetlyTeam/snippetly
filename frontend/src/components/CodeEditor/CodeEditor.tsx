@@ -3,24 +3,23 @@ import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
-import type { SnippetLanguageType } from '../../types/SnippetLanguageType';
 
 type Props = {
-  language: SnippetLanguageType
+  language: string
   value?: string
-  setValue?: (value: string) => void
+  onChange?: (value: string) => void
 }
 
 const CodeEditor: React.FC<Props> = ({
   language,
   value = '',
-  setValue = () => { },
+  onChange = () => { },
 }) => (
   <div className={styles.editor}>
     <CodeMirror
       value={value}
       extensions={
-        language === 'js'
+        language === 'javascript'
           ? [javascript({ jsx: true })]
           : [python()]
       }
@@ -29,7 +28,7 @@ const CodeEditor: React.FC<Props> = ({
         maxHeight: '350px',
         overflowY: 'auto'
       }}
-      onChange={setValue}
+      onChange={onChange}
     />
   </div>
 );

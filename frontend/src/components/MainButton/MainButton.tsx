@@ -3,7 +3,7 @@ import styles from './MainButton.module.scss';
 import React from 'react';
 
 type Props = {
-  content: string;
+  content: React.ReactNode;
   [key: string]: any;
 };
 
