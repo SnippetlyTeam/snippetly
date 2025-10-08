@@ -10,7 +10,7 @@ from src.adapters.postgres.models import (
     ActivationTokenModel,
     PasswordResetTokenModel,
 )
-from src.adapters.postgres.repositories import UserRepository, TokenRepository
+from src.adapters.postgres.repositories import UserRepository, TokenRepository, UserProfileRepository
 from src.core.config import Settings
 from src.core.security import generate_secure_token
 from src.features.auth import UserServiceInterface
@@ -18,13 +18,13 @@ from src.features.auth import UserServiceInterface
 
 class UserService(UserServiceInterface):
     def __init__(self, db: AsyncSession, settings: Settings):
-        self.db = db
+        self._db = db
         self.settings = settings
 
-        self.user_repo = UserRepository(db)
-        self.activation_token_repo = TokenRepository(db, ActivationTokenModel)
+        self.user_repo = UserRepository(self._db)
+        self.activation_token_repo = TokenRepository(self._db, ActivationTokenModel)
         self.password_reset_token_repo = TokenRepository(
-            db, PasswordResetTokenModel
+            self._db, PasswordResetTokenModel
         )
 
     async def register_user(
@@ -39,21 +39,23 @@ class UserService(UserServiceInterface):
             if existing_user.username == username:
                 raise exc.UserAlreadyExistsError("This username is taken.")
 
+        profile_repo = UserProfileRepository(self._db)
         token = generate_secure_token()
 
         user = await self.user_repo.create(email, username, password)
-        await self.db.flush()
+        await self._db.flush()
+        profile = await profile_repo.create(user.id)
         activation_token = await self.activation_token_repo.create(
             user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
         )
 
         try:
-            await self.db.commit()
-            await self.db.refresh(user)
-            await self.db.refresh(activation_token)
+            await self._db.commit()
+            await self._db.refresh(user)
+            await self._db.refresh(activation_token)
             return user, token
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise
 
     async def new_activation_token(self, email: str) -> ActivationTokenModel:
@@ -74,11 +76,11 @@ class UserService(UserServiceInterface):
         )
 
         try:
-            await self.db.commit()
-            await self.db.refresh(new_token)
+            await self._db.commit()
+            await self._db.refresh(new_token)
             return new_token
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise
 
     async def activate_account(self, token: str) -> None:
@@ -96,10 +98,10 @@ class UserService(UserServiceInterface):
         await self.activation_token_repo.delete(token)
 
         try:
-            await self.db.commit()
-            await self.db.refresh(user)
+            await self._db.commit()
+            await self._db.refresh(user)
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise
 
     async def reset_password_token(self, email: str) -> Tuple[UserModel, str]:
@@ -113,11 +115,11 @@ class UserService(UserServiceInterface):
         )
 
         try:
-            await self.db.commit()
-            await self.db.refresh(password_reset_token)
+            await self._db.commit()
+            await self._db.refresh(password_reset_token)
             return user, token
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise
 
     async def reset_password_complete(
@@ -136,10 +138,10 @@ class UserService(UserServiceInterface):
         await self.password_reset_token_repo.delete(token)
 
         try:
-            await self.db.commit()
-            await self.db.refresh(user)
+            await self._db.commit()
+            await self._db.refresh(user)
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise
 
     async def change_password(
@@ -158,7 +160,7 @@ class UserService(UserServiceInterface):
 
         user.password = new_password
         try:
-            await self.db.commit()
+            await self._db.commit()
         except SQLAlchemyError:
-            await self.db.rollback()
+            await self._db.rollback()
             raise

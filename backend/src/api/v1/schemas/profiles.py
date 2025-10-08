@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.adapters.postgres.models import GenderEnum
 
@@ -17,7 +17,8 @@ class BaseProfileSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     @field_validator("date_of_birth")
-    def validate_birth_date(cls, v: Optional[date]) -> date:
+    @classmethod
+    def validate_data_of_birth(cls, v: Optional[date]) -> date:
         if v and v > date.today():
             raise ValueError("Date of birth cannot be in the future")
         return v
@@ -26,10 +27,6 @@ class BaseProfileSchema(BaseModel):
 # --- Requests ---
 class ProfileUpdateRequestSchema(BaseProfileSchema):
     pass
-
-
-class AvatarUploadRequestSchema(BaseModel):
-    avatar_url: HttpUrl = Field(...)
 
 
 # --- Responses ---

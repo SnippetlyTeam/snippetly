@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from fastapi import UploadFile
+
 from src.adapters.postgres.models import UserProfileModel
 from src.api.v1.schemas.profiles import ProfileUpdateRequestSchema
 
@@ -49,12 +51,15 @@ class ProfileServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def set_profile_avatar(self, user_id: int, avatar_url: str) -> None:
+    async def set_profile_avatar(
+        self, user_id: int, avatar: UploadFile
+    ) -> None:
         """
         Method for setting user's profile avatar
 
         :param user_id: User's, requesting avatar setting, id
-        :param avatar_url: URL of avatar image
+        :param avatar: Uploaded profile avatar
+        :type: fastapi.UploadFile
         :return: None
         :raises SQLAlchemyError: If error occurred during profile avatar set
                 ProfileNotFoundError: If profile doesn't exist

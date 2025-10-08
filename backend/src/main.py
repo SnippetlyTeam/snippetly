@@ -3,6 +3,7 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from src.adapters.mongo.client import init_mongo_client
 from src.api.v1.routes import v1_router
@@ -35,4 +36,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount(
+    "/static",
+    StaticFiles(directory=settings.PROJECT_ROOT / "static"),
+    name="static"
+)
 app.include_router(v1_router, prefix="/api")

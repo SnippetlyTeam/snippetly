@@ -60,6 +60,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
+      - ./backend/static/avatars:/app/static/avatars
 
   migrate:
     build:

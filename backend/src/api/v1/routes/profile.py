@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi.params import File
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.api.docs.auth_error_examples as exm
@@ -10,7 +11,6 @@ from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.api.v1.schemas.profiles import (
     ProfileResponseSchema,
-    AvatarUploadRequestSchema,
     ProfileUpdateRequestSchema,
 )
 from src.core.dependencies.auth import get_current_user
@@ -96,16 +96,102 @@ async def update_profile_details(
     return ProfileResponseSchema.model_validate(profile)
 
 
-@router.post("/avatar", summary="Set user's profile avatar")
-async def set_profile_avatar(
-    data: AvatarUploadRequestSchema,
-    user: Annotated[UserModel, Depends(get_current_user)],
-    service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
-) -> MessageResponseSchema: ...
-
-
-@router.delete("/avatar", summary="Delete user's profile avatar")
+@router.delete(
+    "/avatar",
+    summary="Delete user's profile avatar",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples={
+                **exm.NOT_FOUND_ERRORS_EXAMPLES,
+                "profile_not_found": "Profile with this user ID was not found",
+            },
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Something went wrong during "
+                "avatar deletion"
+            },
+        ),
+    },
+)
 async def delete_profile_avatar(
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
-) -> MessageResponseSchema: ...
+) -> MessageResponseSchema:
+    try:
+        await service.delete_profile_avatar(user.id)
+    except exc.ProfileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong during avatar deletion",
+        ) from e
+    return MessageResponseSchema(
+        message="Profile avatar has been deleted successfully"
+    )
+
+
+@router.post(
+    "/avatar",
+    summary="Set user's profile avatar",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples={
+                **exm.NOT_FOUND_ERRORS_EXAMPLES,
+                "profile_not_found": "Profile with this user ID was not found",
+            },
+        ),
+        422: create_error_examples(
+            description="Unprocessable Entity",
+            examples={
+                "size": "Image size exceeds 2 MB limit",
+                "error": "Invalid image format",
+                "invalid_format": "Unsupported image format: "
+                "{image_format}. Use one of: JPEG, PNG, WEBP",
+            },
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={"internal_server": "Something went wrong"},
+        ),
+    },
+)
+async def set_profile_avatar(
+    user: Annotated[UserModel, Depends(get_current_user)],
+    service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
+    avatar: Annotated[UploadFile, File(...)],
+) -> MessageResponseSchema:
+    try:
+        await service.set_profile_avatar(user.id, avatar)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e)) from e
+    except exc.ProfileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong",
+        ) from e
+    return MessageResponseSchema(
+        message="Profile avatar has been set successfully"
+    )
