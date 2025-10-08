@@ -6,7 +6,7 @@ class StorageInterface(ABC):
     @abstractmethod
     def upload_file(
         self, file_name: str, file_data: Union[bytes, bytearray]
-    ) -> None:
+    ) -> str:
         """
         Uploads a file to the storage.
 
@@ -25,5 +25,28 @@ class StorageInterface(ABC):
 
         :param file_name: The name of the file stored in the bucket.
         :return: The full URL to access the file.
+        """
+        pass
+
+    @abstractmethod
+    def delete_file(self, file_url: str) -> None:
+        """
+        Method for file deletion
+
+        :param file_url: The URL of the file to be deleted.
+        :type: str
+        :return: None
+        """
+        pass
+
+    @abstractmethod
+    def file_exists(self, file_url: str) -> bool:
+        """
+        Method that checks if a file exists.
+
+        :param file_url: The URL of the file.
+        :type: str
+        :return: Boolean value if the file exists.
+        :rtype: bool
         """
         pass

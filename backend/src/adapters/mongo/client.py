@@ -8,7 +8,9 @@ settings = get_settings()
 
 
 async def init_mongo_client() -> None:
-    client: AsyncMongoClient = AsyncMongoClient(settings.mongodb_url)
+    client: AsyncMongoClient = AsyncMongoClient(
+        settings.mongodb_url, maxPoolSize=10, minPoolSize=1
+    )
     await init_beanie(
         database=client.snippetly, document_models=[SnippetDocument]
     )

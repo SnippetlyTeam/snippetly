@@ -19,6 +19,7 @@ dependencies = [
     "bcrypt>=4.3.0",
     "aiosmtplib>=4.0.2",
     "aiohttp>=3.12.15",
+    "pillow>=11.3.0",
 ]
 
 [dependency-groups]
