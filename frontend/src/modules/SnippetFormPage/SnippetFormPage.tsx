@@ -57,14 +57,6 @@ const SnippetFormPage = () => {
 
   const [isLoading, setIsLoading] = useState(isEditMode);
 
-  function handleLanguageChange(lang: string) {
-    setSnippet(prev => ({
-      ...prev,
-      language: lang
-    }));
-    setIsLanguageDropdownOpen(false);
-  }
-
   function formatLanguage(language: string): string {
     switch (language.toLowerCase()) {
       case 'javascript':
@@ -80,11 +72,15 @@ const SnippetFormPage = () => {
     }
   }
 
-  function handleContentChange(value: string) {
+  function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
     setSnippet(prev => ({
       ...prev,
-      content: value,
+      [key]: value,
     }));
+
+    if (key === 'language') {
+      setIsLanguageDropdownOpen(false);
+    }
   }
 
   async function handleSnippetSave(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -127,7 +123,7 @@ const SnippetFormPage = () => {
 
   return (
     <main className={styles.main}>
-      <h2>Create a New Snippet</h2>
+      <h2>{isEditMode ? 'Edit a Snippet' : 'Create a New Snippet'}</h2>
 
       {isLoading ? (
         <Loader />
@@ -158,6 +154,20 @@ const SnippetFormPage = () => {
             />
           </div>
 
+          <div className={styles.formItem}>
+            <label htmlFor="description">Description</label>
+            <textarea
+              name="description"
+              id="description"
+              value={snippet.description}
+              className={styles.textarea}
+              maxLength={500}
+              onChange={event => {
+                handleSnippetDetailsChange('description', event.target.value);
+              }}
+            ></textarea>
+          </div>
+
           <div className={styles.container}>
             <div className={styles.formItem}>
               <label htmlFor="language">Language</label>
@@ -179,7 +189,9 @@ const SnippetFormPage = () => {
                       <button
                         key={lang}
                         type="button"
-                        onClick={() => handleLanguageChange(lang)}
+                        name="language"
+                        value={lang}
+                        onClick={() => handleSnippetDetailsChange('language', lang)}
                         className={styles.dropdownItem}
                       >
                         {lang}
@@ -198,13 +210,34 @@ const SnippetFormPage = () => {
                 id='tags'
               />
             </div>
+
+            <div className={styles.formItem}>
+              <label htmlFor="visibility">Visibility</label>
+              <div className={styles.visibility}>
+                <input
+                  type="checkbox"
+                  name="visibility"
+                  checked={snippet.is_private}
+                  onChange={() => handleSnippetDetailsChange('is_private', !snippet.is_private)}
+                  className={styles.checkbox}
+                />
+                <span className={styles.visibilityState}>
+                  {snippet.is_private ? 'Private' : 'Public'}
+                </span>
+                <span className={styles.hint}>
+                  {snippet.is_private
+                    ? '(Only you can see)'
+                    : '(Visible to everyone)'}
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.fromItem}>
+          <div className={styles.formItem}>
             <label htmlFor="code">Code</label>
             <CodeEditor
               value={snippet.content}
-              onChange={handleContentChange}
+              onChange={(value) => handleSnippetDetailsChange('content', value)}
               language={formatLanguage(snippet.language)}
             />
           </div>
