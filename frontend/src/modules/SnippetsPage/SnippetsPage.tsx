@@ -97,7 +97,7 @@ const SnippetsPage = () => {
           <MainButton
             content='Create New'
             style={{ width: '150px' }}
-            onClick={() => navigate('/snippets/new')}
+            onClick={() => navigate('/snippets/create')}
           />
         </div>
 

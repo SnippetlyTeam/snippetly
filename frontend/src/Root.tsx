@@ -16,7 +16,7 @@ import SnippetDetailsPage from "./modules/SnippetDetailsPage/SnippetDetailsPage"
 import PublicOnlyRoute from "./components/PublicOnlyRoute/PublicOnlyRoute";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
-import CreateSnippetPage from "./modules/CreateSnippetPage/CreateSnippetPage";
+import SnippetFormPage from "./modules/SnippetFormPage/SnippetFormPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,8 +61,8 @@ export const Root = () => (
             <Route element={<ProtectedRoute />}>
               <Route path="snippets">
                 <Route index element={<SnippetsPage />} />
-                <Route path="new" element={<CreateSnippetPage />} />
-                <Route path="new/:snippetId" element={<CreateSnippetPage />} />
+                <Route path="create" element={<SnippetFormPage />} />
+                <Route path="edit/:snippetId" element={<SnippetFormPage />} />
                 <Route path=":snippetId" element={<SnippetDetailsPage />} />
               </Route>
             </Route>

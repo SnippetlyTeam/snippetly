@@ -21,10 +21,8 @@ const CodeEditor: React.FC<Props> = ({
       value={value}
       extensions={
         language === 'js'
-          ? [javascript()]
-          : language === 'jsx'
-            ? [javascript({ jsx: true })]
-            : [python()]
+          ? [javascript({ jsx: true })]
+          : [python()]
       }
       theme={oneDark}
       style={{
