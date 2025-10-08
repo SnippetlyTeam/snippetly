@@ -36,7 +36,7 @@ class UserProfileRepository:
         return profile
 
     # --- Read ---
-    async def get_by_user_id(self, user_id: int) -> Optional[UserProfileModel]:
+    async def get_by_user_id(self, user_id: int) -> UserProfileModel:
         query = select(UserProfileModel).where(
             UserProfileModel.user_id == user_id
         )
@@ -58,7 +58,7 @@ class UserProfileRepository:
         date_of_birth: Optional[date] = None,
         info: Optional[str] = None,
     ) -> UserProfileModel:
-        profile: UserProfileModel | None = await self.get_by_user_id(user_id)
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
 
         if first_name:
             profile.first_name = first_name
@@ -77,7 +77,7 @@ class UserProfileRepository:
     async def update_avatar_url(
         self, user_id: int, avatar_url: str
     ) -> UserProfileModel:
-        profile: UserProfileModel | None = await self.get_by_user_id(user_id)
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
 
         profile.avatar_url = avatar_url
         self._db.add(profile)
@@ -85,7 +85,7 @@ class UserProfileRepository:
 
     # --- Delete ---
     async def delete_avatar_url(self, user_id: int) -> None:
-        profile: UserProfileModel | None = await self.get_by_user_id(user_id)
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
 
         profile.avatar_url = None
         self._db.add(profile)

@@ -23,7 +23,7 @@ class SnippetCreateSchema(BaseSnippetSchema):
 
 class SnippetUpdateRequestSchema(BaseModel):
     title: Optional[str] = Field(None, max_length=255)
-    language: LanguageEnum = Field(None)
+    language: Optional[LanguageEnum] = Field(None)
     is_private: Optional[bool] = Field(None)
     content: Optional[str] = Field(None)
     description: Optional[str] = Field(None)

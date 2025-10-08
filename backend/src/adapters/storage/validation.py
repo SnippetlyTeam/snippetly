@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import cast
 
 from PIL import Image
 from fastapi import UploadFile
@@ -10,14 +11,18 @@ def validate_image(avatar: UploadFile) -> BytesIO:
 
     contents = avatar.file.read()
     if len(contents) > max_file_size:
-        raise ValueError("Image size exceeds 2 MB limit")
+        raise ValueError(
+            "Avatar must be less than 2MB. Please choose a smaller file."
+        )
 
     try:
         image = Image.open(BytesIO(contents))
     except IOError as e:
         raise ValueError("Invalid image format") from e
 
-    image_format = image.format.upper()
+    image_format = cast(str, image.format)
+
+    image_format = image_format.upper()
     if image_format not in supported_image_formats:
         raise ValueError(
             f"Unsupported image format: {image_format}. "

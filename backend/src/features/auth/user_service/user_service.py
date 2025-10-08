@@ -10,7 +10,11 @@ from src.adapters.postgres.models import (
     ActivationTokenModel,
     PasswordResetTokenModel,
 )
-from src.adapters.postgres.repositories import UserRepository, TokenRepository, UserProfileRepository
+from src.adapters.postgres.repositories import (
+    UserRepository,
+    TokenRepository,
+    UserProfileRepository,
+)
 from src.core.config import Settings
 from src.core.security import generate_secure_token
 from src.features.auth import UserServiceInterface
@@ -22,7 +26,9 @@ class UserService(UserServiceInterface):
         self.settings = settings
 
         self.user_repo = UserRepository(self._db)
-        self.activation_token_repo = TokenRepository(self._db, ActivationTokenModel)
+        self.activation_token_repo = TokenRepository(
+            self._db, ActivationTokenModel
+        )
         self.password_reset_token_repo = TokenRepository(
             self._db, PasswordResetTokenModel
         )
@@ -44,7 +50,7 @@ class UserService(UserServiceInterface):
 
         user = await self.user_repo.create(email, username, password)
         await self._db.flush()
-        profile = await profile_repo.create(user.id)
+        await profile_repo.create(user.id)
         activation_token = await self.activation_token_repo.create(
             user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
         )

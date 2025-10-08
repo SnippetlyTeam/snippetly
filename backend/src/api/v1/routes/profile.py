@@ -192,6 +192,4 @@ async def set_profile_avatar(
             status_code=500,
             detail="Something went wrong",
         ) from e
-    return MessageResponseSchema(
-        message="Profile avatar has been set successfully"
-    )
+    return MessageResponseSchema(message="Profile picture updated")

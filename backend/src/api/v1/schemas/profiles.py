@@ -18,7 +18,7 @@ class BaseProfileSchema(BaseModel):
 
     @field_validator("date_of_birth")
     @classmethod
-    def validate_data_of_birth(cls, v: Optional[date]) -> date:
+    def validate_data_of_birth(cls, v: date) -> date:
         if v and v > date.today():
             raise ValueError("Date of birth cannot be in the future")
         return v

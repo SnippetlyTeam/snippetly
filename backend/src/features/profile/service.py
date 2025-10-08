@@ -26,9 +26,9 @@ class ProfileService(ProfileServiceInterface):
     async def update_profile(
         self, user_id: int, data: ProfileUpdateRequestSchema
     ) -> UserProfileModel:
-        new_data = data.model_dump()
-        new_data["user_id"] = user_id
-        profile = await self._repo.update(new_data)
+        profile = await self._repo.update(
+            user_id=user_id, **data.model_dump(exclude_unset=True)
+        )
 
         try:
             await self._db.commit()
@@ -85,7 +85,9 @@ class ProfileService(ProfileServiceInterface):
         from uuid import uuid4
         from pathlib import Path
 
-        ext = Path(avatar.filename).suffix or ".png"
+        filename = avatar.filename if avatar.filename is not None else ""
+
+        ext = Path(filename).suffix or ".png"
         file_name = f"{uuid4()}{ext}"
 
         avatar_url = self._storage.upload_file(

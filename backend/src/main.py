@@ -39,6 +39,6 @@ app.add_middleware(
 app.mount(
     "/static",
     StaticFiles(directory=settings.PROJECT_ROOT / "static"),
-    name="static"
+    name="static",
 )
 app.include_router(v1_router, prefix="/api")

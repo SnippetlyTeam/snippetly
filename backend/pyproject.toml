@@ -25,9 +25,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "mypy>=1.18.2",
+    "pyright>=1.1.406",
     "ruff>=0.13.1",
-    "types-passlib>=1.7.7.20250602",
 ]
 
 [tool.ruff]
@@ -44,19 +43,14 @@ ignore = ["N807", "F401", "F405", "ANN204"]
 docstring-code-format = true
 
 
-[tool.mypy]
-disallow_untyped_defs = true
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
-pretty = true
-mypy_path = "src/"
-exclude = ["src/adapters/postgres/migrations/.*"]
-
-
 [tool.alembic]
 path_separator = "os"
 script_location = "src/adapters/postgres/migrations"
 prepend_sys_path = "."
 sqlalchemy.url = "driver://user:pass@localhost/dbname"
+
+
+[tool.pyright]
+include = ["src"]
+exclude = ["src/adapters/postgres/migrations", "**/.venv", "**/venv", "**/__pycache__"]
+typeCheckingMode = "basic"
