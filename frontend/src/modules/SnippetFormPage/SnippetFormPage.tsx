@@ -107,6 +107,43 @@ const SnippetFormPage = () => {
     }
   }
 
+  function validateForm() {
+    let isValid = true;
+
+    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
+      setTitleError('Please enter a title for your snippet');
+      isValid = false;
+    }
+
+    if (!snippet.content.trim()) {
+      setContentError('Snippet must contain code');
+      isValid = false;
+    }
+
+    if (snippet.content.length > 50000) {
+      setContentError('Snippet exceeds size limit of 10MB');
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  function isFormValid() {
+    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
+      return false;
+    }
+
+    if (!snippet.content.trim()) {
+      return false;
+    }
+
+    if (snippet.content.length > 50000) {
+      return false;
+    }
+
+    return true
+  }
+
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
     if (key === 'title') {
       setTitleError('');
@@ -134,24 +171,9 @@ const SnippetFormPage = () => {
     event.preventDefault();
     if (!snippet) return;
 
-    let hasError = false;
+    let isValid = validateForm();
 
-    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
-      setTitleError('Please enter a title for your snippet');
-      hasError = true;
-    }
-
-    if (!snippet.content.trim()) {
-      setContentError('Snippet must contain code');
-      hasError = true;
-    }
-
-    if (snippet.content.length > 50000) {
-      setContentError('Snippet exceeds size limit of 10MB');
-      hasError = true;
-    }
-
-    if (hasError) return;
+    if (!isValid) return;
 
     if (isEditMode) {
       updateSnippet({
@@ -374,6 +396,7 @@ const SnippetFormPage = () => {
               type="submit"
               aria-label="Save Snippet"
               onClick={() => { }}
+              disabled={!isFormValid()}
             />
           </form>
         </>
