@@ -11,6 +11,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import toast, { type Toast } from 'react-hot-toast';
 import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import GoogleSignIn from './GoogleSignIn';
 
 type SignUpForm = {
   username: string;
@@ -121,6 +122,12 @@ const SignUpPage: React.FC = () => {
       email: form.email,
       password: form.password,
     });
+  }
+
+  function handleSignUpWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+
+    window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
   }
 
   return (
@@ -298,6 +305,8 @@ const SignUpPage: React.FC = () => {
         >
           {isPending ? <Loader buttonContent /> : 'Sign Up'}
         </button>
+
+        <GoogleSignIn type='signup' onClick={handleSignUpWithGoogle} />
         <p className={styles.text}>
           Have an account? <Link to="/sign-in">Sign In</Link>
         </p>

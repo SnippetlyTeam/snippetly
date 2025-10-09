@@ -21,6 +21,7 @@ const SnippetsPage = () => {
   const [data, setData] = useState<object | null>(null);
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -122,6 +123,43 @@ const SnippetsPage = () => {
             ))
           ) : null
         )}
+      </div>
+
+      <div className={styles.pagination}>
+        <button
+          className={styles.paginationSwitcher}
+          onClick={() => {
+            if (currentPage - 1 >= 1) {
+              setCurrentPage(prev => prev - 1)
+            }
+          }}
+        >
+          &larr; Prev
+        </button>
+
+        <button className={`
+          ${styles.paginationItem} 
+          ${currentPage === 1 ? styles.paginationItemActive : ''}
+        `}>1</button>
+        <button className={`
+          ${styles.paginationItem} 
+          ${currentPage === 2 ? styles.paginationItemActive : ''}
+        `}>2</button>
+        <button className={`
+          ${styles.paginationItem} 
+          ${currentPage === 3 ? styles.paginationItemActive : ''}
+        `}>3</button>
+
+        <button
+          className={styles.paginationSwitcher}
+          onClick={() => {
+            if (currentPage + 1 <= 3) {
+              setCurrentPage(prev => prev + 1)
+            }
+          }}
+        >
+          Next &rarr;
+        </button>
       </div>
     </main>
   )
