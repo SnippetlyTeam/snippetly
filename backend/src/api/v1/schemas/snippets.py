@@ -10,6 +10,10 @@ from .common import BaseListSchema
 TagStr = constr(min_length=3, max_length=100)
 
 
+def serialize_tags(tags: list[str]) -> list:
+    return [item.strip().lower().replace(" ", "") for item in tags]
+
+
 # --- Requests ---
 class BaseSnippetSchema(BaseModel):
     title: str = Field(..., min_length=3, max_length=100)
@@ -24,7 +28,7 @@ class BaseSnippetSchema(BaseModel):
     @field_validator("tags", mode="before")
     @classmethod
     def normalize_tags(cls, v: list[str]) -> list:
-        return [item.strip().lower() for item in v]
+        return serialize_tags(tags=v)
 
 
 class SnippetCreateSchema(BaseSnippetSchema):
@@ -44,7 +48,7 @@ class SnippetUpdateRequestSchema(BaseModel):
     @field_validator("tags", mode="before")
     @classmethod
     def normalize_tags(cls, v: list[str]) -> list:
-        return [item.strip().lower() for item in v]
+        return serialize_tags(tags=v)
 
 
 # --- Responses ---
