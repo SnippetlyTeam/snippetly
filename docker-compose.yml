@@ -34,9 +34,13 @@ services:
     volumes:
       - mongodata_dev:/data/db
     restart: unless-stopped
+    command: [
+      "--logpath", "/dev/null",
+      "--quiet"
+    ]
     healthcheck:
       test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 5
 
@@ -56,6 +60,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./backend/src:/app/src
+      - ./backend/static/avatars:/app/static/avatars
 
   migrate:
     build:

@@ -10,6 +10,7 @@ from src.api.v1.schemas.auth import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
     ActivationRequestSchema,
+    EmailBaseSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_user_service
@@ -108,3 +109,39 @@ async def activate_account(
     return MessageResponseSchema(
         message="Account has been activated successfully"
     )
+
+
+@router.post(
+    "/resend-activation",
+    summary="Resend activation email",
+    description="Endpoint for resending an activation email",
+    responses={
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={"internal_server": "Something went wrong"},
+        ),
+    },
+)
+async def resend_activation(
+    service: Annotated[UserServiceInterface, Depends(get_user_service)],
+    email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
+    data: EmailBaseSchema,
+    background_tasks: BackgroundTasks,
+) -> MessageResponseSchema:
+    message = MessageResponseSchema(
+        message="If an inactive account exists for this "
+        "email, an activation email has been sent."
+    )
+    try:
+        token = await service.new_activation_token(data.email)
+    except (exc.UserNotFoundError, ValueError):
+        return message
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail="Something went wrong"
+        ) from e
+
+    background_tasks.add_task(
+        email_sender.send_activation_email, data.email, token.token
+    )
+    return message

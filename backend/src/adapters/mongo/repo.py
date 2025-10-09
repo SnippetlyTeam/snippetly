@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 
 from beanie import PydanticObjectId
 from pydantic import ValidationError
@@ -23,7 +23,7 @@ class SnippetDocumentRepository:
     ) -> SnippetDocument:
         try:
             snippet = SnippetDocument(content=content, description=description)
-            return await snippet.insert()
+            return cast(SnippetDocument, await snippet.insert())
         except ValidationError as e:
             raise ValidationError("Invalid document data") from e
         except DuplicateKeyError as e:

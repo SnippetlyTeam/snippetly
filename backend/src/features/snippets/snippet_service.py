@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, cast
 from uuid import UUID
 
 from fastapi.requests import Request
@@ -56,14 +56,17 @@ class SnippetService(SnippetServiceInterface):
     def _build_snippet_response(
         snippet: SnippetModel, document: SnippetDocument
     ) -> SnippetResponseSchema:
+        description = document.description if document else None
+        content = document.content if document else None
+
         return SnippetResponseSchema(
-            uuid=snippet.uuid,
+            uuid=cast(UUID, snippet.uuid),
             user_id=snippet.user_id,
             title=snippet.title,
             language=snippet.language,
             is_private=snippet.is_private,
-            content=document.content if document else "",
-            description=document.description if document else "",
+            content=content if content is not None else "",
+            description=description if description is not None else "",
             created_at=snippet.created_at,
             updated_at=snippet.updated_at,
         )
@@ -78,6 +81,8 @@ class SnippetService(SnippetServiceInterface):
             )
         except (ValidationError, PyMongoError):
             raise
+
+        assert document.id is not None
 
         try:
             snippet_model = self._model_repo.create(
@@ -112,7 +117,8 @@ class SnippetService(SnippetServiceInterface):
             )
 
             snippet_list = []
-            for snippet in snippets:
+            # TODO: TEST IF IT WORKS CORRECTLY Sequence is not iterable
+            for snippet in snippets:  # type:ignore
                 try:
                     document = await self._doc_repo.get_by_id(
                         snippet.mongodb_id
@@ -120,13 +126,16 @@ class SnippetService(SnippetServiceInterface):
                 except (PyMongoError, ValidationError):
                     document = None
 
+                doc_content = document.content if document else None
+                doc_description = document.description if document else None
+
                 snippet_list.append(
                     SnippetListItemSchema(
                         title=snippet.title,
                         language=snippet.language,
                         is_private=snippet.is_private,
-                        content=document.content if document else "",
-                        description=document.description if document else "",
+                        content=doc_content or "",
+                        description=doc_description or "",
                         uuid=snippet.uuid,
                     )
                 )
@@ -150,6 +159,12 @@ class SnippetService(SnippetServiceInterface):
                 "Snippet with this UUID was not found"
             )
         document = await self._doc_repo.get_by_id(snippet.mongodb_id)
+
+        if document is None:
+            raise exc.SnippetNotFoundError(
+                "Snippet with this UUID was not found"
+            )
+
         return self._build_snippet_response(snippet, document)
 
     async def _update_sql_snippet(
@@ -182,6 +197,10 @@ class SnippetService(SnippetServiceInterface):
         if update_data:
             await self._doc_repo.update(snippet.mongodb_id, **update_data)
         updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
+
+        if not updated_doc:
+            raise exc.SnippetNotFoundError("Snippet document not found")
+
         return updated_doc
 
     async def update_snippet(
