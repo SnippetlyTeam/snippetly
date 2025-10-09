@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, ActivationTokenModel
 
 
 class UserServiceInterface(ABC):
@@ -72,3 +72,38 @@ class UserServiceInterface(ABC):
                 SQLAlchemyError: If database error occurred
         """
         pass
+
+    @abstractmethod
+    async def new_activation_token(self, email: str) -> ActivationTokenModel:
+        """
+        Method for creating a new activation token and deleting old one
+
+        :param email: User's email address
+        :type: str
+        :return: Activation Token
+        :rtype: ActivationTokenModel
+        :raises UserNotFoundError: If user was not found
+                ValueError: If user is activated
+                SQLAlchemyError: If error occurred during deletion
+                or creation new token
+        """
+
+    @abstractmethod
+    async def change_password(
+        self, user: UserModel, old_password: str, new_password: str
+    ) -> None:
+        """
+        Method for changing User's password if
+        old password provided and doesn't match the new password
+
+        :param user: User requesting change
+        :type: UserModel
+        :param old_password: Old user's password
+        :type: str
+        :param new_password: New user's password
+        :type: str
+        :return: None
+        :raises InvalidPasswordError: If old password is incorrect
+                and new password the same as old one
+                SQLAlchemyError: If error occurred during new password save
+        """

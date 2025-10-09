@@ -63,7 +63,7 @@ class SnippetRepository:
     # --- Read ---
     async def get_snippets_paginated(
         self, offset: int, limit: int
-    ) -> Tuple[Sequence[SnippetModel], int]:
+    ) -> Tuple[Sequence, int]:
         total = await self._db.scalar(
             select(func.count())
             .select_from(SnippetModel)
@@ -71,7 +71,7 @@ class SnippetRepository:
         )
         query = select(SnippetModel).where(SnippetModel.is_private.is_(False))
         result = await self._db.execute(query.offset(offset).limit(limit))
-        return result.scalars().all(), total
+        return result.scalars().all(), total  # type: ignore
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:
         query = select(SnippetModel).where(SnippetModel.uuid == uuid)
@@ -80,17 +80,15 @@ class SnippetRepository:
 
     async def get_snippets_by_language(
         self, language: LanguageEnum
-    ) -> Optional[Sequence[SnippetModel]]:
+    ) -> Optional[Sequence]:
         query = select(SnippetModel).where(SnippetModel.language == language)
         result = await self._db.execute(query)
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
-    async def get_by_user(
-        self, user_id: int
-    ) -> Optional[Sequence[SnippetModel]]:
+    async def get_by_user(self, user_id: int) -> Optional[Sequence]:
         query = select(SnippetModel).where(SnippetModel.user_id == user_id)
         result = await self._db.execute(query)
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
     # --- Update ---
     async def update(

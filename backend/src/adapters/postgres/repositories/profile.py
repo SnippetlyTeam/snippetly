@@ -4,12 +4,13 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+import src.core.exceptions as exc
 from src.adapters.postgres.models import UserProfileModel, GenderEnum
 
 
 class UserProfileRepository:
     def __init__(self, db: AsyncSession) -> None:
-        self.db = db
+        self._db = db
 
     # --- Create ---
     async def create(
@@ -31,13 +32,60 @@ class UserProfileRepository:
             date_of_birth=date_of_birth,
             info=info or "",
         )
-        self.db.add(profile)
+        self._db.add(profile)
         return profile
 
     # --- Read ---
-    async def get_by_user_id(self, user_id: int) -> Optional[UserProfileModel]:
+    async def get_by_user_id(self, user_id: int) -> UserProfileModel:
         query = select(UserProfileModel).where(
             UserProfileModel.user_id == user_id
         )
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        result = await self._db.execute(query)
+        profile = result.scalar_one_or_none()
+        if profile is None:
+            raise exc.ProfileNotFoundError(
+                "Profile with this user ID was not found"
+            )
+        return profile
+
+    # --- Update ---
+    async def update(
+        self,
+        user_id: int,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        gender: Optional[GenderEnum] = None,
+        date_of_birth: Optional[date] = None,
+        info: Optional[str] = None,
+    ) -> UserProfileModel:
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
+
+        if first_name:
+            profile.first_name = first_name
+        if last_name:
+            profile.last_name = last_name
+        if gender:
+            profile.gender = gender
+        if date_of_birth:
+            profile.date_of_birth = date_of_birth
+        if info:
+            profile.info = info
+
+        self._db.add(profile)
+        return profile
+
+    async def update_avatar_url(
+        self, user_id: int, avatar_url: str
+    ) -> UserProfileModel:
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
+
+        profile.avatar_url = avatar_url
+        self._db.add(profile)
+        return profile
+
+    # --- Delete ---
+    async def delete_avatar_url(self, user_id: int) -> None:
+        profile: UserProfileModel = await self.get_by_user_id(user_id)
+
+        profile.avatar_url = None
+        self._db.add(profile)

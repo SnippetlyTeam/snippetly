@@ -4,15 +4,19 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
+import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
+from src.adapters.postgres.models import UserModel
 from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.auth import (
     PasswordResetCompletionSchema,
     PasswordResetRequestSchema,
+    ChangePasswordRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import (
     get_user_service,
+    get_current_user,
 )
 from src.core.dependencies.email import get_email_sender
 from src.core.email import EmailSenderInterface
@@ -106,3 +110,57 @@ async def reset_password_request(
             email_sender.send_password_reset_email, data.email, reset_token
         )
     return MessageResponseSchema(message=message)
+
+
+@router.post(
+    "/change-password",
+    summary="Change Password",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples={
+                **exm.FORBIDDEN_ERROR_EXAMPLES,
+                "password_match": "New password cannot be the "
+                "same as old password!",
+                "invalid_password": "Entered Invalid password! "
+                "Check your keyboard layout "
+                "or Caps Lock. Forgot your password?",
+            },
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Something went wrong during "
+                "saving new password"
+            },
+        ),
+    },
+)
+async def change_password(
+    data: ChangePasswordRequestSchema,
+    user: Annotated[UserModel, Depends(get_current_user)],
+    user_service: Annotated[UserServiceInterface, Depends(get_user_service)],
+) -> MessageResponseSchema:
+    message = MessageResponseSchema(
+        message="Password has been successfully changed"
+    )
+    try:
+        await user_service.change_password(
+            user, data.old_password, data.new_password
+        )
+    except exc.InvalidPasswordError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something wen wrong during saving new password",
+        ) from e
+    return message

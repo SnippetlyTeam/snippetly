@@ -8,4 +8,5 @@ from .exceptions import (
     InvalidPasswordError,
     SnippetNotFoundError,
     NoPermissionError,
+    ProfileNotFoundError,
 )
