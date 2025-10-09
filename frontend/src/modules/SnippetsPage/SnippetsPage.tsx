@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './SnippetsPage.module.scss';
 import Snippet from '../../components/Snippet/Snippet';

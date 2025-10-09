@@ -21,6 +21,9 @@
   @include on-desktop {
     top: 54px;
   }
+
+  opacity: 0;
+  transform: translateX(100%);
 }
 
 .title {
@@ -51,9 +54,3 @@
   opacity: 1;
   transform: translateX(0);
 }
-
-.notVisible {
-  opacity: 0;
-  transform: translateX(100%);
-}
-

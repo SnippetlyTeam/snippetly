@@ -116,13 +116,13 @@
 .textarea {
   border: 1px solid var(--color-accent);
   border-radius: 6px;
-  background-color: var(--secondary-bg-color);
+  background-color: var(--primary-bg-color);
   color: var(--color-white);
   padding: 8px 40px 8px 12px;
   width: 50%;
+  height: 100px;
   max-width: 500px;
   max-height: 150px;
-  // resize: none;
   outline: none;
   box-sizing: border-box;
 }

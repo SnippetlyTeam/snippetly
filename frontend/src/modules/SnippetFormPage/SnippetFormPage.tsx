@@ -4,12 +4,14 @@ import CodeEditor from '../../components/CodeEditor/CodeEditor';
 import MainButton from '../../components/MainButton/MainButton';
 import { create, getById, update } from '../../api/snippetsClient';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Loader } from '../../components/Loader';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
+import toast, { type Toast } from 'react-hot-toast';
+import CustomToast from '../../components/CustomAuthToast/CustomToast';
 
 const SnippetFormPage = () => {
   const { snippetId } = useParams();
@@ -28,13 +30,26 @@ const SnippetFormPage = () => {
   const { accessToken } = useAuthContext();
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const {
     mutate: createSnippet,
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: (response) => setSnippet(response.data),
+    onSuccess: () => {
+      setSnippet(emptySnippet);
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title="Snippet created successfully"
+          message="Your snippet has been saved."
+          type={'success'}
+        />
+      ), {
+        duration: 2500,
+      });
+    },
   });
 
   const {
@@ -44,8 +59,14 @@ const SnippetFormPage = () => {
     mutationFn: (newSnippet: NewSnippetType) => {
       return update(snippetId as string, newSnippet, accessToken)
     },
-    onSuccess: (response) => {
-      setSnippet(response.data);
+    onSuccess: () => {
+      navigate('/snippets', {
+        state: {
+          title: 'Snippet updated successfully',
+          message: 'Your snippet has been updated.',
+          type: 'success'
+        }
+      });
     },
   });
 
@@ -123,130 +144,134 @@ const SnippetFormPage = () => {
 
   return (
     <main className={styles.main}>
-      <h2>{isEditMode ? 'Edit a Snippet' : 'Create a New Snippet'}</h2>
-
+      <h2>{isEditMode ? `Edit Snippet: ${snippet.title}` : 'Create a New Snippet'}</h2>
       {isLoading ? (
         <Loader />
       ) : (
-        <form className={styles.form} noValidate onSubmit={handleSnippetSave}>
-          <div className={styles.formItem}>
-            <label htmlFor="title">Title</label>
-            <input
-              className={styles.input}
-              type="text"
-              id='title'
-              placeholder='Enter snippet title'
-              value={snippet.title ?? ''}
-              onChange={event =>
-                setSnippet(prev =>
-                  prev
-                    ? { ...prev, title: event.target.value }
-                    : {
-                      title: event.target.value,
-                      language: '',
-                      is_private: false,
-                      content: '',
-                      description: '',
-                    }
-                )
-              }
-              required
-            />
-          </div>
-
-          <div className={styles.formItem}>
-            <label htmlFor="description">Description</label>
-            <textarea
-              name="description"
-              id="description"
-              value={snippet.description}
-              className={styles.textarea}
-              maxLength={500}
-              onChange={event => {
-                handleSnippetDetailsChange('description', event.target.value);
-              }}
-            ></textarea>
-          </div>
-
-          <div className={styles.container}>
+        <>
+          <form className={styles.form} noValidate onSubmit={handleSnippetSave}>
             <div className={styles.formItem}>
-              <label htmlFor="language">Language</label>
-              <div ref={dropdownRef} className={styles.dropdown}>
-                <button
-                  type="button"
-                  className={`
-                    ${styles.dropdownTrigger} 
-                    ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
-                  `}
-                  onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
-                >
-                  {formatLanguage(snippet.language)}
-                </button>
-
-                {isLanguageDropDownOpen && (
-                  <div className={styles.dropdownMenu}>
-                    {languages.map(lang => (
-                      <button
-                        key={lang}
-                        type="button"
-                        name="language"
-                        value={lang}
-                        onClick={() => handleSnippetDetailsChange('language', lang)}
-                        className={styles.dropdownItem}
-                      >
-                        {lang}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.formItem}>
-              <label htmlFor="tags">Tags</label>
+              <label htmlFor="title">Title</label>
               <input
-                placeholder='e.g., react, hooks'
+                className={styles.input}
                 type="text"
-                id='tags'
+                id='title'
+                maxLength={100}
+                placeholder='Enter snippet title'
+                value={snippet.title ?? ''}
+                onChange={event =>
+                  setSnippet(prev =>
+                    prev
+                      ? { ...prev, title: event.target.value }
+                      : {
+                        title: event.target.value,
+                        language: '',
+                        is_private: false,
+                        content: '',
+                        description: '',
+                      }
+                  )
+                }
+                required
               />
             </div>
 
             <div className={styles.formItem}>
-              <label htmlFor="visibility">Visibility</label>
-              <div className={styles.visibility}>
+              <label htmlFor="description">Description</label>
+              <textarea
+                name="description"
+                id="description"
+                placeholder='Describe what this code does...'
+                value={snippet.description}
+                className={styles.textarea}
+                maxLength={500}
+                onChange={event => {
+                  handleSnippetDetailsChange('description', event.target.value);
+                }}
+              ></textarea>
+            </div>
+
+            <div className={styles.container}>
+              <div className={styles.formItem}>
+                <label htmlFor="language">Language</label>
+                <div ref={dropdownRef} className={styles.dropdown}>
+                  <button
+                    type="button"
+                    className={`
+                    ${styles.dropdownTrigger} 
+                    ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
+                  `}
+                    onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
+                  >
+                    {formatLanguage(snippet.language)}
+                  </button>
+
+                  {isLanguageDropDownOpen && (
+                    <div className={styles.dropdownMenu}>
+                      {languages.map(lang => (
+                        <button
+                          key={lang}
+                          type="button"
+                          name="language"
+                          value={lang}
+                          onClick={() => handleSnippetDetailsChange('language', lang)}
+                          className={styles.dropdownItem}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.formItem}>
+                <label htmlFor="tags">Tags</label>
                 <input
-                  type="checkbox"
-                  name="visibility"
-                  checked={snippet.is_private}
-                  onChange={() => handleSnippetDetailsChange('is_private', !snippet.is_private)}
-                  className={styles.checkbox}
+                  placeholder='e.g., react, hooks'
+                  type="text"
+                  id='tags'
                 />
-                <span className={styles.visibilityState}>
-                  {snippet.is_private ? 'Private' : 'Public'}
-                </span>
-                <span className={styles.hint}>
-                  {snippet.is_private
-                    ? '(Only you can see)'
-                    : '(Visible to everyone)'}
-                </span>
+              </div>
+
+              <div className={styles.formItem}>
+                <label htmlFor="visibility">Visibility</label>
+                <div className={styles.visibility}>
+                  <input
+                    type="checkbox"
+                    name="visibility"
+                    checked={snippet.is_private}
+                    onChange={() => handleSnippetDetailsChange('is_private', !snippet.is_private)}
+                    className={styles.checkbox}
+                  />
+                  <span className={styles.visibilityState}>
+                    {snippet.is_private ? 'Private' : 'Public'}
+                  </span>
+                  <span className={styles.hint}>
+                    {snippet.is_private
+                      ? '(Only you can see)'
+                      : '(Visible to everyone)'}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className={styles.formItem}>
-            <label htmlFor="code">Code</label>
-            <CodeEditor
-              value={snippet.content}
-              onChange={(value) => handleSnippetDetailsChange('content', value)}
-              language={formatLanguage(snippet.language)}
+            <div className={styles.formItem}>
+              <label htmlFor="code">Code</label>
+              <CodeEditor
+                value={snippet.content}
+                onChange={(value) => handleSnippetDetailsChange('content', value)}
+                language={formatLanguage(snippet.language)}
+              />
+            </div>
+
+            <MainButton
+              content={(isCreating || isUpdating) ? <Loader buttonContent /> : 'Save Snippet'}
+              type="submit"
+              onClick={() => { }}
             />
-          </div>
-
-          <MainButton
-            content={(isCreating || isUpdating) ? <Loader buttonContent /> : 'Save Snippet'}
-            type="submit"
-          />
-        </form>
+          </form>
+        </>
       )}
     </main>
   )
