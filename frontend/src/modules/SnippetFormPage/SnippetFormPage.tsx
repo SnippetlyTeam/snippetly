@@ -19,6 +19,8 @@ const SnippetFormPage = () => {
   const isEditMode = !!snippetId;
   const languages: string[] = ['JavaScript', 'Python'];
 
+  const initialTitleRef = useRef<string>('');
+
   const [titleError, setTitleError] = useState('');
   const [contentError, setContentError] = useState('');
 
@@ -105,6 +107,43 @@ const SnippetFormPage = () => {
     }
   }
 
+  function validateForm() {
+    let isValid = true;
+
+    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
+      setTitleError('Please enter a title for your snippet');
+      isValid = false;
+    }
+
+    if (!snippet.content.trim()) {
+      setContentError('Snippet must contain code');
+      isValid = false;
+    }
+
+    if (snippet.content.length > 50000) {
+      setContentError('Snippet exceeds size limit of 10MB');
+      isValid = false;
+    }
+
+    return isValid;
+  }
+
+  function isFormValid() {
+    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
+      return false;
+    }
+
+    if (!snippet.content.trim()) {
+      return false;
+    }
+
+    if (snippet.content.length > 50000) {
+      return false;
+    }
+
+    return true
+  }
+
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
     if (key === 'title') {
       setTitleError('');
@@ -132,24 +171,9 @@ const SnippetFormPage = () => {
     event.preventDefault();
     if (!snippet) return;
 
-    let hasError = false;
+    let isValid = validateForm();
 
-    if (!snippet.title || snippet.title.length < 3) {
-      setTitleError('Please enter a title for your snippet');
-      hasError = true;
-    }
-
-    if (!snippet.content) {
-      setContentError('Snippet must contain code');
-      hasError = true;
-    }
-
-    if (snippet.content.length > 50000) {
-      setContentError('Snippet exceeds size limit of 10MB');
-      hasError = true;
-    }
-
-    if (hasError) return;
+    if (!isValid) return;
 
     if (isEditMode) {
       updateSnippet({
@@ -163,11 +187,11 @@ const SnippetFormPage = () => {
     }
 
     createSnippet({
-      title: snippet.title,
+      title: snippet.title.trim(),
       language: snippet.language.toLowerCase(),
       is_private: snippet.is_private,
       content: snippet.content,
-      description: snippet.description,
+      description: snippet.description.trim(),
     });
   }
 
@@ -177,6 +201,7 @@ const SnippetFormPage = () => {
         .then(response => {
           if (response.status === 200) {
             setSnippet(response.data);
+            initialTitleRef.current = response.data.title;
           }
         })
         .finally(() => {
@@ -187,7 +212,11 @@ const SnippetFormPage = () => {
 
   return (
     <main className={styles.main}>
-      <h2 id="snippet-form-heading">{isEditMode ? `Edit Snippet: ${snippet.title}` : 'Create a New Snippet'}</h2>
+      <h2 id="snippet-form-heading">
+        {isEditMode
+          ? `Edit Snippet: ${initialTitleRef.current}`
+          : 'Create a New Snippet'}
+      </h2>
       {isLoading ? (
         <Loader />
       ) : (
@@ -367,6 +396,7 @@ const SnippetFormPage = () => {
               type="submit"
               aria-label="Save Snippet"
               onClick={() => { }}
+              disabled={!isFormValid()}
             />
           </form>
         </>
