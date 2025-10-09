@@ -69,9 +69,9 @@ class SnippetService(SnippetServiceInterface):
             description=description if description is not None else "",
             created_at=snippet.created_at,
             updated_at=snippet.updated_at,
+            tags=[tag.name for tag in snippet.tags],
         )
 
-    # TODO: create with tags
     async def create_snippet(
         self, data: SnippetCreateSchema
     ) -> SnippetResponseSchema:
@@ -85,10 +85,11 @@ class SnippetService(SnippetServiceInterface):
         assert document.id is not None
 
         try:
-            snippet_model = self._model_repo.create(
+            snippet_model = await self._model_repo.create_with_tags(
                 data.title,
                 data.language,
                 data.is_private,
+                tag_names=data.tags,
                 user_id=data.user_id,
                 mongodb_id=document.id,
             )
@@ -137,6 +138,7 @@ class SnippetService(SnippetServiceInterface):
                         content=doc_content or "",
                         description=doc_description or "",
                         uuid=snippet.uuid,
+                        tags=[tag.name for tag in snippet.tags],
                     )
                 )
         except SQLAlchemyError:
@@ -153,7 +155,7 @@ class SnippetService(SnippetServiceInterface):
         )
 
     async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:
-        snippet = await self._model_repo.get_by_uuid(uuid)
+        snippet = await self._model_repo.get_by_uuid_with_tags(uuid)
         if not snippet:
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"
@@ -206,7 +208,7 @@ class SnippetService(SnippetServiceInterface):
     async def update_snippet(
         self, uuid: UUID, data: SnippetUpdateRequestSchema, user: UserModel
     ) -> SnippetResponseSchema:
-        snippet = await self._model_repo.get_by_uuid(uuid)
+        snippet = await self._model_repo.get_by_uuid_with_tags(uuid)
         if not snippet:
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"

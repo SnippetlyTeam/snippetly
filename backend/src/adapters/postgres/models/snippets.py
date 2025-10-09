@@ -82,7 +82,10 @@ class SnippetModel(Base):
         "UserModel", back_populates="snippets"
     )
     tags: Mapped[list["TagModel"]] = relationship(
-        "TagModel", secondary=SnippetsTagsTable, back_populates="snippets"
+        "TagModel",
+        secondary=SnippetsTagsTable,
+        back_populates="snippets",
+        lazy="selectin",
     )
     favorited_by: Mapped[list["SnippetFavoritesModel"]] = relationship(
         "SnippetFavoritesModel", back_populates="snippet"
@@ -141,7 +144,10 @@ class TagModel(Base):
     )
 
     snippets: Mapped[list["SnippetModel"]] = relationship(
-        "SnippetModel", secondary=SnippetsTagsTable, back_populates="tags"
+        "SnippetModel",
+        secondary=SnippetsTagsTable,
+        back_populates="tags",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
