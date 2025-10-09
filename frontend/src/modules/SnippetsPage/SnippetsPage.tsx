@@ -18,39 +18,45 @@ const SnippetsPage = () => {
     isAuthenticated
   } = useAuthContext();
 
-  const [data, setData] = useState<object | null>(null);
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const fetchSnippets = async () => {
+  const fetchSnippets = async (page = 1, perPage = 10) => {
     if (!accessToken) {
-      setData({ snippets: [] });
       setSnippets([]);
-      setIsLoading(false);
       return;
     }
-    try {
-      const response = await getAll(accessToken);
 
-      setData(response.data);
-      if (Array.isArray(response.data)) {
-        setSnippets(response.data);
-      } else if (response.data && Array.isArray(response.data.snippets)) {
+    setIsLoading(true);
+
+    try {
+      const response = await getAll(accessToken, page, perPage);
+
+      if (response.data && Array.isArray(response.data.snippets)) {
         setSnippets(response.data.snippets);
+        setTotalPages(response.data.total_pages);
       } else {
         setSnippets([]);
       }
     } catch (error) {
-      setData({ snippets: [] });
       setSnippets([]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  function handlePageChange(newValue: number) {
+
+    if (newValue >= 1 && newValue <= totalPages) {
+      fetchSnippets(newValue);
+      setCurrentPage(newValue);
+    }
+  }
 
   useEffect(() => {
     if (isTokenLoading) {
@@ -125,42 +131,38 @@ const SnippetsPage = () => {
         )}
       </div>
 
-      <div className={styles.pagination}>
-        <button
-          className={styles.paginationSwitcher}
-          onClick={() => {
-            if (currentPage - 1 >= 1) {
-              setCurrentPage(prev => prev - 1)
-            }
-          }}
-        >
-          &larr; Prev
-        </button>
+      {totalPages && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.paginationSwitcher}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            &larr; Prev
+          </button>
 
-        <button className={`
-          ${styles.paginationItem} 
-          ${currentPage === 1 ? styles.paginationItemActive : ''}
-        `}>1</button>
-        <button className={`
-          ${styles.paginationItem} 
-          ${currentPage === 2 ? styles.paginationItemActive : ''}
-        `}>2</button>
-        <button className={`
-          ${styles.paginationItem} 
-          ${currentPage === 3 ? styles.paginationItemActive : ''}
-        `}>3</button>
+          {
+            Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`${styles.paginationItem} ${currentPage === i + 1 ? styles.paginationItemActive : ''}`}
+                onClick={() => handlePageChange(i + 1)}
+                disabled={currentPage === i + 1}
+              >
+                {i + 1}
+              </button>
+            ))
+          }
 
-        <button
-          className={styles.paginationSwitcher}
-          onClick={() => {
-            if (currentPage + 1 <= 3) {
-              setCurrentPage(prev => prev + 1)
-            }
-          }}
-        >
-          Next &rarr;
-        </button>
-      </div>
+          <button
+            className={styles.paginationSwitcher}
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next &rarr;
+          </button>
+        </div>
+      )}
     </main>
   )
 }

@@ -12,10 +12,16 @@ export const snippetsClient: AxiosInstance = axios.create({
   }
 });
 
-export const getAll = (token: string): Promise<AxiosResponse> => {
+export const getAll = (token: string, page: number, perPage: number): Promise<AxiosResponse> => {
   return snippetsClient.get<SnippetType[]>(
     '/',
-    { headers: { 'Authorization': `Bearer ${token}` } },
+    {
+      headers: { 'Authorization': `Bearer ${token}` },
+      params: {
+        page: page,
+        per_page: perPage,
+      }
+    },
   );
 };
 
