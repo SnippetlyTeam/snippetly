@@ -18,3 +18,26 @@ ul {
   padding: 0;
   margin: 0;
 }
+
+input {
+  background-color: var(--primary-bg-color);
+  color: var(--color-white);
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  padding: 8px 40px 8px 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    border: 1px solid var(--color-accent-hover);
+    box-shadow: 0 0 0 1px var(--color-accent-hover);
+  }
+}
+
+label {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+}

@@ -15,6 +15,15 @@
   }
 }
 
+.buttonContent {
+  height: 1em;
+  width: 1em;
+  border-width: 0.2em;
+  border-style: solid;
+  border-color: #ddd;
+  border-left-color: transparent;
+}
+
 @keyframes load8 {
   0% {
     transform: rotate(0deg);

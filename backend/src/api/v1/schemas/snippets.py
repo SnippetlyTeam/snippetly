@@ -10,11 +10,11 @@ from .common import BaseListSchema
 
 # --- Requests ---
 class BaseSnippetSchema(BaseModel):
-    title: str
-    language: LanguageEnum
-    is_private: bool
-    content: str
-    description: str
+    title: str = Field(..., min_length=3, max_length=100)
+    language: LanguageEnum = Field(...)
+    is_private: bool = Field(...)
+    content: str = Field(..., min_length=1, max_length=50_000)
+    description: str = Field(default="", max_length=500)
 
 
 class SnippetCreateSchema(BaseSnippetSchema):
@@ -22,11 +22,11 @@ class SnippetCreateSchema(BaseSnippetSchema):
 
 
 class SnippetUpdateRequestSchema(BaseModel):
-    title: Optional[str] = Field(None, max_length=255)
-    language: Optional[LanguageEnum] = Field(None)
-    is_private: Optional[bool] = Field(None)
-    content: Optional[str] = Field(None)
-    description: Optional[str] = Field(None)
+    title: Optional[str] = Field(None, min_length=3, max_length=100)
+    language: Optional[LanguageEnum] = None
+    is_private: Optional[bool] = None
+    content: Optional[str] = Field(None, min_length=1, max_length=50_000)
+    description: Optional[str] = Field(None, max_length=500)
 
 
 # --- Responses ---

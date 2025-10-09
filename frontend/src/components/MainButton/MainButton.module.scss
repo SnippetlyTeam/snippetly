@@ -1,4 +1,8 @@
 .button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
   height: 40px;
   width: 150px;
@@ -21,4 +25,15 @@
   &:hover {
     background-color: var(--color-accent-hover);
   }
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+  background-color: var(--color-disabled-bg, #353945);
+  color: var(--color-disabled-text, #6c6c6c);
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: background-color 0.2s ease-out, color 0.2s ease-out, opacity 0.2s ease-out;
 }

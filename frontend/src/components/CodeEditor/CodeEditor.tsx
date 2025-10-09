@@ -1,37 +1,36 @@
 import styles from './CodeEditor.module.scss';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { python } from '@codemirror/lang-python';
 import { oneDark } from '@codemirror/theme-one-dark';
-import { useState } from 'react';
 
-const CodeEditor = () => {
-  const [code, setCode] = useState([
-    '// Save and share your favorite code snippets!',
-    'function saveSnippet(snippet) {',
-    '  if (!snippet) {',
-    '    console.log("Oops! No snippet to save.");',
-    '    return;',
-    '  }',
-    '  console.log(`Snippet saved: "${snippet}"`);',
-    '}',
-    '',
-    "saveSnippet(\"console.log('Hello, snippets!');\");"
-  ].join('\n'));
+type Props = {
+  language: string
+  value?: string
+  onChange?: (value: string) => void
+}
 
-  return (
-    <div className={styles.editor}>
-      <CodeMirror
-        value={code}
-        extensions={[javascript({ jsx: true })]}
-        theme={oneDark}
-        style={{
-          maxHeight: '350px',
-          overflowY: 'auto'
-        }}
-        onChange={setCode}
-      />
-    </div>
-  );
-};
+const CodeEditor: React.FC<Props> = ({
+  language,
+  value = '',
+  onChange = () => { },
+}) => (
+  <div className={styles.editor}>
+    <CodeMirror
+      value={value}
+      extensions={
+        language === 'javascript'
+          ? [javascript({ jsx: true })]
+          : [python()]
+      }
+      theme={oneDark}
+      style={{
+        maxHeight: '350px',
+        overflowY: 'auto'
+      }}
+      onChange={onChange}
+    />
+  </div>
+);
 
 export default CodeEditor;
