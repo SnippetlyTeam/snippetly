@@ -19,6 +19,8 @@ const SnippetFormPage = () => {
   const isEditMode = !!snippetId;
   const languages: string[] = ['JavaScript', 'Python'];
 
+  const initialTitleRef = useRef<string>('');
+
   const [titleError, setTitleError] = useState('');
   const [contentError, setContentError] = useState('');
 
@@ -177,6 +179,7 @@ const SnippetFormPage = () => {
         .then(response => {
           if (response.status === 200) {
             setSnippet(response.data);
+            initialTitleRef.current = response.data.title;
           }
         })
         .finally(() => {
@@ -187,7 +190,11 @@ const SnippetFormPage = () => {
 
   return (
     <main className={styles.main}>
-      <h2 id="snippet-form-heading">{isEditMode ? `Edit Snippet: ${snippet.title}` : 'Create a New Snippet'}</h2>
+      <h2 id="snippet-form-heading">
+        {isEditMode
+          ? `Edit Snippet: ${initialTitleRef.current}`
+          : 'Create a New Snippet'}
+      </h2>
       {isLoading ? (
         <Loader />
       ) : (
