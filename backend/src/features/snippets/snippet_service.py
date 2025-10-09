@@ -4,13 +4,14 @@ from uuid import UUID
 from fastapi.requests import Request
 from pydantic import ValidationError
 from pymongo.errors import PyMongoError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
 from src.adapters.mongo.documents import SnippetDocument
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.models import SnippetModel, UserModel
+from src.adapters.postgres.models import SnippetModel, UserModel, TagModel
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
@@ -71,6 +72,64 @@ class SnippetService(SnippetServiceInterface):
             updated_at=snippet.updated_at,
             tags=[tag.name for tag in snippet.tags],
         )
+
+    async def _sync_tags(self, tag_names: list[str]) -> list[TagModel]:
+        stmt = select(TagModel).where(TagModel.name.in_(tag_names))
+        result = await self._db.execute(stmt)
+        existing = {t.name: t for t in result.scalars().all()}
+
+        tags_to_return: list[TagModel] = []
+        for name in tag_names:
+            tag = existing.get(name)
+            if tag is None:
+                tag = TagModel(name=name)
+                self._db.add(tag)
+            tags_to_return.append(tag)
+
+        return tags_to_return
+
+    async def _update_sql_snippet(
+        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
+    ) -> None:
+        payload = data.model_dump(exclude_unset=True)
+
+        try:
+            if "tags" in payload:
+                tag_names = payload.pop("tags") or []
+                tag_models = await self._sync_tags(tag_names)
+                snippet.tags = tag_models
+
+            for field, value in payload.items():
+                if hasattr(snippet, field) and value is not None:
+                    setattr(snippet, field, value)
+
+            await self._db.commit()
+            await self._db.refresh(snippet)
+        except SQLAlchemyError:
+            await self._db.rollback()
+            raise
+
+    async def _update_mongo_document(
+        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
+    ) -> SnippetDocument:
+        document = await self._doc_repo.get_by_id(snippet.mongodb_id)
+        if not document:
+            raise exc.SnippetNotFoundError("Snippet document not found")
+
+        update_data = {}
+        if data.content is not None:
+            update_data["content"] = data.content
+        if data.description is not None:
+            update_data["description"] = data.description
+
+        if update_data:
+            await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
+
+        if not updated_doc:
+            raise exc.SnippetNotFoundError("Snippet document not found")
+
+        return updated_doc
 
     async def create_snippet(
         self, data: SnippetCreateSchema
@@ -168,42 +227,6 @@ class SnippetService(SnippetServiceInterface):
             )
 
         return self._build_snippet_response(snippet, document)
-
-    async def _update_sql_snippet(
-        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
-    ) -> None:
-        for field, value in data.model_dump(exclude_unset=True).items():
-            if hasattr(snippet, field) and value is not None:
-                setattr(snippet, field, value)
-
-        try:
-            await self._db.commit()
-            await self._db.refresh(snippet)
-        except SQLAlchemyError:
-            await self._db.rollback()
-            raise
-
-    async def _update_mongo_document(
-        self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
-    ) -> SnippetDocument:
-        document = await self._doc_repo.get_by_id(snippet.mongodb_id)
-        if not document:
-            raise exc.SnippetNotFoundError("Snippet document not found")
-
-        update_data = {}
-        if data.content is not None:
-            update_data["content"] = data.content
-        if data.description is not None:
-            update_data["description"] = data.description
-
-        if update_data:
-            await self._doc_repo.update(snippet.mongodb_id, **update_data)
-        updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
-
-        if not updated_doc:
-            raise exc.SnippetNotFoundError("Snippet document not found")
-
-        return updated_doc
 
     async def update_snippet(
         self, uuid: UUID, data: SnippetUpdateRequestSchema, user: UserModel

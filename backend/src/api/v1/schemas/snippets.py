@@ -37,6 +37,14 @@ class SnippetUpdateRequestSchema(BaseModel):
     is_private: Optional[bool] = None
     content: Optional[str] = Field(None, min_length=1, max_length=50_000)
     description: Optional[str] = Field(None, max_length=500)
+    tags: List[TagStr] = Field(
+        default_factory=list, min_length=0, max_length=10
+    )
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def normalize_tags(cls, v: list[str]) -> list:
+        return [item.strip().lower() for item in v]
 
 
 # --- Responses ---

@@ -121,9 +121,7 @@ class SnippetRepository:
         language: LanguageEnum | None = None,
         is_private: bool | None = None,
     ) -> SnippetModel:
-        stmt = select(SnippetModel).where(SnippetModel.uuid == uuid)
-        result = await self._db.execute(stmt)
-        snippet: SnippetModel | None = result.scalar_one_or_none()
+        snippet: SnippetModel | None = await self.get_by_uuid_with_tags(uuid)
 
         if snippet is None:
             raise exc.SnippetNotFoundError(
