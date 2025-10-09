@@ -136,12 +136,12 @@ const SnippetFormPage = () => {
 
     let hasError = false;
 
-    if (!snippet.title || snippet.title.length < 3) {
+    if (!snippet.title.trim() || snippet.title.trim().length < 3) {
       setTitleError('Please enter a title for your snippet');
       hasError = true;
     }
 
-    if (!snippet.content) {
+    if (!snippet.content.trim()) {
       setContentError('Snippet must contain code');
       hasError = true;
     }
@@ -165,11 +165,11 @@ const SnippetFormPage = () => {
     }
 
     createSnippet({
-      title: snippet.title,
+      title: snippet.title.trim(),
       language: snippet.language.toLowerCase(),
       is_private: snippet.is_private,
       content: snippet.content,
-      description: snippet.description,
+      description: snippet.description.trim(),
     });
   }
 
