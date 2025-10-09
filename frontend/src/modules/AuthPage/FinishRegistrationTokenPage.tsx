@@ -1,77 +1,61 @@
-import { useNavigate, useParams } from 'react-router-dom';
-import MainButton from '../../components/MainButton/MainButton';
+import { Navigate, useParams } from 'react-router-dom';
 import styles from './AuthPage.module.scss';
 import { useEffect, useState } from 'react';
 import { activate } from '../../api/authClient';
+import { Loader } from '../../components/Loader';
 
 const FinishRegistrationTokenPage = () => {
-  const navigate = useNavigate();
   const { token } = useParams();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isValid, setIsValid] = useState<null | boolean>(null);
 
   useEffect(() => {
-    setIsLoading(true);
+    if (!token) {
+      setIsValid(false);
+      setIsLoading(false);
+      return;
+    }
 
     activate(token)
       .then(response => {
-        if (response.status === 200) {
+        if (response && response.status === 200) {
           setIsValid(true);
+        } else {
+          setIsValid(false);
         }
       })
+      .catch(() => {
+        setIsValid(false);
+      })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [token]);
 
   return (
     <main className={styles.main}>
       {isLoading ? (
-        <p>Loading...</p>
+        <Loader />
+      ) : isValid === true ? (
+        <Navigate
+          to='/sign-in'
+          state={{
+            title: 'Registration Complete',
+            message: 'Your account has been successfully activated.',
+            type: 'success'
+          }}
+        />
       ) : (
-        <>
-          {isValid ? <h2 className={styles.success}>Registration Complete</h2> : <h2 className={`${styles.errorTitle} ${styles.error}`}>Registration Error</h2>}
-
-
-          <div
-            className={styles.form}
-          >
-            <div className={styles.inputs}>
-              <div className={styles.inputsItem}>
-                {isValid ? (
-                  <div className={styles.inputsDescription}>
-                    Your account is now active. You can start creating and sharing snippets.
-                  </div>
-                ) : (
-                  <div className={styles.inputsDescription}>
-                    Activation failed. The activation link may be invalid or expired. Please try again or contact support.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <MainButton
-              content={isValid ? 'Go to Sign In' : 'Go to Sign Up'}
-              onClick={() => {
-                navigate(`/sign-${isValid ? 'in' : 'up'}`, {
-                  state: isValid
-                    ? {
-                        title: 'Registration Complete',
-                        message: 'Your account is now active. Please sign in to continue.',
-                        type: 'success'
-                      }
-                    : {
-                        title: 'Activation Failed',
-                        message: 'The activation link is invalid or expired. Please sign up again or contact support.',
-                        type: 'error'
-                      }
-                });
-              }}
-            />
-          </div>
-        </>
+        <Navigate
+          to='/sign-up'
+          state={{
+            title: 'Activation Failed',
+            message: 'The activation link is invalid or has expired. Please sign up again.',
+            type: 'error'
+          }}
+        />
       )}
     </main>
-  )
+  );
 }
 
 export default FinishRegistrationTokenPage;

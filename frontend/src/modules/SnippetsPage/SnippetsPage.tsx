@@ -12,11 +12,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {
   const [searchInputValue, setSearchInputValue] = useState('');
-  const { accessToken, isTokenLoading, isAuthenticated } = useAuthContext();
+  const {
+    accessToken,
+    isTokenLoading,
+    isAuthenticated
+  } = useAuthContext();
 
-  const [data, setData] = useState<{} | null>(null);
+  const [data, setData] = useState<object | null>(null);
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const fetchSnippets = async () => {
     if (!accessToken) {
@@ -61,9 +68,6 @@ const SnippetsPage = () => {
     }
 
   }, [isTokenLoading, accessToken, isAuthenticated]);
-
-  const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (

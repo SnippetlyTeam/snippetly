@@ -7,6 +7,8 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { login } from '../../api/authClient';
 import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import toast, { type Toast } from 'react-hot-toast';
+import { useMutation } from '@tanstack/react-query';
+import { Loader } from '../../components/Loader';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -27,6 +29,39 @@ const SignInPage: React.FC = () => {
     emailNotFound: 'User with such email or username not registered.',
     passwordWrong: 'Entered Invalid password! Check your keyboard layout or Caps Lock. Forgot your password?',
   }
+
+  const { mutate: signIn, isPending } = useMutation({
+    mutationFn: async ({ emailOrUsername, password }: { emailOrUsername: string, password: string }) => {
+      return login(emailOrUsername, password);
+    },
+    onSuccess: (response) => {
+      setAccessToken(response.data.access_token);
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+
+      navigate('/snippets', {
+        replace: true,
+        state: {
+          title: 'Signed In Successfully',
+          message: 'You have signed in.',
+          type: 'success',
+        }
+      });
+    },
+    onError: (error: any) => {
+      if (error?.response?.data?.detail && typeof error.response.data.detail === 'string') {
+        const detail = error.response.data.detail;
+        if (detail.includes('not registered')) {
+          setEmailErrorContent(errors.emailNotFound);
+        } else if (detail.includes('Invalid password')) {
+          setPasswordErrorContent(errors.passwordWrong);
+        } else {
+          setEmailErrorContent('Sign in failed. Please try again.');
+        }
+      } else {
+        setEmailErrorContent('Sign in failed. Please try again.');
+      }
+    }
+  });
 
   function handleEmailInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     setEmailInputValue(event.target.value);
@@ -79,34 +114,10 @@ const SignInPage: React.FC = () => {
 
     if (hasError) return;
 
-    login(emailInputValue, passwordInputValue)
-      .then(response => {
-        switch (response.status) {
-          case 200:
-            return response.data;
-          case 403:
-            setPasswordErrorContent(errors.passwordWrong);
-            return null;
-          case 404:
-            setEmailErrorContent(errors.emailNotFound);
-            return null;
-          default:
-            return null;
-        }
-      })
-      .then(data => {
-        if (!data) return;
-        setAccessToken(data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        navigate('/snippets', {
-          replace: true,
-          state: {
-            title: 'Signed In Successfully',
-            message: 'You have signed in.',
-            type: 'success'
-          }
-        });
-      })
+    signIn({
+      emailOrUsername: emailInputValue,
+      password: passwordInputValue,
+    });
   }
 
   function handleSignInWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
@@ -146,7 +157,6 @@ const SignInPage: React.FC = () => {
 
       <form
         noValidate
-        action="#"
         className={styles.form}
         onSubmit={handleFormSubmit}
         aria-labelledby="sign-in-title"
@@ -161,6 +171,7 @@ const SignInPage: React.FC = () => {
             </label>
             <input
               required
+              disabled={isPending}
               value={emailInputValue}
               className={styles.input}
               id="usernameOrEmail"
@@ -194,6 +205,7 @@ const SignInPage: React.FC = () => {
             <div className={styles.container}>
               <input
                 required
+                disabled={isPending}
                 value={passwordInputValue}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
@@ -241,7 +253,7 @@ const SignInPage: React.FC = () => {
           type="submit"
           className={styles.button}
           aria-label="Sign in to your account"
-        >Sign In</button>
+        >{isPending ? <Loader buttonContent /> : 'Sign In'}</button>
 
         <button
           onClick={handleSignInWithGoogle}

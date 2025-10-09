@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styles from './AuthPage.module.scss';
 import { useEffect, useState } from 'react';
 import UncrossedEye from './UncrossedEye';
@@ -7,6 +7,10 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { register as registerRequest } from '../../api/authClient';
+import { useMutation } from '@tanstack/react-query';
+import { Loader } from '../../components/Loader';
+import toast, { type Toast } from 'react-hot-toast';
+import CustomToast from '../../components/CustomAuthToast/CustomToast';
 
 type SignUpForm = {
   username: string;
@@ -19,14 +23,36 @@ const SignUpPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [serverEmailError, setServerEmailError] = useState('');
   const [serverUsernameError, setServerUsernameError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const serverErrors = {
     emailTaken: 'This email is taken. Want to log in?',
     usernameTaken: 'This username is taken.',
   };
 
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const { mutate: signUp, isPending } = useMutation({
+    mutationFn: ({ username, email, password }:
+      { username: string; email: string; password: string }) =>
+      registerRequest(username, email, password),
+    onSuccess: () => {
+      navigate('/activate-account');
+    },
+    onError: (error: any) => {
+      if (error?.response?.data?.detail && typeof error.response.data.detail === 'string') {
+        const detail = error.response.data.detail;
+        if (detail.includes('username')) {
+          setServerUsernameError(serverErrors.usernameTaken);
+        }
+        if (detail.includes('email')) {
+          setServerEmailError(serverErrors.emailTaken);
+        }
+      } else {
+        console.log(error);
+      }
+    },
+  });
 
   const signupSchema = z.object({
     username: z.string()
@@ -66,27 +92,35 @@ const SignUpPage: React.FC = () => {
     }
   }, [watchedFields.username]);
 
-  async function handleFormSubmit(form: SignUpForm) {
-    setIsLoading(true);
-    try {
-      const response = await registerRequest(form.username, form.email, form.password);
-      const data = await response.data;
-      if (response.status === 201) {
-        navigate('/activate-account');
-      } else {
-        if (data.detail && typeof data.detail === 'string') {
-          if (data.detail.includes('username')) {
-            setServerUsernameError(serverErrors.usernameTaken);
-          }
-          if (data.detail.includes('email')) {
-            setServerEmailError(serverErrors.emailTaken);
-          }
-        }
-      }
-    } catch (error) { }
-    finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (location.state && (
+      location.state.title ||
+      location.state.message ||
+      location.state.type
+    )) {
+      const { title = '', message = '', type = 'info' } = location.state || {};
+
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={title}
+          message={message}
+          type={type}
+        />
+      ), {
+        duration: 2500,
+      });
+
+      navigate(location.pathname, { replace: true, state: null });
     }
+  }, [location, navigate]);
+
+  async function handleFormSubmit(form: SignUpForm) {
+    signUp({
+      username: form.username,
+      email: form.email,
+      password: form.password,
+    });
   }
 
   return (
@@ -105,7 +139,7 @@ const SignUpPage: React.FC = () => {
               Username
             </label>
             <input
-              disabled={isLoading}
+              disabled={isPending}
               {...register('username')}
               className={styles.input}
               maxLength={40}
@@ -140,7 +174,7 @@ const SignUpPage: React.FC = () => {
               Email
             </label>
             <input
-              disabled={isLoading}
+              disabled={isPending}
               {...register('email')}
               className={styles.input}
               id="email"
@@ -174,7 +208,7 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
-                disabled={isLoading}
+                disabled={isPending}
                 {...register('password')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
@@ -219,7 +253,7 @@ const SignUpPage: React.FC = () => {
             </label>
             <div className={styles.container}>
               <input
-                disabled={isLoading}
+                disabled={isPending}
                 {...register('confirmPassword')}
                 className={styles.input}
                 type={isPasswordVisible ? 'text' : 'password'}
@@ -260,9 +294,9 @@ const SignUpPage: React.FC = () => {
         <button
           type="submit"
           className={styles.button}
-          disabled={isLoading}
+          disabled={isPending}
         >
-          Sign Up
+          {isPending ? <Loader buttonContent /> : 'Sign Up'}
         </button>
         <p className={styles.text}>
           Have an account? <Link to="/sign-in">Sign In</Link>

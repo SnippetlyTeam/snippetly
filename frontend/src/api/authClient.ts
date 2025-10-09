@@ -8,11 +8,11 @@ export const authClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
-export const register = (password: string, username: string, email: string) => {
+export const register = (username: string, email: string, password: string) => {
   return authClient.post('/register', {
-    password,
     username,
     email,
+    password,
   })
 }
 
