@@ -2,10 +2,16 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, constr, field_validator
 
 from src.adapters.postgres.models import LanguageEnum
 from .common import BaseListSchema
+
+TagStr = constr(min_length=3, max_length=100)
+
+
+def serialize_tags(tags: list[str]) -> list:
+    return [item.strip().lower().replace(" ", "") for item in tags]
 
 
 # --- Requests ---
@@ -15,6 +21,14 @@ class BaseSnippetSchema(BaseModel):
     is_private: bool = Field(...)
     content: str = Field(..., min_length=1, max_length=50_000)
     description: str = Field(default="", max_length=500)
+    tags: List[TagStr] = Field(
+        default_factory=list, min_length=0, max_length=10
+    )
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def normalize_tags(cls, v: list[str]) -> list:
+        return serialize_tags(tags=v)
 
 
 class SnippetCreateSchema(BaseSnippetSchema):
@@ -27,6 +41,14 @@ class SnippetUpdateRequestSchema(BaseModel):
     is_private: Optional[bool] = None
     content: Optional[str] = Field(None, min_length=1, max_length=50_000)
     description: Optional[str] = Field(None, max_length=500)
+    tags: List[TagStr] = Field(
+        default_factory=list, min_length=0, max_length=10
+    )
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def normalize_tags(cls, v: list[str]) -> list:
+        return serialize_tags(tags=v)
 
 
 # --- Responses ---

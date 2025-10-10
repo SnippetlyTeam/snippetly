@@ -4,6 +4,7 @@ from uuid import UUID
 from beanie import PydanticObjectId
 from sqlalchemy import select, delete, Sequence, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 import src.core.exceptions as exc
 from ..models import SnippetModel, LanguageEnum, TagModel
@@ -38,9 +39,15 @@ class SnippetRepository:
         language: LanguageEnum,
         is_private: bool,
         tag_names: list[str],
+        mongodb_id: PydanticObjectId,
+        user_id: int,
     ) -> SnippetModel:
         snippet = SnippetModel(
-            title=title, language=language, is_private=is_private
+            title=title,
+            language=language,
+            is_private=is_private,
+            user_id=user_id,
+            mongodb_id=str(mongodb_id),
         )
 
         tags: list[TagModel] = []
@@ -56,7 +63,6 @@ class SnippetRepository:
             tags.append(tag)
 
         snippet.tags = tags
-
         self._db.add(snippet)
         return snippet
 
@@ -69,12 +75,29 @@ class SnippetRepository:
             .select_from(SnippetModel)
             .where(SnippetModel.is_private.is_(False))
         )
-        query = select(SnippetModel).where(SnippetModel.is_private.is_(False))
-        result = await self._db.execute(query.offset(offset).limit(limit))
+        query = (
+            select(SnippetModel)
+            .where(SnippetModel.is_private.is_(False))
+            .options(selectinload(SnippetModel.tags))
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self._db.execute(query)
         return result.scalars().all(), total  # type: ignore
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:
         query = select(SnippetModel).where(SnippetModel.uuid == uuid)
+        result = await self._db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_by_uuid_with_tags(
+        self, uuid: UUID
+    ) -> Optional[SnippetModel]:
+        query = (
+            select(SnippetModel)
+            .where(SnippetModel.uuid == uuid)
+            .options(selectinload(SnippetModel.tags))
+        )
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
@@ -98,9 +121,7 @@ class SnippetRepository:
         language: LanguageEnum | None = None,
         is_private: bool | None = None,
     ) -> SnippetModel:
-        stmt = select(SnippetModel).where(SnippetModel.uuid == uuid)
-        result = await self._db.execute(stmt)
-        snippet: SnippetModel | None = result.scalar_one_or_none()
+        snippet: SnippetModel | None = await self.get_by_uuid_with_tags(uuid)
 
         if snippet is None:
             raise exc.SnippetNotFoundError(
