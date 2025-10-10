@@ -24,6 +24,7 @@ const SnippetFormPage = () => {
 
   const [titleError, setTitleError] = useState('');
   const [contentError, setContentError] = useState('');
+  const [tagsError, setTagsError] = useState('');
 
   const emptySnippet: NewSnippetType = {
     title: '',
@@ -152,7 +153,16 @@ const SnippetFormPage = () => {
   }
 
   function handleAddTag(tagContent: string) {
-    if (snippet.tags.length === 10) return;
+    if (snippet.tags.length === 10) {
+      setTagsError('You can add up to 10 tags only');
+      return;
+    }
+
+    if (tagContent.length < 3) {
+      setTagsError('Tag must be at least 3 characters');
+      return;
+    }
+
     if (!snippet.tags.includes(tagContent.trim())) {
       setSnippet(prev => ({
         ...prev,
@@ -182,6 +192,7 @@ const SnippetFormPage = () => {
           handleAddTag(value.slice(0, -1));
         } else {
           setCurrentTag(value);
+          setTagsError('');
         }
         return;
       default:
@@ -378,6 +389,7 @@ const SnippetFormPage = () => {
                     }
                   }}
                 />
+                <span className={styles.error}>{tagsError}</span>
                 <div className={styles.tagsList}>
                   {snippet.tags.map(tag => (
                     <Tag
