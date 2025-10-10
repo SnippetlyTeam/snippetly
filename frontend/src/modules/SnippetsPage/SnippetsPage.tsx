@@ -11,6 +11,9 @@ import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {
+  const SIBLING_COUNT = 2;
+  const EDGE_COUNT = 2;
+
   const [searchInputValue, setSearchInputValue] = useState('');
   const {
     accessToken,
@@ -61,6 +64,59 @@ const SnippetsPage = () => {
       setCurrentPage(newValue);
     }
   }
+
+  function getPaginationItems(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    if (totalPages <= EDGE_COUNT * 2 + SIBLING_COUNT * 2 + 1) {
+
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    const startPages = [];
+    for (let i = 1; i <= EDGE_COUNT; i++) {
+      startPages.push(i);
+    }
+    const endPages = [];
+    for (let i = totalPages - EDGE_COUNT + 1; i <= totalPages; i++) {
+      endPages.push(i);
+    }
+
+    const siblingsStart = Math.max(
+      Math.min(
+        currentPage - SIBLING_COUNT,
+        totalPages - EDGE_COUNT - SIBLING_COUNT * 2
+      ),
+      EDGE_COUNT + 1
+    );
+    const siblingsEnd = Math.min(
+      Math.max(
+        currentPage + SIBLING_COUNT,
+        EDGE_COUNT + SIBLING_COUNT * 2 + 1
+      ),
+      totalPages - EDGE_COUNT
+    );
+
+
+    pages.push(...startPages);
+
+
+    if (siblingsStart > EDGE_COUNT + 1) {
+      pages.push('...');
+    }
+
+    for (let i = siblingsStart; i <= siblingsEnd; i++) {
+      pages.push(i);
+    }
+
+    if (siblingsEnd < totalPages - EDGE_COUNT) {
+      pages.push('...');
+    }
+
+    pages.push(...endPages);
+
+    return pages;
+  };
 
   useEffect(() => {
     if (isTokenLoading) {
@@ -168,18 +224,23 @@ const SnippetsPage = () => {
           </button>
 
           <div className={styles.paginationPages}>
-            {
-              Array.from({ length: totalPages }, (_, i) => (
+            {getPaginationItems().map((item, index) => (
+              typeof item === 'number' ? (
                 <button
-                  key={i + 1}
-                  className={`${styles.paginationItem} ${currentPage === i + 1 ? styles.paginationItemActive : ''}`}
-                  onClick={() => handlePageChange(i + 1)}
-                  disabled={currentPage === i + 1}
+                  key={item}
+                  className={`
+                    ${styles.paginationItem} 
+                    ${currentPage === item ? styles.paginationItemActive : ''}
+                  `}
+                  onClick={() => handlePageChange(item as number)}
+                  disabled={currentPage === item}
                 >
-                  {i + 1}
+                  {item}
                 </button>
-              ))
-            }
+              ) : (
+                <span key={`ellipsis-${index}`} className={styles.paginationEllipsis}>...</span>
+              )
+            ))}
           </div>
 
           <button
