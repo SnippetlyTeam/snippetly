@@ -21,12 +21,17 @@ const SnippetsPage = () => {
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [perPageValue, setPerPageValue] = useState(10);
   const [totalPages, setTotalPages] = useState<number>(0);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const fetchSnippets = async (page = 1, perPage = 10) => {
+  function getParams() {
+    return new URLSearchParams(location.search);
+  }
+
+  async function fetchSnippets(page: number, perPage: number) {
     if (!accessToken) {
       setSnippets([]);
       return;
@@ -51,9 +56,8 @@ const SnippetsPage = () => {
   };
 
   function handlePageChange(newValue: number) {
-
     if (newValue >= 1 && newValue <= totalPages) {
-      fetchSnippets(newValue);
+      fetchSnippets(newValue, perPageValue);
       setCurrentPage(newValue);
     }
   }
@@ -70,11 +74,33 @@ const SnippetsPage = () => {
     }
 
     if (accessToken) {
-      setIsLoading(true);
-      fetchSnippets();
-    }
+      const params = getParams();
+      let page = currentPage;
+      let perPage = 10;
 
-  }, [isTokenLoading, accessToken, isAuthenticated]);
+      const pageParam = params.get('page');
+      const perPageParam = params.get('perPage');
+
+      if (pageParam) {
+        const parsedPage = parseInt(pageParam, 10);
+        if (!isNaN(parsedPage) && parsedPage > 0 && parsedPage <= totalPages) {
+          page = parsedPage;
+          setCurrentPage(parsedPage);
+        }
+      }
+
+      if (perPageParam) {
+        const parsedPerPage = parseInt(perPageParam, 10);
+        if (!isNaN(parsedPerPage) && parsedPerPage > 0 && parsedPerPage <= 20) {
+          perPage = parsedPerPage;
+          setPerPageValue(parsedPerPage);
+        }
+      }
+
+      setIsLoading(true);
+      fetchSnippets(page, perPage);
+    }
+  }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
 
   useEffect(() => {
     if (
@@ -131,7 +157,7 @@ const SnippetsPage = () => {
         )}
       </div>
 
-      {totalPages && (
+      {totalPages > 1 && (
         <div className={styles.pagination}>
           <button
             className={styles.paginationSwitcher}
@@ -141,18 +167,20 @@ const SnippetsPage = () => {
             &larr; Prev
           </button>
 
-          {
-            Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i + 1}
-                className={`${styles.paginationItem} ${currentPage === i + 1 ? styles.paginationItemActive : ''}`}
-                onClick={() => handlePageChange(i + 1)}
-                disabled={currentPage === i + 1}
-              >
-                {i + 1}
-              </button>
-            ))
-          }
+          <div className={styles.paginationPages}>
+            {
+              Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i + 1}
+                  className={`${styles.paginationItem} ${currentPage === i + 1 ? styles.paginationItemActive : ''}`}
+                  onClick={() => handlePageChange(i + 1)}
+                  disabled={currentPage === i + 1}
+                >
+                  {i + 1}
+                </button>
+              ))
+            }
+          </div>
 
           <button
             className={styles.paginationSwitcher}
