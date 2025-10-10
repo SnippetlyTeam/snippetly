@@ -23,7 +23,7 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
         {snippet.content}
       </div>
 
-      <div className={styles.line}></div>
+      <div className={styles.line} />
 
       <div className={styles.tags}></div>
     </div>

@@ -9,6 +9,7 @@ import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import toast, { type Toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
+import GoogleSignIn from './GoogleSignIn';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -255,12 +256,7 @@ const SignInPage: React.FC = () => {
           aria-label="Sign in to your account"
         >{isPending ? <Loader buttonContent /> : 'Sign In'}</button>
 
-        <button
-          onClick={handleSignInWithGoogle}
-          className={styles.google}
-        >
-          Sign In with Google <img className={styles.googleIcon} src='./icons/google.webp' alt='Google' />
-        </button>
+        <GoogleSignIn type='signin' onClick={handleSignInWithGoogle} />
 
         <p className={styles.text}>
           Need an account? <Link to='/sign-up'>Sign Up</Link>

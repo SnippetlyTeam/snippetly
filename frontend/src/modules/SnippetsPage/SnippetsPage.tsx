@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './SnippetsPage.module.scss';
 import Snippet from '../../components/Snippet/Snippet';
@@ -11,6 +11,9 @@ import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {
+  const SIBLING_COUNT = 2;
+  const EDGE_COUNT = 2;
+
   const [searchInputValue, setSearchInputValue] = useState('');
   const {
     accessToken,
@@ -18,38 +21,119 @@ const SnippetsPage = () => {
     isAuthenticated
   } = useAuthContext();
 
-  const [data, setData] = useState<object | null>(null);
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPageValue, setPerPageValue] = useState(10);
+  const [totalPages, setTotalPages] = useState<number>(0);
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const fetchSnippets = async () => {
+  const paramsRef = useRef<{ pageParam: number | undefined; perPageParam: number | undefined }>({
+    pageParam: undefined,
+    perPageParam: undefined,
+  });
+
+  function getParams() {
+    return new URLSearchParams(location.search);
+  }
+
+  async function fetchSnippets(page: number, perPage: number) {
     if (!accessToken) {
-      setData({ snippets: [] });
       setSnippets([]);
-      setIsLoading(false);
       return;
     }
-    try {
-      const response = await getAll(accessToken);
 
-      setData(response.data);
-      if (Array.isArray(response.data)) {
-        setSnippets(response.data);
-      } else if (response.data && Array.isArray(response.data.snippets)) {
+    setIsLoading(true);
+
+    try {
+      const response = await getAll(accessToken, page, perPage);
+
+      if (response.data && Array.isArray(response.data.snippets)) {
         setSnippets(response.data.snippets);
+        setTotalPages(response.data.total_pages);
       } else {
         setSnippets([]);
       }
     } catch (error) {
-      setData({ snippets: [] });
       setSnippets([]);
     } finally {
       setIsLoading(false);
     }
   };
+
+  function handlePageChange(newValue: number) {
+    if (newValue >= 1 && newValue <= totalPages) {
+      const params = new URLSearchParams(location.search);
+      params.set('page', String(newValue));
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+
+      fetchSnippets(newValue, perPageValue);
+      setCurrentPage(newValue);
+    }
+  }
+
+  function getPaginationItems(): (number | string)[] {
+    const pages: (number | string)[] = [];
+    if (totalPages <= EDGE_COUNT * 2 + SIBLING_COUNT * 2 + 1) {
+
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    const startPages = [];
+    for (let i = 1; i <= EDGE_COUNT; i++) {
+      startPages.push(i);
+    }
+    const endPages = [];
+    for (let i = totalPages - EDGE_COUNT + 1; i <= totalPages; i++) {
+      endPages.push(i);
+    }
+
+    const siblingsStart = Math.max(
+      Math.min(
+        currentPage - SIBLING_COUNT,
+        totalPages - EDGE_COUNT - SIBLING_COUNT * 2
+      ),
+      EDGE_COUNT + 1
+    );
+    const siblingsEnd = Math.min(
+      Math.max(
+        currentPage + SIBLING_COUNT,
+        EDGE_COUNT + SIBLING_COUNT * 2 + 1
+      ),
+      totalPages - EDGE_COUNT
+    );
+
+    pages.push(...startPages);
+
+    if (siblingsStart > EDGE_COUNT + 1) {
+      pages.push('...');
+    }
+
+    for (let i = siblingsStart; i <= siblingsEnd; i++) {
+      pages.push(i);
+    }
+
+    if (siblingsEnd < totalPages - EDGE_COUNT) {
+      pages.push('...');
+    }
+
+    pages.push(...endPages);
+
+    return pages;
+  };
+
+  useEffect(() => {
+    const params = getParams();
+    const pageRaw = params.get('page');
+    const perPageRaw = params.get('perPage');
+    paramsRef.current = {
+      pageParam: pageRaw ? parseInt(pageRaw, 10) : undefined,
+      perPageParam: perPageRaw ? parseInt(perPageRaw, 10) : undefined
+    };
+  }, [location.search]);
 
   useEffect(() => {
     if (isTokenLoading) {
@@ -63,11 +147,50 @@ const SnippetsPage = () => {
     }
 
     if (accessToken) {
-      setIsLoading(true);
-      fetchSnippets();
-    }
+      const params = getParams();
+      let page = currentPage;
+      let perPage = 10;
 
-  }, [isTokenLoading, accessToken, isAuthenticated]);
+      const pageParam = params.get('page');
+      const perPageParam = params.get('perPage');
+
+      if (pageParam) {
+        const parsedPage = parseInt(pageParam, 10);
+        if (!isNaN(parsedPage) && parsedPage > 0) {
+          page = parsedPage;
+        }
+      }
+
+      if (perPageParam) {
+        const parsedPerPage = parseInt(perPageParam, 10);
+        if (!isNaN(parsedPerPage) && parsedPerPage > 0 && parsedPerPage <= 20) {
+          perPage = parsedPerPage;
+          setPerPageValue(parsedPerPage);
+        }
+      }
+
+      setIsLoading(true);
+      fetchSnippets(page, perPage);
+    }
+  }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
+
+  useEffect(() => {
+    const requestedPage = paramsRef.current.pageParam;
+    if (totalPages > 0 && requestedPage !== undefined) {
+      if (requestedPage > totalPages) {
+        setCurrentPage(totalPages);
+
+        const params = getParams();
+        params.set('page', totalPages.toString());
+        navigate({
+          pathname: location.pathname,
+          search: params.toString()
+        }, { replace: true });
+      } else if (requestedPage !== currentPage) {
+        setCurrentPage(requestedPage);
+      }
+    }
+  }, [totalPages, location.pathname, navigate])
 
   useEffect(() => {
     if (
@@ -123,6 +246,46 @@ const SnippetsPage = () => {
           ) : null
         )}
       </div>
+
+      {(totalPages > 1 && !isLoading) && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.paginationSwitcher}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            &larr; Prev
+          </button>
+
+          <div className={styles.paginationPages}>
+            {getPaginationItems().map((item, index) => (
+              typeof item === 'number' ? (
+                <button
+                  key={item}
+                  className={`
+                    ${styles.paginationItem} 
+                    ${currentPage === item ? styles.paginationItemActive : ''}
+                  `}
+                  onClick={() => handlePageChange(item as number)}
+                  disabled={currentPage === item}
+                >
+                  {item}
+                </button>
+              ) : (
+                <span key={`ellipsis-${index}`} className={styles.paginationEllipsis}>...</span>
+              )
+            ))}
+          </div>
+
+          <button
+            className={styles.paginationSwitcher}
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next &rarr;
+          </button>
+        </div>
+      )}
     </main>
   )
 }
