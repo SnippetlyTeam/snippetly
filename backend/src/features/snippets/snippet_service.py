@@ -21,6 +21,7 @@ from src.api.v1.schemas.snippets import (
     SnippetUpdateRequestSchema,
 )
 from .interface import SnippetServiceInterface
+from ...core.utils.logger import logger
 
 
 class SnippetService(SnippetServiceInterface):
@@ -177,18 +178,20 @@ class SnippetService(SnippetServiceInterface):
             )
 
             snippet_list = []
+
+            mongo_ids = [snippet.mongodb_id for snippet in snippets]
+            documents = await self._doc_repo.get_by_ids(mongo_ids)
+
+            documents_map = {str(doc.id): doc for doc in documents}
+
             # TODO: TEST IF IT WORKS CORRECTLY Sequence is not iterable
             for snippet in snippets:  # type:ignore
-                try:
-                    document = await self._doc_repo.get_by_id(
-                        snippet.mongodb_id
-                    )
-                except (PyMongoError, ValidationError):
-                    document = None
+                document = documents_map.get(snippet.mongodb_id)
 
                 doc_content = document.content if document else None
                 doc_description = document.description if document else None
 
+                logger.debug(f"snippet {snippet}")
                 snippet_list.append(
                     SnippetListItemSchema(
                         title=snippet.title,

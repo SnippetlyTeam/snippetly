@@ -33,7 +33,11 @@ router = APIRouter(prefix="/auth", tags=["Password Reset"])
     responses={
         404: create_error_examples(
             description="Not Found",
-            examples={"not_found": "Password reset token was not found"},
+            examples={
+                "not_found": "Password reset token was not found",
+                "expired": "This password reset link has expired "
+                "or is invalid. Please request a new reset link.",
+            },
         ),
         400: create_error_examples(
             description="Bad Request",

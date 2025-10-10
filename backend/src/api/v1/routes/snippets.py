@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -105,11 +105,17 @@ async def create_snippet(
         ),
     },
 )
-async def get_all_snippets(
+async def get_all_snippets(  # TODO filter by user's email
     request: Request,
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
+    tag: Annotated[
+        Optional[str], Query(description="Filter snippets by tag")
+    ] = None,
+    language: Annotated[
+        Optional[str], Query(description="Filter snippets by language")
+    ] = None,
     page: int = Query(1, ge=1, description="Page number (1-based index)"),
     per_page: int = Query(
         10, ge=1, le=20, description="Number of items per page"
