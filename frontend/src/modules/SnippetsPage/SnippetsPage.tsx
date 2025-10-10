@@ -213,7 +213,7 @@ const SnippetsPage = () => {
         )}
       </div>
 
-      {totalPages > 1 && (
+      {(totalPages > 1 && !isLoading) && (
         <div className={styles.pagination}>
           <button
             className={styles.paginationSwitcher}
