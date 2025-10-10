@@ -63,3 +63,8 @@
 .line {
   border: 1px solid var(--notification-color);
 }
+
+.tags {
+  display: flex;
+  gap: 8px;
+}

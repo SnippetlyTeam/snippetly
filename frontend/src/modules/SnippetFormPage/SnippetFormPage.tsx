@@ -30,6 +30,7 @@ const SnippetFormPage = () => {
     is_private: false,
     content: '',
     description: '',
+    tags: [],
   }
 
   const [isLanguageDropDownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -43,7 +44,8 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log(response.data)
       setSnippet(emptySnippet);
       toast.custom((t: Toast) => (
         <CustomToast
@@ -56,6 +58,9 @@ const SnippetFormPage = () => {
         duration: 2500,
       });
     },
+    onError: (error) => {
+      console.log(error)
+    }
   });
 
   const {
@@ -145,20 +150,27 @@ const SnippetFormPage = () => {
   }
 
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
-    if (key === 'title') {
-      setTitleError('');
-    }
-
-    if (key === 'content') {
-      setContentError('');
-
-      if (value.length > 50000) {
-        setContentError('Snippet exceeds size limit of 10MB');
-      }
-    }
-
-    if (key === 'language') {
-      setIsLanguageDropdownOpen(false);
+    switch (key) {
+      case 'title':
+        setTitleError('');
+        break;
+      case 'content':
+        setContentError('');
+        if (value.length > 50000) {
+          setContentError('Snippet exceeds size limit of 10MB');
+        }
+        break;
+      case 'language':
+        setIsLanguageDropdownOpen(false);
+        break;
+      case 'tags':
+        setSnippet(prev => ({
+          ...prev,
+          [key]: value.split(', ')
+        }));
+        return;
+      default:
+        break;
     }
 
     setSnippet(prev => ({
@@ -182,6 +194,7 @@ const SnippetFormPage = () => {
         is_private: snippet.is_private,
         content: snippet.content,
         description: snippet.description,
+        tags: snippet.tags,
       });
       return;
     }
@@ -192,6 +205,7 @@ const SnippetFormPage = () => {
       is_private: snippet.is_private,
       content: snippet.content,
       description: snippet.description.trim(),
+      tags: snippet.tags,
     });
   }
 
@@ -336,8 +350,9 @@ const SnippetFormPage = () => {
                   name="tags"
                   autoComplete="off"
                   aria-describedby="tags-hint"
-                  disabled
                   aria-disabled="true"
+                  value={snippet.tags.join(', ')}
+                  onChange={(event) => handleSnippetDetailsChange('tags', event.target.value)}
                 />
               </div>
 

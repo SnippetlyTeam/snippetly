@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './Snippet.module.scss';
 import type { SnippetType } from '../../types/SnippetType';
+import Tag from '../Tag/Tag';
 
 type Props = {
   snippet: SnippetType,
@@ -25,7 +26,11 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
 
       <div className={styles.line} />
 
-      <div className={styles.tags}></div>
+      <div className={styles.tags}>
+        {snippet.tags.map(tag => (
+          <Tag content={tag} key={tag}/>
+        ))}
+      </div>
     </div>
   );
 }

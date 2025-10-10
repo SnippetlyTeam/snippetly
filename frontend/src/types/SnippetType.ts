@@ -4,6 +4,6 @@ export type SnippetType = {
   is_private: boolean,
   content: string,
   description: string,
-  user_id: number,
+  tags: string[],
   uuid: string,
 }
