@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './SnippetsPage.module.scss';
 import Snippet from '../../components/Snippet/Snippet';
@@ -30,6 +30,11 @@ const SnippetsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const paramsRef = useRef<{ pageParam: number | undefined; perPageParam: number | undefined }>({
+    pageParam: undefined,
+    perPageParam: undefined,
+  });
+
   function getParams() {
     return new URLSearchParams(location.search);
   }
@@ -60,6 +65,10 @@ const SnippetsPage = () => {
 
   function handlePageChange(newValue: number) {
     if (newValue >= 1 && newValue <= totalPages) {
+      const params = new URLSearchParams(location.search);
+      params.set('page', String(newValue));
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+
       fetchSnippets(newValue, perPageValue);
       setCurrentPage(newValue);
     }
@@ -97,9 +106,7 @@ const SnippetsPage = () => {
       totalPages - EDGE_COUNT
     );
 
-
     pages.push(...startPages);
-
 
     if (siblingsStart > EDGE_COUNT + 1) {
       pages.push('...');
@@ -117,6 +124,16 @@ const SnippetsPage = () => {
 
     return pages;
   };
+
+  useEffect(() => {
+    const params = getParams();
+    const pageRaw = params.get('page');
+    const perPageRaw = params.get('perPage');
+    paramsRef.current = {
+      pageParam: pageRaw ? parseInt(pageRaw, 10) : undefined,
+      perPageParam: perPageRaw ? parseInt(perPageRaw, 10) : undefined
+    };
+  }, [location.search]);
 
   useEffect(() => {
     if (isTokenLoading) {
@@ -139,9 +156,8 @@ const SnippetsPage = () => {
 
       if (pageParam) {
         const parsedPage = parseInt(pageParam, 10);
-        if (!isNaN(parsedPage) && parsedPage > 0 && parsedPage <= totalPages) {
+        if (!isNaN(parsedPage) && parsedPage > 0) {
           page = parsedPage;
-          setCurrentPage(parsedPage);
         }
       }
 
@@ -157,6 +173,24 @@ const SnippetsPage = () => {
       fetchSnippets(page, perPage);
     }
   }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
+
+  useEffect(() => {
+    const requestedPage = paramsRef.current.pageParam;
+    if (totalPages > 0 && requestedPage !== undefined) {
+      if (requestedPage > totalPages) {
+        setCurrentPage(totalPages);
+
+        const params = getParams();
+        params.set('page', totalPages.toString());
+        navigate({
+          pathname: location.pathname,
+          search: params.toString()
+        }, { replace: true });
+      } else if (requestedPage !== currentPage) {
+        setCurrentPage(requestedPage);
+      }
+    }
+  }, [totalPages, location.pathname, navigate])
 
   useEffect(() => {
     if (
