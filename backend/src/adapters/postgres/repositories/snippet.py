@@ -68,21 +68,35 @@ class SnippetRepository:
 
     # --- Read ---
     async def get_snippets_paginated(
-        self, offset: int, limit: int
+        self,
+        offset: int,
+        limit: int,
+        language: Optional[LanguageEnum] = None,
+        tags: Optional[str] = None,
     ) -> Tuple[Sequence, int]:
-        total = await self._db.scalar(
-            select(func.count())
-            .select_from(SnippetModel)
-            .where(SnippetModel.is_private.is_(False))
+        base_query = select(SnippetModel).where(
+            SnippetModel.is_private.is_(False)
         )
-        query = (
-            select(SnippetModel)
-            .where(SnippetModel.is_private.is_(False))
-            .options(selectinload(SnippetModel.tags))
+
+        if language:
+            language_enum_member = LanguageEnum(language)
+            base_query = base_query.where(SnippetModel.language == language_enum_member)
+
+        if tags:
+            base_query = base_query.join(SnippetModel.tags).where(
+                TagModel.name.in_(tags)
+            )
+
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total = await self._db.scalar(count_query)
+
+        data_query = (
+            base_query.options(selectinload(SnippetModel.tags))
             .offset(offset)
             .limit(limit)
         )
-        result = await self._db.execute(query)
+
+        result = await self._db.execute(data_query)
         return result.scalars().all(), total  # type: ignore
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:

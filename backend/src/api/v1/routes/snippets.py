@@ -110,8 +110,8 @@ async def get_all_snippets(  # TODO filter by user's email
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
-    tag: Annotated[
-        Optional[str], Query(description="Filter snippets by tag")
+    tags: Annotated[
+        Optional[list[str]], Query(description="Filter snippets by tags")
     ] = None,
     language: Annotated[
         Optional[str], Query(description="Filter snippets by language")
@@ -122,7 +122,7 @@ async def get_all_snippets(  # TODO filter by user's email
     ),
 ) -> GetSnippetsResponseSchema:
     try:
-        return await snippet_service.get_snippets(request, page, per_page)
+        return await snippet_service.get_snippets(request, page, per_page, language, tags)
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=500, detail="Something went wrong"

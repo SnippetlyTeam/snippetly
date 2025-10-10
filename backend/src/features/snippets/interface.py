@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 from uuid import UUID
 
 from fastapi.requests import Request
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
@@ -34,12 +35,27 @@ class SnippetServiceInterface(ABC):
 
     @abstractmethod
     async def get_snippets(
-        self, request: Request, page: int, per_page: int
+        self,
+        request: Request,
+        page: int,
+        per_page: int,
+        language: Optional[LanguageEnum],
+        tags: Optional[list[str]],
     ) -> GetSnippetsResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
         list of Snippets with pagination
 
+        :param request: Request that will be used to create pagination links
+        :type: fastapi.requests.Request
+        :param page: Current page number
+        :type: int
+        :param per_page: Number of items per page
+        :type: int
+        :param language: Optional param - language
+        :type: LanguageEnum | None
+        :param tags: Optional param - list of tag names
+        :type: list[str] | None
         :return: Snippets with pagination
         :rtype: GetSnippetsResponseSchema
         :raises SQLAlchemyError: If error occurred during SnippetModel get

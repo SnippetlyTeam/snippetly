@@ -11,7 +11,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import src.core.exceptions as exc
 from src.adapters.mongo.documents import SnippetDocument
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.models import SnippetModel, UserModel, TagModel
+from src.adapters.postgres.models import (
+    SnippetModel,
+    UserModel,
+    TagModel,
+    LanguageEnum,
+)
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
@@ -165,25 +170,29 @@ class SnippetService(SnippetServiceInterface):
         return snippet_data
 
     async def get_snippets(
-        self, request: Request, page: int, per_page: int
+        self,
+        request: Request,
+        page: int,
+        per_page: int,
+        language: Optional[LanguageEnum],
+        tags: Optional[list[str]],
     ) -> GetSnippetsResponseSchema:
         try:
             offset = self._calculate_offset(page, per_page)
             snippets, total = await self._model_repo.get_snippets_paginated(
-                offset, per_page
+                offset, per_page, language, tags
             )
 
             prev_page, next_page = self._build_pagination_links(
                 request, page, per_page, total
             )
 
-            snippet_list = []
-
             mongo_ids = [snippet.mongodb_id for snippet in snippets]
             documents = await self._doc_repo.get_by_ids(mongo_ids)
 
             documents_map = {str(doc.id): doc for doc in documents}
 
+            snippet_list = []
             # TODO: TEST IF IT WORKS CORRECTLY Sequence is not iterable
             for snippet in snippets:  # type:ignore
                 document = documents_map.get(snippet.mongodb_id)
