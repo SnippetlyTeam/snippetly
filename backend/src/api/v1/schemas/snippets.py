@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import List, Optional
 from uuid import UUID
 
@@ -65,3 +65,15 @@ class SnippetResponseSchema(BaseSnippetSchema):
     uuid: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class SnippetsFilterParams(BaseModel):
+    language: Optional[LanguageEnum] = Field(
+        default=None, description="Filter snippets by language"
+    )
+    created_before: Optional[date] = Field(
+        default=None, description="Created before date snippets filter"
+    )
+    created_after: Optional[date] = Field(
+        default=None, description="Created after date snippets filter included"
+    )

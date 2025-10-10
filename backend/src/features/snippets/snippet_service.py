@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional, cast
 from uuid import UUID
 
@@ -176,11 +177,13 @@ class SnippetService(SnippetServiceInterface):
         per_page: int,
         language: Optional[LanguageEnum],
         tags: Optional[list[str]],
+        created_before: Optional[date],
+        created_after: Optional[date],
     ) -> GetSnippetsResponseSchema:
         try:
             offset = self._calculate_offset(page, per_page)
             snippets, total = await self._model_repo.get_snippets_paginated(
-                offset, per_page, language, tags
+                offset, per_page, language, tags, created_before, created_after
             )
 
             prev_page, next_page = self._build_pagination_links(
@@ -193,7 +196,6 @@ class SnippetService(SnippetServiceInterface):
             documents_map = {str(doc.id): doc for doc in documents}
 
             snippet_list = []
-            # TODO: TEST IF IT WORKS CORRECTLY Sequence is not iterable
             for snippet in snippets:  # type:ignore
                 document = documents_map.get(snippet.mongodb_id)
 

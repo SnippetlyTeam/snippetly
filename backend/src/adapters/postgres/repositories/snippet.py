@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Optional, Tuple
 from uuid import UUID
 
@@ -72,7 +73,9 @@ class SnippetRepository:
         offset: int,
         limit: int,
         language: Optional[LanguageEnum] = None,
-        tags: Optional[str] = None,
+        tags: Optional[list[str]] = None,
+        created_before: Optional[date] = None,
+        created_after: Optional[date] = None,
     ) -> Tuple[Sequence, int]:
         base_query = select(SnippetModel).where(
             SnippetModel.is_private.is_(False)
@@ -80,11 +83,22 @@ class SnippetRepository:
 
         if language:
             language_enum_member = LanguageEnum(language)
-            base_query = base_query.where(SnippetModel.language == language_enum_member)
+            base_query = base_query.where(
+                SnippetModel.language == language_enum_member
+            )
 
         if tags:
             base_query = base_query.join(SnippetModel.tags).where(
                 TagModel.name.in_(tags)
+            )
+
+        if created_before:
+            end_date = created_before + timedelta(days=1)
+            base_query = base_query.where(SnippetModel.created_at < end_date)
+
+        if created_after:
+            base_query = base_query.where(
+                SnippetModel.created_at >= created_after
             )
 
         count_query = select(func.count()).select_from(base_query.subquery())

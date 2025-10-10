@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
@@ -41,10 +42,12 @@ class SnippetServiceInterface(ABC):
         per_page: int,
         language: Optional[LanguageEnum],
         tags: Optional[list[str]],
+        created_before: Optional[date],
+        created_after: Optional[date],
     ) -> GetSnippetsResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
-        list of Snippets with pagination
+        list of Snippets with pagination. Optional params used for filtering
 
         :param request: Request that will be used to create pagination links
         :type: fastapi.requests.Request
@@ -56,6 +59,10 @@ class SnippetServiceInterface(ABC):
         :type: LanguageEnum | None
         :param tags: Optional param - list of tag names
         :type: list[str] | None
+        :param created_before: Optional param - created before date
+        :type: date | None
+        :param created_after: Optional param - created after date
+        :type: date | None
         :return: Snippets with pagination
         :rtype: GetSnippetsResponseSchema
         :raises SQLAlchemyError: If error occurred during SnippetModel get
