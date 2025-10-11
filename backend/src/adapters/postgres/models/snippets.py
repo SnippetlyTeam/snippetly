@@ -91,6 +91,10 @@ class SnippetModel(Base):
         "SnippetFavoritesModel", back_populates="snippet"
     )
 
+    __table_args__ = (
+        UniqueConstraint("user_id", "title", name="uq_user_title"),
+    )
+
     def __repr__(self) -> str:
         return (
             f"<SnippetModel(id={self.id}, title={self.title}, "
@@ -138,7 +142,7 @@ class TagModel(Base):
         Integer, primary_key=True, autoincrement=True
     )
 
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    name: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

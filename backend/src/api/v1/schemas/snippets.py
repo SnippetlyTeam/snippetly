@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, constr, field_validator
 from src.adapters.postgres.models import LanguageEnum
 from .common import BaseListSchema
 
-TagStr = constr(min_length=3, max_length=100)
+TagStr = constr(min_length=2, max_length=20)
 
 
 def serialize_tags(tags: list[str]) -> list:
@@ -19,7 +19,7 @@ class BaseSnippetSchema(BaseModel):
     title: str = Field(..., min_length=3, max_length=100)
     language: LanguageEnum = Field(...)
     is_private: bool = Field(...)
-    content: str = Field(..., min_length=1, max_length=50_000)
+    content: str = Field(..., min_length=1, max_length=1000)
     description: str = Field(default="", max_length=500)
     tags: List[TagStr] = Field(
         default_factory=list, min_length=0, max_length=10
@@ -39,7 +39,7 @@ class SnippetUpdateRequestSchema(BaseModel):
     title: Optional[str] = Field(None, min_length=3, max_length=100)
     language: Optional[LanguageEnum] = None
     is_private: Optional[bool] = None
-    content: Optional[str] = Field(None, min_length=1, max_length=50_000)
+    content: Optional[str] = Field(None, min_length=1, max_length=1000)
     description: Optional[str] = Field(None, max_length=500)
     tags: List[TagStr] = Field(
         default_factory=list, min_length=0, max_length=10
