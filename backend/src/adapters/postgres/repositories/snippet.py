@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import src.core.exceptions as exc
-from ..models import SnippetModel, LanguageEnum, TagModel
+from ..models import SnippetModel, LanguageEnum, TagModel, UserModel
 
 
 class SnippetRepository:
@@ -76,6 +76,7 @@ class SnippetRepository:
         tags: Optional[list[str]] = None,
         created_before: Optional[date] = None,
         created_after: Optional[date] = None,
+        username: Optional[str] = None,
     ) -> Tuple[Sequence, int]:
         base_query = select(SnippetModel).where(
             SnippetModel.is_private.is_(False)
@@ -99,6 +100,11 @@ class SnippetRepository:
         if created_after:
             base_query = base_query.where(
                 SnippetModel.created_at >= created_after
+            )
+
+        if username:
+            base_query = base_query.join(UserModel).where(
+                UserModel.username.icontains(username)
             )
 
         count_query = select(func.count()).select_from(base_query.subquery())

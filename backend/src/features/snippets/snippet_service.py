@@ -179,11 +179,18 @@ class SnippetService(SnippetServiceInterface):
         tags: Optional[list[str]],
         created_before: Optional[date],
         created_after: Optional[date],
+        username: Optional[str],
     ) -> GetSnippetsResponseSchema:
         try:
             offset = self._calculate_offset(page, per_page)
             snippets, total = await self._model_repo.get_snippets_paginated(
-                offset, per_page, language, tags, created_before, created_after
+                offset,
+                per_page,
+                language,
+                tags,
+                created_before,
+                created_after,
+                username,
             )
 
             prev_page, next_page = self._build_pagination_links(

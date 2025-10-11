@@ -77,3 +77,6 @@ class SnippetsFilterParams(BaseModel):
     created_after: Optional[date] = Field(
         default=None, description="Created after date snippets filter included"
     )
+    username: Optional[str] = Field(
+        default=None, description="Filter snippets by username"
+    )

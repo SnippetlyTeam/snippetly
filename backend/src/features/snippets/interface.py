@@ -44,6 +44,7 @@ class SnippetServiceInterface(ABC):
         tags: Optional[list[str]],
         created_before: Optional[date],
         created_after: Optional[date],
+        username: Optional[str],
     ) -> GetSnippetsResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
@@ -63,6 +64,8 @@ class SnippetServiceInterface(ABC):
         :type: date | None
         :param created_after: Optional param - created after date
         :type: date | None
+        :param username: Optional param - username
+        :type: str | None
         :return: Snippets with pagination
         :rtype: GetSnippetsResponseSchema
         :raises SQLAlchemyError: If error occurred during SnippetModel get
