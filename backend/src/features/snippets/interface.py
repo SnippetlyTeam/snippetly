@@ -40,6 +40,8 @@ class SnippetServiceInterface(ABC):
         request: Request,
         page: int,
         per_page: int,
+        current_user_id: int,
+        visibility: Optional[str],
         language: Optional[LanguageEnum],
         tags: Optional[list[str]],
         created_before: Optional[date],
@@ -56,6 +58,10 @@ class SnippetServiceInterface(ABC):
         :type: int
         :param per_page: Number of items per page
         :type: int
+        :param current_user_id: Current user id
+        :type: int
+        :param visibility: visibility param flag
+        :type: str
         :param language: Optional param - language
         :type: LanguageEnum | None
         :param tags: Optional param - list of tag names

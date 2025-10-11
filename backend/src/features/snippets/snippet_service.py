@@ -175,6 +175,8 @@ class SnippetService(SnippetServiceInterface):
         request: Request,
         page: int,
         per_page: int,
+        current_user_id: int,
+        visibility: Optional[str],
         language: Optional[LanguageEnum],
         tags: Optional[list[str]],
         created_before: Optional[date],
@@ -186,6 +188,8 @@ class SnippetService(SnippetServiceInterface):
             snippets, total = await self._model_repo.get_snippets_paginated(
                 offset,
                 per_page,
+                current_user_id,
+                visibility,
                 language,
                 tags,
                 created_before,

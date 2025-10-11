@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from sqlalchemy import select, delete, Sequence, func
+from sqlalchemy import select, delete, Sequence, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -72,15 +72,27 @@ class SnippetRepository:
         self,
         offset: int,
         limit: int,
+        current_user_id: int,
+        visibility: Optional[str] = None,
         language: Optional[LanguageEnum] = None,
         tags: Optional[list[str]] = None,
         created_before: Optional[date] = None,
         created_after: Optional[date] = None,
         username: Optional[str] = None,
     ) -> Tuple[Sequence, int]:
-        base_query = select(SnippetModel).where(
-            SnippetModel.is_private.is_(False)
-        )
+        if visibility == "private":
+            visibility_filter = and_(
+                SnippetModel.is_private.is_(True),
+                SnippetModel.user_id == current_user_id
+            )
+        elif visibility == "public":
+            visibility_filter = SnippetModel.is_private.is_(False)
+        else:
+            visibility_filter = or_(
+                SnippetModel.is_private.is_(False),
+                SnippetModel.user_id == current_user_id
+            )
+        base_query = select(SnippetModel).where(visibility_filter)
 
         if language:
             language_enum_member = LanguageEnum(language)
@@ -112,6 +124,7 @@ class SnippetRepository:
 
         data_query = (
             base_query.options(selectinload(SnippetModel.tags))
+            .order_by(SnippetModel.created_at.desc())
             .offset(offset)
             .limit(limit)
         )

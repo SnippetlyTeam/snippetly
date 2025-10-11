@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
@@ -67,6 +68,11 @@ class SnippetResponseSchema(BaseSnippetSchema):
     updated_at: datetime
 
 
+class VisibilityFilterEnum(str, Enum):
+    PRIVATE = "private"
+    PUBLIC = "public"
+
+
 class SnippetsFilterParams(BaseModel):
     language: Optional[LanguageEnum] = Field(
         default=None, description="Filter snippets by language"
@@ -79,4 +85,7 @@ class SnippetsFilterParams(BaseModel):
     )
     username: Optional[str] = Field(
         default=None, description="Filter snippets by username"
+    )
+    visibility: Optional[VisibilityFilterEnum] = Field(
+        default=None, description="Filter snippets by private flag"
     )

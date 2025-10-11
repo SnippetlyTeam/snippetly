@@ -86,7 +86,6 @@ async def create_snippet(
     "/",
     summary="Get all NOT private snippets",
     description="Get all snippets, if access token provided",
-    dependencies=[Depends(get_current_user)],
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -106,8 +105,9 @@ async def create_snippet(
         ),
     },
 )
-async def get_all_snippets(  # TODO filter by user's email
+async def get_all_snippets(
     request: Request,
+    user: Annotated[UserModel, Depends(get_current_user)],
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
@@ -125,6 +125,7 @@ async def get_all_snippets(  # TODO filter by user's email
             request,
             page,
             per_page,
+            user.id,
             tags=tags,
             **filters.model_dump(exclude_unset=True),
         )
