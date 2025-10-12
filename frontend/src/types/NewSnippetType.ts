@@ -3,5 +3,6 @@ export type NewSnippetType = {
   language: string,
   is_private: boolean,
   content: string,
-  description: string
+  description: string,
+  tags: string[],
 }

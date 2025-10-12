@@ -13,6 +13,7 @@ import { useMutation } from '@tanstack/react-query';
 import toast, { type Toast } from 'react-hot-toast';
 import CustomToast from '../../components/CustomAuthToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
+import Tag from '../../components/Tag/Tag';
 
 const SnippetFormPage = () => {
   const { snippetId } = useParams();
@@ -23,6 +24,7 @@ const SnippetFormPage = () => {
 
   const [titleError, setTitleError] = useState('');
   const [contentError, setContentError] = useState('');
+  const [tagsError, setTagsError] = useState('');
 
   const emptySnippet: NewSnippetType = {
     title: '',
@@ -30,6 +32,7 @@ const SnippetFormPage = () => {
     is_private: false,
     content: '',
     description: '',
+    tags: [],
   }
 
   const [isLanguageDropDownOpen, setIsLanguageDropdownOpen] = useState(false);
@@ -43,7 +46,8 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log(response.data)
       setSnippet(emptySnippet);
       toast.custom((t: Toast) => (
         <CustomToast
@@ -56,6 +60,9 @@ const SnippetFormPage = () => {
         duration: 2500,
       });
     },
+    onError: (error) => {
+      console.log(error)
+    }
   });
 
   const {
@@ -91,6 +98,7 @@ const SnippetFormPage = () => {
 
   const [snippet, setSnippet] = useState<NewSnippetType | SnippetType>(emptySnippet);
   const [isLoading, setIsLoading] = useState(isEditMode);
+  const [currentTag, setCurrentTag] = useState('');
 
   function formatLanguage(language: string): string {
     switch (language.toLowerCase()) {
@@ -144,21 +152,51 @@ const SnippetFormPage = () => {
     return true
   }
 
+  function handleAddTag(tagContent: string) {
+    if (snippet.tags.length === 10) {
+      setTagsError('You can add up to 10 tags only');
+      return;
+    }
+
+    if (tagContent.length < 3) {
+      setTagsError('Tag must be at least 3 characters');
+      return;
+    }
+
+    if (!snippet.tags.includes(tagContent.trim())) {
+      setSnippet(prev => ({
+        ...prev,
+        tags: [...prev.tags, tagContent]
+      }));
+    }
+
+    setCurrentTag('');
+  }
+
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
-    if (key === 'title') {
-      setTitleError('');
-    }
-
-    if (key === 'content') {
-      setContentError('');
-
-      if (value.length > 50000) {
-        setContentError('Snippet exceeds size limit of 10MB');
-      }
-    }
-
-    if (key === 'language') {
-      setIsLanguageDropdownOpen(false);
+    switch (key) {
+      case 'title':
+        setTitleError('');
+        break;
+      case 'content':
+        setContentError('');
+        if (value.length > 50000) {
+          setContentError('Snippet exceeds size limit of 10MB');
+        }
+        break;
+      case 'language':
+        setIsLanguageDropdownOpen(false);
+        break;
+      case 'tags':
+        if (value.endsWith(',')) {
+          handleAddTag(value.slice(0, -1));
+        } else {
+          setCurrentTag(value);
+          setTagsError('');
+        }
+        return;
+      default:
+        break;
     }
 
     setSnippet(prev => ({
@@ -182,6 +220,7 @@ const SnippetFormPage = () => {
         is_private: snippet.is_private,
         content: snippet.content,
         description: snippet.description,
+        tags: snippet.tags,
       });
       return;
     }
@@ -192,6 +231,7 @@ const SnippetFormPage = () => {
       is_private: snippet.is_private,
       content: snippet.content,
       description: snippet.description.trim(),
+      tags: snippet.tags,
     });
   }
 
@@ -336,9 +376,32 @@ const SnippetFormPage = () => {
                   name="tags"
                   autoComplete="off"
                   aria-describedby="tags-hint"
-                  disabled
                   aria-disabled="true"
+                  maxLength={50}
+                  value={currentTag}
+                  onChange={event => handleSnippetDetailsChange('tags', event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      if (currentTag.trim() !== '') {
+                        handleSnippetDetailsChange('tags', currentTag + ',');
+                      }
+                    }
+                  }}
                 />
+                <span className={styles.error}>{tagsError}</span>
+                <div className={styles.tagsList}>
+                  {snippet.tags.map(tag => (
+                    <Tag
+                      key={tag}
+                      content={tag}
+                      onClose={() => setSnippet(prev => ({
+                        ...prev,
+                        tags: [...prev.tags].filter(item => item !== tag),
+                      }))}
+                    />
+                  ))}
+                </div>
               </div>
 
               <div className={styles.formItem}>

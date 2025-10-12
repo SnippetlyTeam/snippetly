@@ -1,0 +1,29 @@
+.tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: var(--secondary-bg-color);
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  background-color: var(--color-accent);
+  width: fit-content;
+  border-radius: 20px;
+  padding: 4px 8px;
+}
+
+.removeButton {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  width: fit-content;
+  height: fit-content;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-white);
+  }
+}
