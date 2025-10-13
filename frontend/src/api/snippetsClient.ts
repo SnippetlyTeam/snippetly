@@ -26,14 +26,14 @@ export const getAll = (token: string, page: number, perPage: number): Promise<Ax
   );
 };
 
-export const getById = (uuid: string, token: string | null): Promise<AxiosResponse<SnippetDetailsType>> => {
+export const getById = (uuid: string, token: string | undefined): Promise<AxiosResponse<SnippetDetailsType>> => {
   return snippetsClient.get<SnippetDetailsType>(
     `/${uuid}`,
     { headers: { 'Authorization': `Bearer ${token}` } },
   );
 };
 
-export const create = (snippet: NewSnippetType, token: string | null): Promise<AxiosResponse<SnippetType>> => {
+export const create = (snippet: NewSnippetType, token: string | undefined): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.post(
     '/create',
     snippet,
@@ -44,7 +44,7 @@ export const create = (snippet: NewSnippetType, token: string | null): Promise<A
 export const update = (
   uuid: string,
   snippet: Partial<NewSnippetType>,
-  token: string | null,
+  token: string | undefined,
 ): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.patch<SnippetType>(
     `/${uuid}`,

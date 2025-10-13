@@ -1,0 +1,7 @@
+.main {
+  @include page-padding-inline;
+}
+
+.head {
+  background-color: var(--secondary-bg-color);
+}

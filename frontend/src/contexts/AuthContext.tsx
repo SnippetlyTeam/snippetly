@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader } from "../components/Loader";
 
+type AccessToken = string | undefined;
+type RefreshToken = string | undefined;
+
 type AuthContextType = {
-  accessToken: string | null;
+  accessToken: AccessToken;
   isAuthenticated: boolean;
   isTokenLoading: boolean;
-  setAccessToken: (token: string | null) => void;
-  refreshAuthToken: () => Promise<string | null>;
+  setAccessToken: (token: AccessToken) => void;
+  refreshAuthToken: () => Promise<AccessToken>;
   email: string;
   setEmail: (email: string) => void;
 };
@@ -18,21 +21,21 @@ type Props = {
 }
 
 export const AuthProvider: React.FC<Props> = ({ children }) => {
-  const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<AccessToken>(undefined);
   const [isTokenLoading, setIsTokenLoading] = useState<boolean>(true);
 
-  const setAccessToken = (token: string | null) => setAccessTokenState(token);
+  const setAccessToken = (token: AccessToken) => setAccessTokenState(token);
 
   const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
   const [email, setEmail] = useState<string>('');
 
-  const refreshAuthToken = async (): Promise<string | null> => {
-    const storedRefreshToken = localStorage.getItem('refresh_token');
+  const refreshAuthToken = async (): Promise<AccessToken> => {
+    const storedRefreshToken: RefreshToken = localStorage.getItem('refresh_token') || undefined;
 
     if (!storedRefreshToken) {
-      setAccessToken(null);
-      return null;
+      setAccessToken(undefined);
+      return undefined;
     }
 
     try {
@@ -51,14 +54,14 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
       }
 
       const data = await response.json();
-      const newAccessToken = data.access_token;
+      const newAccessToken: AccessToken = data.access_token;
       setAccessToken(newAccessToken);
 
       return newAccessToken;
     } catch (error) {
       console.log(error)
-      setAccessToken(null);
-      return null;
+      setAccessToken(undefined);
+      return undefined;
     }
   };
 
