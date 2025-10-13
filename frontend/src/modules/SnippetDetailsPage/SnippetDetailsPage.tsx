@@ -69,7 +69,7 @@ const SnippetDetailsPage = () => {
 
   if (isPending) {
     return (
-      <main className={styles.main}>
+      <main className={styles.main} aria-busy="true" aria-live="polite">
         <Loader />
       </main>
     );
@@ -77,8 +77,8 @@ const SnippetDetailsPage = () => {
 
   if (isError) {
     return (
-      <main className={styles.main}>
-        <div className={styles.error}>Failed to load snippet details.</div>
+      <main className={styles.main} aria-live="assertive">
+        <div className={styles.error} role="alert">Failed to load snippet details.</div>
       </main>
     );
   }
@@ -86,77 +86,88 @@ const SnippetDetailsPage = () => {
   return (
     <main className={styles.main}>
       <div className={styles.head}>
-        <h2 className={styles.title}>{snippet.title || "Untitled"}</h2>
+        <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
 
-        <div className={styles.buttons}>
+        <div className={styles.buttons} role="group" aria-label="Snippet actions">
           <button
             className={`${styles.buttonsItem} ${styles.copy}`}
             onClick={() => copyContent()}
-          >Copy Code</button>
+            aria-label="Copy code snippet to clipboard"
+            type="button"
+          >
+            Copy Code
+          </button>
           <button
             onClick={() => navigate(`/snippets/edit/${snippetId}`)}
             className={styles.buttonsItem}
-          >Edit</button>
+            aria-label="Edit this code snippet"
+            type="button"
+          >
+            Edit
+          </button>
         </div>
       </div>
 
-      <div className={styles.line} />
+      <div className={styles.line} aria-hidden="true" />
 
       <div className={styles.content}>
         <CodeEditor
           language={snippet.language}
           value={snippet.content}
           readonly={true}
+          aria-label={snippet.title ? `Code for ${snippet.title}` : 'Code snippet'}
         />
       </div>
 
-      <div className={styles.details}>
-        <h3 className={styles.detailsTitle}>Snippet Information</h3>
-        <div className={styles.line} />
+      <div className={styles.details} aria-label="Snippet information">
+        <h3 className={styles.detailsTitle} id="snippet-info-heading">Snippet Information</h3>
+        <div className={styles.line} aria-hidden="true" />
 
         <div className={styles.detailsInfo}>
-          <div className={styles.container}>
+          <div className={styles.container} role="list" aria-label="Snippet attributes">
             <span className={styles.containerItem}>
-              <strong className={styles.type}>Language:</strong>
-              {snippet.language ? snippet.language : 'Unknown'}
+              <strong className={`${styles.type} ${styles.key}`}>Language:</strong>
+              <span className={styles.value} aria-label="Snippet language">{snippet.language ? snippet.language : 'Unknown'}</span>
             </span>
             <span className={styles.containerItem}>
-              <strong className={styles.type}>Visibility:</strong>
-              {typeof snippet.is_private === "boolean"
-                ? snippet.is_private ? "Private" : "Public"
-                : "Unknown"}
+              <strong className={`${styles.key} ${styles.type}`}>Created:</strong>
+              <span className={styles.value} aria-label="Created date">
+                {snippet.created_at ? new Date(snippet.created_at).toLocaleString() : 'N/A'}
+              </span>
+            </span>
+            <span className={styles.containerItem}>
+              <strong className={`${styles.type} ${styles.key}`}>Visibility:</strong>
+              <span className={styles.value} aria-label="Visibility">
+                {typeof snippet.is_private === "boolean"
+                  ? snippet.is_private ? "Private" : "Public"
+                  : "Unknown"}
+              </span>
+            </span>
+            <span className={styles.containerItem}>
+              <strong className={`${styles.key} ${styles.type}`}>Last updated:</strong>
+              <span className={styles.value} aria-label="Last updated">
+                {snippet.updated_at ? new Date(snippet.updated_at).toLocaleString() : 'N/A'}
+              </span>
             </span>
           </div>
 
           {snippet.description && snippet.description.length > 0 && (
-            <div className={styles.detailsIteml}>
-              <strong className={styles.type}>Description:</strong>
-              <p className={styles.text}>{snippet.description}</p>
+            <div className={styles.detailsItem}>
+              <strong className={styles.key} id="snippet-description-label">Description</strong>
+              <p className={`${styles.text} ${styles.value}`} aria-labelledby="snippet-description-label">{snippet.description}</p>
             </div>
           )}
 
           {Array.isArray(snippet.tags) && snippet.tags.length > 0 && (
             <div className={styles.detailsItem}>
-              <strong className={styles.type}>Tags:</strong>
-              <div className={styles.tags}>
-                {snippet.tags.map(tag => (
-                  <Tag content={tag} />
+              <strong id="snippet-tags-label">Tags</strong>
+              <div className={styles.tags} role="list" aria-labelledby="snippet-tags-label">
+                {snippet.tags.map((tag, i) => (
+                  <Tag key={tag + i} content={tag} />
                 ))}
               </div>
             </div>
           )}
-
-          <div className={styles.container}>
-            <span className={styles.containerItem}>
-              <strong className={styles.type}>Created:</strong>
-              {snippet.created_at ? new Date(snippet.created_at).toLocaleString() : 'N/A'}
-            </span>
-
-            <span className={styles.containerItem}>
-              <strong className={styles.type}>Last updated:</strong>
-              {snippet.updated_at ? new Date(snippet.updated_at).toLocaleString() : 'N/A'}
-            </span>
-          </div>
         </div>
       </div>
     </main>

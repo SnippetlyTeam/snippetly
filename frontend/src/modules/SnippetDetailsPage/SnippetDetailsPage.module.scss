@@ -31,7 +31,8 @@
     color: var(--primary-bg-color);
 
     border-radius: 99px;
-    padding: 12px 16px;
+    padding: 16px 16px;
+    font-size: 16px;
     font-weight: 600;
     cursor: pointer;
 
@@ -80,7 +81,6 @@
 .tags {
   display: flex;
   gap: 8px;
-  padding: 0 0 0 8px;
 }
 
 .line {
@@ -93,17 +93,33 @@
 }
 
 .container {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
 
   &Item {
     display: flex;
     gap: 8px;
     text-transform: capitalize;
+    font-size: 14px;
   }
 }
 
 .text {
   margin: 0;
-  padding: 0 0 0 8px;
+}
+
+.key {
+  font-family: "Space Mono", monospace;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.value {
+  font-family: "Inter", sans-serif;
+  line-height: 1.4;
+  vertical-align: middle;
+  position: relative;
+  top: 1px;
 }
