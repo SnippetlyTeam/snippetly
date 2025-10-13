@@ -324,14 +324,14 @@ const SnippetFormPage = () => {
             <div className={styles.container}>
               <div className={`${styles.formItem} ${styles.language}`}>
                 <label id="language-label" htmlFor="language-dropdown-trigger">Language</label>
-                <div ref={dropdownRef} className={styles.dropdown}>
+                <div ref={dropdownRef} className='dropdown'>
                   <button
                     id="language-dropdown-trigger"
                     type="button"
                     className={`
-                    ${styles.dropdownTrigger} 
-                    ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
-                  `}
+                      dropdownTrigger 
+                      ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
+                    `}
                     aria-haspopup="listbox"
                     aria-expanded={isLanguageDropDownOpen}
                     aria-labelledby="language-label language-dropdown-trigger"
@@ -342,7 +342,7 @@ const SnippetFormPage = () => {
 
                   {isLanguageDropDownOpen && (
                     <div
-                      className={styles.dropdownMenu}
+                      className='dropdownMenu'
                       role="listbox"
                       aria-labelledby="language-label"
                       tabIndex={-1}
@@ -354,7 +354,7 @@ const SnippetFormPage = () => {
                           name="language"
                           value={lang}
                           onClick={() => handleSnippetDetailsChange('language', lang)}
-                          className={styles.dropdownItem}
+                          className='dropdownItem'
                           role="option"
                           aria-selected={snippet.language === lang}
                           tabIndex={0}
