@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { SnippetType } from '../types/SnippetType';
 import type { NewSnippetType } from '../types/NewSnippetType';
+import type { SnippetDetailsType } from '../types/SnippetDetailsType';
 
 const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
 
@@ -25,8 +26,8 @@ export const getAll = (token: string, page: number, perPage: number): Promise<Ax
   );
 };
 
-export const getById = (uuid: string, token: string | null): Promise<AxiosResponse<SnippetType>> => {
-  return snippetsClient.get<SnippetType>(
+export const getById = (uuid: string, token: string | null): Promise<AxiosResponse<SnippetDetailsType>> => {
+  return snippetsClient.get<SnippetDetailsType>(
     `/${uuid}`,
     { headers: { 'Authorization': `Bearer ${token}` } },
   );

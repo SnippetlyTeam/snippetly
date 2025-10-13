@@ -1,3 +1,69 @@
 .main {
   @include page-padding-inline;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+} 
+
+.head {
+  display: flex;
+  justify-content: space-between;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--secondary-bg-color);
+  border-radius: 6px;
+  padding: 16px;
+  box-sizing: border-box;
+
+  &Title {
+    margin: 8px;
+  }
+
+  &Item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &Info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px;
+  }
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+  padding: 0 0 0 8px;
+}
+
+.line {
+  border: 1px solid var(--notification-color);
+  margin: 8px;
+}
+
+.type {
+  color: var(--color-accent);
+}
+
+.container {
+  display: flex;
+  justify-content: space-around;
+
+  &Item {
+    display: flex;
+    gap: 8px;
+    text-transform: capitalize;
+  }
+}
+
+.text {
+  margin: 0;
+  padding: 0 0 0 8px;
 }
