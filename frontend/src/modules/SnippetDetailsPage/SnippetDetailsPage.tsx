@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './SnippetDetailsPage.module.scss';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { getById } from '../../api/snippetsClient';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -9,7 +9,7 @@ import CodeEditor from '../../components/CodeEditor/CodeEditor';
 import type { SnippetDetailsType } from '../../types/SnippetDetailsType';
 import Tag from '../../components/Tag/Tag';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 
 const initialSnippet: SnippetDetailsType = {
   title: "",
@@ -28,11 +28,11 @@ const SnippetDetailsPage = () => {
   const [snippet, setSnippet] = useState<SnippetDetailsType>(initialSnippet);
   const { snippetId } = useParams();
   const { accessToken } = useAuthContext();
+  const navigate = useNavigate();
 
   const { mutate: getSnippet, isPending, isError } = useMutation({
     mutationFn: () => getById(snippetId ?? '', accessToken),
     onSuccess: (response) => setSnippet(response.data),
-    onError: () => { },
   });
 
   const { mutate: copyContent } = useMutation({
@@ -46,7 +46,7 @@ const SnippetDetailsPage = () => {
           type={'success'}
         />
       ), {
-        duration: 1500,
+        duration: 1000,
       });
     },
     onError: () => {
@@ -58,7 +58,7 @@ const SnippetDetailsPage = () => {
           type={'error'}
         />
       ), {
-        duration: 1500,
+        duration: 1000,
       });
     }
   })
@@ -93,7 +93,10 @@ const SnippetDetailsPage = () => {
             className={`${styles.buttonsItem} ${styles.copy}`}
             onClick={() => copyContent()}
           >Copy Code</button>
-          <button className={styles.buttonsItem}>Edit</button>
+          <button
+            onClick={() => navigate(`/snippets/edit/${snippetId}`)}
+            className={styles.buttonsItem}
+          >Edit</button>
         </div>
       </div>
 

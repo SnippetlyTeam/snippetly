@@ -11,7 +11,7 @@ import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
 
