@@ -11,6 +11,12 @@ from pymongo.errors import (
 
 from .documents import SnippetDocument
 
+messages = {
+    "conn": "MongoDB connection failed",
+    "fail": "MongoDB operation failed",
+    "invalid": "Invalid document data",
+}
+
 
 class SnippetDocumentRepository:
     def __init__(self) -> None:
@@ -25,22 +31,34 @@ class SnippetDocumentRepository:
             snippet = SnippetDocument(content=content, description=description)
             return cast(SnippetDocument, await snippet.insert())
         except ValidationError as e:
-            raise ValidationError("Invalid document data") from e
+            raise ValidationError(messages["invalid"]) from e
         except DuplicateKeyError as e:
             raise DuplicateKeyError("Document already exists") from e
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionFailure("MongoDB connection failed") from e
+            raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
-            raise PyMongoError("MongoDB operation failed") from e
+            raise PyMongoError(messages["fail"]) from e
 
     # --- Read ---
     async def get_by_id(self, _id: str) -> Optional[SnippetDocument]:
         try:
             return await self.document.get(PydanticObjectId(_id))
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionError("MongoDB connection failed") from e
+            raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
-            raise RuntimeError("MongoDB operation failed") from e
+            raise PyMongoError(messages["fail"]) from e
+
+    async def get_by_ids(self, _ids: list[str]) -> list[SnippetDocument]:
+        try:
+            object_ids = [PydanticObjectId(id_str) for id_str in _ids]
+            documents = await self.document.find(
+                {"_id": {"$in": object_ids}}
+            ).to_list()
+        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
+            raise ConnectionFailure(messages["conn"]) from e
+        except PyMongoError as e:
+            raise PyMongoError(messages["fail"]) from e
+        return documents
 
     # --- Update ---
     async def update(
@@ -59,11 +77,11 @@ class SnippetDocumentRepository:
                 await snippet.save()
             return snippet
         except ValidationError as e:
-            raise ValidationError("Invalid document data") from e
+            raise ValidationError(messages["invalid"]) from e
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionError("MongoDB connection failed") from e
+            raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
-            raise RuntimeError("MongoDB operation failed") from e
+            raise PyMongoError(messages["fail"]) from e
 
     # --- Delete ---
     async def delete(self, _id: str) -> None:
@@ -72,15 +90,15 @@ class SnippetDocumentRepository:
             if snippet:
                 await snippet.delete()
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionError("MongoDB connection failed") from e
+            raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
-            raise RuntimeError("MongoDB operation failed") from e
+            raise PyMongoError(messages["fail"]) from e
 
     @staticmethod
     async def delete_document(document: SnippetDocument) -> None:
         try:
             await document.delete()
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            raise ConnectionError("MongoDB connection failed") from e
+            raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
-            raise RuntimeError("MongoDB operation failed") from e
+            raise PyMongoError(messages["fail"]) from e

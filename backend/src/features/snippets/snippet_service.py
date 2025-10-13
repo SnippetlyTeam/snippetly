@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional, cast
 from uuid import UUID
 
@@ -11,7 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import src.core.exceptions as exc
 from src.adapters.mongo.documents import SnippetDocument
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.models import SnippetModel, UserModel, TagModel
+from src.adapters.postgres.models import (
+    SnippetModel,
+    UserModel,
+    TagModel,
+    LanguageEnum,
+)
 from src.adapters.postgres.repositories import SnippetRepository
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
@@ -21,6 +27,7 @@ from src.api.v1.schemas.snippets import (
     SnippetUpdateRequestSchema,
 )
 from .interface import SnippetServiceInterface
+from ...core.utils.logger import logger
 
 
 class SnippetService(SnippetServiceInterface):
@@ -164,31 +171,49 @@ class SnippetService(SnippetServiceInterface):
         return snippet_data
 
     async def get_snippets(
-        self, request: Request, page: int, per_page: int
+        self,
+        request: Request,
+        page: int,
+        per_page: int,
+        current_user_id: int,
+        visibility: Optional[str],
+        language: Optional[LanguageEnum],
+        tags: Optional[list[str]],
+        created_before: Optional[date],
+        created_after: Optional[date],
+        username: Optional[str],
     ) -> GetSnippetsResponseSchema:
         try:
             offset = self._calculate_offset(page, per_page)
             snippets, total = await self._model_repo.get_snippets_paginated(
-                offset, per_page
+                offset,
+                per_page,
+                current_user_id,
+                visibility,
+                language,
+                tags,
+                created_before,
+                created_after,
+                username,
             )
 
             prev_page, next_page = self._build_pagination_links(
                 request, page, per_page, total
             )
 
+            mongo_ids = [snippet.mongodb_id for snippet in snippets]
+            documents = await self._doc_repo.get_by_ids(mongo_ids)
+
+            documents_map = {str(doc.id): doc for doc in documents}
+
             snippet_list = []
-            # TODO: TEST IF IT WORKS CORRECTLY Sequence is not iterable
             for snippet in snippets:  # type:ignore
-                try:
-                    document = await self._doc_repo.get_by_id(
-                        snippet.mongodb_id
-                    )
-                except (PyMongoError, ValidationError):
-                    document = None
+                document = documents_map.get(snippet.mongodb_id)
 
                 doc_content = document.content if document else None
                 doc_description = document.description if document else None
 
+                logger.debug(f"snippet {snippet}")
                 snippet_list.append(
                     SnippetListItemSchema(
                         title=snippet.title,

@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from datetime import date
+from typing import Optional
 from uuid import UUID
 
 from fastapi.requests import Request
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
@@ -34,12 +36,42 @@ class SnippetServiceInterface(ABC):
 
     @abstractmethod
     async def get_snippets(
-        self, request: Request, page: int, per_page: int
+        self,
+        request: Request,
+        page: int,
+        per_page: int,
+        current_user_id: int,
+        visibility: Optional[str],
+        language: Optional[LanguageEnum],
+        tags: Optional[list[str]],
+        created_before: Optional[date],
+        created_after: Optional[date],
+        username: Optional[str],
     ) -> GetSnippetsResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
-        list of Snippets with pagination
+        list of Snippets with pagination. Optional params used for filtering
 
+        :param request: Request that will be used to create pagination links
+        :type: fastapi.requests.Request
+        :param page: Current page number
+        :type: int
+        :param per_page: Number of items per page
+        :type: int
+        :param current_user_id: Current user id
+        :type: int
+        :param visibility: visibility param flag
+        :type: str
+        :param language: Optional param - language
+        :type: LanguageEnum | None
+        :param tags: Optional param - list of tag names
+        :type: list[str] | None
+        :param created_before: Optional param - created before date
+        :type: date | None
+        :param created_after: Optional param - created after date
+        :type: date | None
+        :param username: Optional param - username
+        :type: str | None
         :return: Snippets with pagination
         :rtype: GetSnippetsResponseSchema
         :raises SQLAlchemyError: If error occurred during SnippetModel get

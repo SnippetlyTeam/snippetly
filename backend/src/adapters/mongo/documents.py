@@ -2,11 +2,12 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from beanie import Document, before_event, Insert, Update
+from pydantic import Field
 
 
 class SnippetDocument(Document):
-    content: str
-    description: Optional[str] = None
+    content: str = Field(..., min_length=1, max_length=1000)
+    description: Optional[str] = Field(None, max_length=500)
     created_at: datetime = datetime.now(timezone.utc)
     updated_at: datetime = datetime.now(timezone.utc)
 

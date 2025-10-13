@@ -1,13 +1,14 @@
+from datetime import date, timedelta
 from typing import Optional, Tuple
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from sqlalchemy import select, delete, Sequence, func
+from sqlalchemy import select, delete, Sequence, func, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import src.core.exceptions as exc
-from ..models import SnippetModel, LanguageEnum, TagModel
+from ..models import SnippetModel, LanguageEnum, TagModel, UserModel
 
 
 class SnippetRepository:
@@ -68,21 +69,67 @@ class SnippetRepository:
 
     # --- Read ---
     async def get_snippets_paginated(
-        self, offset: int, limit: int
+        self,
+        offset: int,
+        limit: int,
+        current_user_id: int,
+        visibility: Optional[str] = None,
+        language: Optional[LanguageEnum] = None,
+        tags: Optional[list[str]] = None,
+        created_before: Optional[date] = None,
+        created_after: Optional[date] = None,
+        username: Optional[str] = None,
     ) -> Tuple[Sequence, int]:
-        total = await self._db.scalar(
-            select(func.count())
-            .select_from(SnippetModel)
-            .where(SnippetModel.is_private.is_(False))
-        )
-        query = (
-            select(SnippetModel)
-            .where(SnippetModel.is_private.is_(False))
-            .options(selectinload(SnippetModel.tags))
+        if visibility == "private":
+            visibility_filter = and_(
+                SnippetModel.is_private.is_(True),
+                SnippetModel.user_id == current_user_id
+            )
+        elif visibility == "public":
+            visibility_filter = SnippetModel.is_private.is_(False)
+        else:
+            visibility_filter = or_(
+                SnippetModel.is_private.is_(False),
+                SnippetModel.user_id == current_user_id
+            )
+        base_query = select(SnippetModel).where(visibility_filter)
+
+        if language:
+            language_enum_member = LanguageEnum(language)
+            base_query = base_query.where(
+                SnippetModel.language == language_enum_member
+            )
+
+        if tags:
+            base_query = base_query.join(SnippetModel.tags).where(
+                TagModel.name.in_(tags)
+            )
+
+        if created_before:
+            end_date = created_before + timedelta(days=1)
+            base_query = base_query.where(SnippetModel.created_at < end_date)
+
+        if created_after:
+            base_query = base_query.where(
+                SnippetModel.created_at >= created_after
+            )
+
+        if username:
+            base_query = base_query.join(UserModel).where(
+                UserModel.username.icontains(username)
+            )
+
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total = await self._db.scalar(count_query)
+
+        data_query = (
+            base_query.options(selectinload(SnippetModel.tags))
+            .order_by(SnippetModel.created_at.desc())
             .offset(offset)
             .limit(limit)
         )
-        result = await self._db.execute(query)
+
+        result = await self._db.execute(data_query)
         return result.scalars().all(), total  # type: ignore
 
     async def get_by_uuid(self, uuid: UUID) -> Optional[SnippetModel]:

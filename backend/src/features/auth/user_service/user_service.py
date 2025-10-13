@@ -138,7 +138,10 @@ class UserService(UserServiceInterface):
         user, token_model = result
 
         if token_model.expires_at < datetime.now(timezone.utc):
-            raise exc.TokenExpiredError("Password reset token has expired")
+            raise exc.TokenExpiredError(
+                "This password reset link has expired or is invalid. "
+                "Please request a new reset link."
+            )
 
         user.password = password
         await self.password_reset_token_repo.delete(token)

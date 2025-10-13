@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -18,6 +18,7 @@ from src.api.v1.schemas.snippets import (
     GetSnippetsResponseSchema,
     SnippetResponseSchema,
     SnippetUpdateRequestSchema,
+    SnippetsFilterParams,
 )
 from src.core.dependencies.auth import get_current_user
 from src.core.dependencies.snippets import get_snippet_service
@@ -85,7 +86,6 @@ async def create_snippet(
     "/",
     summary="Get all NOT private snippets",
     description="Get all snippets, if access token provided",
-    dependencies=[Depends(get_current_user)],
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -107,16 +107,28 @@ async def create_snippet(
 )
 async def get_all_snippets(
     request: Request,
+    user: Annotated[UserModel, Depends(get_current_user)],
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
+    filters: Annotated[SnippetsFilterParams, Depends()],
     page: int = Query(1, ge=1, description="Page number (1-based index)"),
     per_page: int = Query(
         10, ge=1, le=20, description="Number of items per page"
     ),
+    tags: Annotated[
+        Optional[list[str]], Query(description="Filter snippets by tags")
+    ] = None,
 ) -> GetSnippetsResponseSchema:
     try:
-        return await snippet_service.get_snippets(request, page, per_page)
+        return await snippet_service.get_snippets(
+            request,
+            page,
+            per_page,
+            user.id,
+            tags=tags,
+            **filters.model_dump(exclude_unset=True),
+        )
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=500, detail="Something went wrong"
