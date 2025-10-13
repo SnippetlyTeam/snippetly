@@ -233,6 +233,23 @@ const SnippetsPage = () => {
           value={searchInputValue}
           className={styles.input}
         />
+
+        <div className={styles.filters}>
+          <h3 className={styles.filtersTitle}>Filter & Search</h3>
+          <div className={styles.line} />
+
+          <div className={styles.filtersContent}>
+            <div className={styles.filtersItem}>
+              <strong>Language</strong>
+            </div>
+            <div className={styles.filtersItem}>
+              <strong>Visibility</strong>
+            </div>
+            <div className={styles.filtersItem}>
+              <strong>Search by</strong>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className={styles.snippets}>

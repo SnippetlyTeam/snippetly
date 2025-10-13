@@ -8,6 +8,9 @@
 }
 
 .head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   &Content {
     display: flex;
     align-items: center;
@@ -47,11 +50,11 @@
     border-radius: 4px;
     width: 70px;
     cursor: pointer;
-    
+
     &:hover:not(:disabled) {
       background-color: #178ca4;
     }
-    
+
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -76,4 +79,32 @@
       background-color: #178ca4;
     }
   }
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: #22262c;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.32), 0 1.5px 6px -1px #111;
+
+  &Title {
+    margin: 0;
+  }
+
+  &Content {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &Item {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.line {
+  border: 1px solid var(--notification-color);
 }
