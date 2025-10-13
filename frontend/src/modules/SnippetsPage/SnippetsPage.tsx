@@ -7,7 +7,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import { getAll } from '../../api/snippetsClient';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const SnippetsPage = () => {

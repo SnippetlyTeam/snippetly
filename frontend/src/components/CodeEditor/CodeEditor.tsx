@@ -8,12 +8,14 @@ type Props = {
   language: string
   value?: string
   onChange?: (value: string) => void
+  readonly?: boolean
 }
 
 const CodeEditor: React.FC<Props> = ({
   language,
   value = '',
   onChange = () => { },
+  readonly = false,
 }) => (
   <div className={styles.editor}>
     <CodeMirror
@@ -29,6 +31,7 @@ const CodeEditor: React.FC<Props> = ({
         overflowY: 'auto'
       }}
       onChange={onChange}
+      readOnly={readonly}
     />
   </div>
 );

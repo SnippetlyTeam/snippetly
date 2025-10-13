@@ -11,7 +11,7 @@ import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
 
@@ -158,8 +158,8 @@ const SnippetFormPage = () => {
       return;
     }
 
-    if (tagContent.length < 3) {
-      setTagsError('Tag must be at least 3 characters');
+    if (tagContent.length < 2) {
+      setTagsError('Tag must be at least 2 characters');
       return;
     }
 
@@ -377,7 +377,8 @@ const SnippetFormPage = () => {
                   autoComplete="off"
                   aria-describedby="tags-hint"
                   aria-disabled="true"
-                  maxLength={50}
+                  minLength={2}
+                  maxLength={20}
                   value={currentTag}
                   onChange={event => handleSnippetDetailsChange('tags', event.target.value)}
                   onKeyDown={event => {

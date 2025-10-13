@@ -10,7 +10,7 @@ import { register as registerRequest } from '../../api/authClient';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import GoogleSignIn from './GoogleSignIn';
 
 type SignUpForm = {

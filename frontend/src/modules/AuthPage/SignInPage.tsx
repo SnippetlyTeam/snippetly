@@ -5,7 +5,7 @@ import UncrossedEye from './UncrossedEye';
 import CrossedEye from './CrossedEye';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { login } from '../../api/authClient';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import toast, { type Toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';

@@ -1,6 +1,6 @@
 .toast {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
   position: absolute;
   top: 48px;
@@ -10,12 +10,10 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   background-color: var(--notification-color);
   color: var(--secondary-text-color);
-  cursor: pointer;
   min-width: 300px;
-  padding: 16px;
+  padding: 12px;
 
-  transition:
-    opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
   @include on-desktop {
@@ -24,6 +22,20 @@
 
   opacity: 0;
   transform: translateX(100%);
+}
+
+.button {
+  position: relative;
+  z-index: 10;
+  border: none;
+  background-color: transparent;
+  color: var(--color-white);
+  cursor: pointer;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
@@ -53,4 +65,9 @@
 .visible {
   opacity: 1;
   transform: translateX(0);
+}
+
+.exiting {
+  opacity: 0;
+  transform: translateX(100%); 
 }
