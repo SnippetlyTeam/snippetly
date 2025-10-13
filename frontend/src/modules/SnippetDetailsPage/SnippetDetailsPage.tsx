@@ -46,7 +46,7 @@ const SnippetDetailsPage = () => {
           type={'success'}
         />
       ), {
-        duration: 2500,
+        duration: 1500,
       });
     },
     onError: () => {
@@ -58,7 +58,7 @@ const SnippetDetailsPage = () => {
           type={'error'}
         />
       ), {
-        duration: 2500,
+        duration: 1500,
       });
     }
   })
@@ -88,7 +88,13 @@ const SnippetDetailsPage = () => {
       <div className={styles.head}>
         <h2 className={styles.title}>{snippet.title || "Untitled"}</h2>
 
-        
+        <div className={styles.buttons}>
+          <button
+            className={`${styles.buttonsItem} ${styles.copy}`}
+            onClick={() => copyContent()}
+          >Copy Code</button>
+          <button className={styles.buttonsItem}>Edit</button>
+        </div>
       </div>
 
       <div className={styles.line} />

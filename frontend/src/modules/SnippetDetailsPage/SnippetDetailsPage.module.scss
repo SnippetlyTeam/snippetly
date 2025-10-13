@@ -4,11 +4,51 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-} 
+}
 
 .head {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+
+  &Item {
+    @include set-transition(background-color);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: none;
+    background-color: var(--color-accent);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    color: var(--primary-bg-color);
+
+    border-radius: 99px;
+    padding: 12px 16px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-accent-hover);
+    }
+  }
+}
+
+.copy {
+  border: 1px solid #6c7075;
+  background-color: var(--secondary-bg-color);
+  color: var(--color-white);
+
+  &:hover {
+    background-color: var(--snippet-hover-bg-color);
+  }
 }
 
 .details {
