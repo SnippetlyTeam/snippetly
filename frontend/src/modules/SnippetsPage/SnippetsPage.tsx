@@ -77,7 +77,6 @@ const SnippetsPage = () => {
   function getPaginationItems(): (number | string)[] {
     const pages: (number | string)[] = [];
     if (totalPages <= EDGE_COUNT * 2 + SIBLING_COUNT * 2 + 1) {
-
       for (let i = 1; i <= totalPages; i++) pages.push(i);
       return pages;
     }
@@ -215,66 +214,88 @@ const SnippetsPage = () => {
   }, [location, navigate]);
 
   return (
-    <main className={styles.main}>
+    <main className={styles.main} aria-labelledby="snippets-heading">
       <div className={styles.head}>
         <div className={styles.headContent}>
-          <h2>Snippets</h2>
+          <h2 id="snippets-heading">Snippets</h2>
           <MainButton
             content='Create New'
             style={{ width: '150px' }}
             onClick={() => navigate('/snippets/create')}
+            aria-label="Create a new snippet"
           />
         </div>
 
+        <label htmlFor="snippet-search" className="visually-hidden">
+          Search your snippets
+        </label>
         <input
+          id="snippet-search"
           onChange={(event) => setSearchInputValue(event.target.value)}
           type="text"
           placeholder='Search your snippets...'
           value={searchInputValue}
           className={styles.input}
+          aria-label="Search your snippets"
         />
 
-        <div className={styles.filters}>
-          <h3 className={styles.filtersTitle}>Filter & Search</h3>
+        <section className={styles.filters} aria-labelledby="filter-search-section-heading">
+          <h3 id="filter-search-section-heading" className={styles.filtersTitle}>Filter & Search</h3>
           <div className={styles.line} />
 
           <div className={styles.filtersContent}>
             <div className={styles.filtersItem}>
-              <strong>Language</strong>
+              <strong id="snippet-lang-label">Language</strong>
             </div>
             <div className={styles.filtersItem}>
-              <strong>Visibility</strong>
+              <strong id="snippet-visibility-label">Visibility</strong>
             </div>
             <div className={styles.filtersItem}>
-              <strong>Search by</strong>
+              <strong id="snippet-searchby-label">Search by</strong>
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div className={styles.snippets}>
+      <section
+        className={styles.snippets}
+        aria-label="List of code snippets"
+        tabIndex={-1}
+      >
         {isLoading ? (
-          <Loader />
+          <Loader aria-label="Loading snippets" />
         ) : (
           Array.isArray(snippets) ? (
-            snippets.map((snippet: SnippetType) => (
-              <Snippet key={snippet.uuid} snippet={snippet} />
-            ))
+            snippets.length === 0 ? (
+              <div role="status" aria-live="polite" style={{ color: '#d4d4d4', marginTop: '2rem' }}>
+                No snippets found.
+              </div>
+            ) : (
+              snippets.map((snippet: SnippetType) => (
+                <Snippet key={snippet.uuid} snippet={snippet} />
+              ))
+            )
           ) : null
         )}
-      </div>
+      </section>
 
       {(totalPages > 1 && !isLoading) && (
-        <div className={styles.pagination}>
+        <nav
+          className={styles.pagination}
+          aria-label="Pagination Navigation"
+        >
           <button
             className={styles.paginationSwitcher}
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
+            aria-disabled={currentPage === 1}
+            aria-label="Previous page"
+            tabIndex={currentPage === 1 ? -1 : 0}
           >
             &larr; Prev
           </button>
 
-          <div className={styles.paginationPages}>
+          <div className={styles.paginationPages} role="group" aria-label="Page numbers">
             {getPaginationItems().map((item, index) => (
               typeof item === 'number' ? (
                 <button
@@ -285,11 +306,19 @@ const SnippetsPage = () => {
                   `}
                   onClick={() => handlePageChange(item as number)}
                   disabled={currentPage === item}
+                  aria-current={currentPage === item ? "page" : undefined}
+                  aria-label={`Go to page ${item}`}
+                  tabIndex={currentPage === item ? -1 : 0}
                 >
                   {item}
                 </button>
               ) : (
-                <span key={`ellipsis-${index}`} className={styles.paginationEllipsis}>...</span>
+                <span
+                  key={`ellipsis-${index}`}
+                  className={styles.paginationEllipsis}
+                  aria-hidden="true"
+                  aria-label="ellipsis"
+                >...</span>
               )
             ))}
           </div>
@@ -298,10 +327,13 @@ const SnippetsPage = () => {
             className={styles.paginationSwitcher}
             onClick={() => handlePageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
+            aria-disabled={currentPage === totalPages}
+            aria-label="Next page"
+            tabIndex={currentPage === totalPages ? -1 : 0}
           >
             Next &rarr;
           </button>
-        </div>
+        </nav>
       )}
     </main>
   )
