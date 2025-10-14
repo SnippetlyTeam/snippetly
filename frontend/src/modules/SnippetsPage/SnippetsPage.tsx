@@ -11,6 +11,7 @@ import CustomToast from '../../components/CustomToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { FiltersType } from '../../types/FiltersType';
+import Pagination from './Pagination';
 
 const SnippetsPage = () => {
   const SIBLING_COUNT = 2;
@@ -37,13 +38,15 @@ const SnippetsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const getInitialFilters = (): FiltersType => {
-    const params = new URLSearchParams(window.location.search);
+  const getFiltersFromURL = (): FiltersType => {
+    const params = new URLSearchParams(location.search);
+
+    const tags = params.getAll('tags');
 
     return {
       page: params.get('page') ? Number(params.get('page')) : 1,
       per_page: params.get('per_page') ? Number(params.get('per_page')) : 10,
-      tags: params.getAll('tags') ?? [],
+      tags: tags.length > 0 ? tags : undefined,
       language: params.get('language') || undefined,
       created_before: params.get('created_before') || undefined,
       created_after: params.get('created_after') || undefined,
@@ -55,7 +58,7 @@ const SnippetsPage = () => {
     };
   };
 
-  const [filters, setFilters] = useState<FiltersType>(getInitialFilters());
+  const [filters, setFilters] = useState<FiltersType>(getFiltersFromURL());
 
   const paramsRef = useRef<{ pageParam: number | undefined; perPageParam: number | undefined }>({
     pageParam: undefined,
@@ -91,9 +94,10 @@ const SnippetsPage = () => {
   };
 
   function handleFiltersChange(newFilters: Partial<typeof filters>) {
-    const nextPage = typeof newFilters.page === 'number' && !isNaN(newFilters.page) && newFilters.page > 0
-      ? newFilters.page
-      : 1;
+    const nextPage =
+      typeof newFilters.page === 'number' && !isNaN(newFilters.page) && newFilters.page > 0
+        ? newFilters.page
+        : 1;
 
     setFilters(prev => ({
       ...prev,
@@ -115,12 +119,16 @@ const SnippetsPage = () => {
       params.delete('is_private');
     }
 
-    if (newFilters.tags !== undefined) {
-      if (Array.isArray(newFilters.tags) && newFilters.tags.length > 0) {
-        params.set('tags', newFilters.tags.join(','));
-      } else {
-        params.delete('tags');
-      }
+    const currentTags =
+      newFilters.tags !== undefined
+        ? newFilters.tags
+        : filters.tags;
+
+    params.delete('tags');
+    if (Array.isArray(currentTags) && currentTags.length > 0) {
+      currentTags.forEach(tag => {
+        params.append('tags', tag);
+      });
     }
 
     params.set('page', String(nextPage));
@@ -205,37 +213,11 @@ const SnippetsPage = () => {
     }
 
     if (accessToken) {
-      const params = getParams();
-      let page = filters.page ?? 1;
-      let perPage = 10;
+      const currentURLFilters = getFiltersFromURL();
 
-      const pageParam = params.get('page');
-      const perPageParam = params.get('per_page') || params.get('perPage');
-
-      if (pageParam) {
-        const parsedPage = parseInt(pageParam, 10);
-        if (!isNaN(parsedPage) && parsedPage > 0) {
-          page = parsedPage;
-          setFilters(prev => ({
-            ...prev,
-            page: parsedPage,
-          }));
-        }
-      }
-
-      if (perPageParam) {
-        const parsedPerPage = parseInt(perPageParam, 10);
-        if (!isNaN(parsedPerPage) && parsedPerPage > 0 && parsedPerPage <= 20) {
-          perPage = parsedPerPage;
-          setFilters(prev => ({
-            ...prev,
-            per_page: parsedPerPage,
-          }));
-        }
-      }
-
+      setFilters(currentURLFilters);
       setIsLoading(true);
-      fetchSnippets({ ...filters, page, per_page: perPage });
+      fetchSnippets(currentURLFilters);
     }
   }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
 
@@ -284,8 +266,6 @@ const SnippetsPage = () => {
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location, navigate]);
-
-  const currentPage = filters.page ?? 1;
 
   return (
     <main className={styles.main} aria-labelledby="snippets-heading">
@@ -368,60 +348,12 @@ const SnippetsPage = () => {
       </section>
 
       {(totalPages > 1 && !isLoading) && (
-        <nav
-          className={styles.pagination}
-          aria-label="Pagination Navigation"
-        >
-          <button
-            className={styles.paginationSwitcher}
-            onClick={() => handleFiltersChange({ page: currentPage - 1 })}
-            disabled={currentPage === 1}
-            aria-disabled={currentPage === 1}
-            aria-label="Previous page"
-            tabIndex={currentPage === 1 ? -1 : 0}
-          >
-            &larr; Prev
-          </button>
-
-          <div className={styles.paginationPages} role="group" aria-label="Page numbers">
-            {getPaginationItems().map((item, index) => (
-              typeof item === 'number' ? (
-                <button
-                  key={item}
-                  className={`
-                    ${styles.paginationItem} 
-                    ${currentPage === item ? styles.paginationItemActive : ''}
-                  `}
-                  onClick={() => handleFiltersChange({ page: item })}
-                  disabled={currentPage === item}
-                  aria-current={currentPage === item ? "page" : undefined}
-                  aria-label={`Go to page ${item}`}
-                  tabIndex={currentPage === item ? -1 : 0}
-                >
-                  {item}
-                </button>
-              ) : (
-                <span
-                  key={`ellipsis-${index}`}
-                  className={styles.paginationEllipsis}
-                  aria-hidden="true"
-                  aria-label="ellipsis"
-                >...</span>
-              )
-            ))}
-          </div>
-
-          <button
-            className={styles.paginationSwitcher}
-            onClick={() => handleFiltersChange({ page: currentPage + 1 })}
-            disabled={currentPage === totalPages}
-            aria-disabled={currentPage === totalPages}
-            aria-label="Next page"
-            tabIndex={currentPage === totalPages ? -1 : 0}
-          >
-            Next &rarr;
-          </button>
-        </nav>
+        <Pagination 
+          totalPages={totalPages}
+          paginationItems={getPaginationItems()}
+          currentPage={filters.page ?? 1}
+          handleFiltersChange={handleFiltersChange}
+        />
       )}
     </main>
   )

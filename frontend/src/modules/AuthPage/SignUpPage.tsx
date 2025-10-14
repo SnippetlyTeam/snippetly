@@ -49,8 +49,6 @@ const SignUpPage: React.FC = () => {
         if (detail.includes('email')) {
           setServerEmailError(serverErrors.emailTaken);
         }
-      } else {
-        console.log(error);
       }
     },
   });

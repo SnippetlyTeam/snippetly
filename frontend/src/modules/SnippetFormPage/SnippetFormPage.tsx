@@ -46,8 +46,7 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: (response) => {
-      console.log(response.data)
+    onSuccess: () => {
       setSnippet(emptySnippet);
       toast.custom((t: Toast) => (
         <CustomToast
@@ -60,9 +59,6 @@ const SnippetFormPage = () => {
         duration: 2500,
       });
     },
-    onError: (error) => {
-      console.log(error)
-    }
   });
 
   const {

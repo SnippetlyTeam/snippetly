@@ -59,7 +59,6 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 
       return newAccessToken;
     } catch (error) {
-      console.log(error)
       setAccessToken(undefined);
       return undefined;
     }

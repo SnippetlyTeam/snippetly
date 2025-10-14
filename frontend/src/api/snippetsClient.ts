@@ -17,11 +17,23 @@ export const getAll = (
   token: string,
   params: { page?: number; per_page?: number; language?: string; is_private?: boolean; tags?: string[] } = {}
 ): Promise<AxiosResponse> => {
+  const { tags, ...otherParams } = params;
+  const searchParams = new URLSearchParams();
+  Object.entries(otherParams).forEach(([key, value]) => {
+    if (value !== undefined) {
+      searchParams.append(key, String(value));
+    }
+  });
+  if (tags && Array.isArray(tags)) {
+    tags.forEach(tag => {
+      searchParams.append('tags', tag);
+    });
+  }
+
   return snippetsClient.get(
-    '/',
+    `/?${searchParams.toString()}`,
     {
       headers: { 'Authorization': `Bearer ${token}` },
-      params
     }
   );
 };
