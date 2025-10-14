@@ -6,5 +6,5 @@ export type FiltersType = {
   created_before?: string;
   created_after?: string;
   username?: string;
-  visibility?: boolean;
-}
+  visibility?: 'private' | 'public';
+};

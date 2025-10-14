@@ -58,16 +58,16 @@ label {
     font-size: 16px;
     color: var(--color-white);
 
-    background-color: var(--dropdown-bg-color);
+    background-color: var(--primary-bg-color);
 
     cursor: pointer;
 
-    &:hover:not(&Active) {
-      border-color: var(--dropdown-hover-border);
+    &:hover {
+      border-color: var(--color-white);
     }
 
     &Active {
-      border-color: var(--dropdown-active-border);
+      border-color: var(--color-white);
     }
   }
 
@@ -95,7 +95,7 @@ label {
     align-items: center;
     background-color: inherit;
     border: none;
-    color: var(--color-secondary);
+    color: var(--color-white);
     cursor: pointer;
     height: 32px;
     max-width: 100%;
@@ -104,7 +104,6 @@ label {
 
     &:hover {
       background-color: var(--dropdown-item-hover-bg);
-      color: var(--color-primary);
     }
   }
 }

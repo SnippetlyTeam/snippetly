@@ -87,7 +87,22 @@
   padding: 16px;
   background-color: #22262c;
   border-radius: 6px;
-  box-shadow: 0 4px 16px 0 rgba(0,0,0,0.32), 0 1.5px 6px -1px #111;
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.32), 0 1.5px 6px -1px #111;
+
+  &Button {
+    font-size: 16px;
+    color: var(--color-accent);
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    @include set-transition(color, 0.2s);
+
+    &:hover {
+      color: var(--color-purple);
+    }
+  }
 
   &Title {
     margin: 0;
@@ -99,6 +114,18 @@
     gap: 16px;
     width: 100%;
 
+    transition: 
+      max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      margin-top 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      padding-top 0.2s cubic-bezier(0.4,0,0.2,1),
+      border-top-color 0.2s cubic-bezier(0.4,0,0.2,1),
+      border-top-width 0.2s cubic-bezier(0.4,0,0.2,1);
+
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    overflow: hidden;
+    border-top: 1px solid transparent;
 
     @include on-tablet {
       grid-template-columns: repeat(2, 1fr);
@@ -111,6 +138,24 @@
     }
   }
 
+  &Collapsed {
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    border-top-color: transparent;
+    border-top-width: 1px;
+    border-top-style: solid;
+  }
+
+  &Expanded {
+    max-height: 800px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top-color: var(--notification-color);
+    border-top-width: 1px;
+    border-top-style: solid;
+  }
+
   &Item {
     display: flex;
     flex-direction: column;
@@ -121,4 +166,9 @@
 
 .line {
   border: 1px solid var(--notification-color);
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
 }
