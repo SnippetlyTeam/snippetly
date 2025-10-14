@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './SnippetsPage.module.scss';
 import Snippet from '../../components/Snippet/Snippet';
@@ -13,12 +13,14 @@ import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { FiltersType } from '../../types/FiltersType';
 import Pagination from './Pagination';
 import Tag from '../../components/Tag/Tag';
+import debounce from 'lodash.debounce';
 
 const SnippetsPage = () => {
   const SIBLING_COUNT = 2;
   const EDGE_COUNT = 2;
 
   const [searchInputValue, setSearchInputValue] = useState('');
+  const [usernameInputValue, setUsernameInputValue] = useState('');
   const {
     accessToken,
     isTokenLoading,
@@ -277,6 +279,21 @@ const SnippetsPage = () => {
     return pages;
   };
 
+  const debouncedFilterFunction = useCallback(
+    debounce(
+      (key: keyof FiltersType, value: any) => {
+        handleFiltersChange(key, value);
+      },
+      400
+    ),
+    []
+  );
+
+  const handleUsernameChange = (value: string) => {
+    setUsernameInputValue(value);
+    debouncedFilterFunction('username', value);
+  };
+
   useEffect(() => {
     if (isTokenLoading) {
       setIsLoading(true);
@@ -295,6 +312,11 @@ const SnippetsPage = () => {
       fetchSnippets(currentURLFilters);
     }
   }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
+
+  useEffect(() => {
+    const currentFilters = getFiltersFromURL();
+    setUsernameInputValue(currentFilters.username || '');
+  }, [location.search]);
 
   useEffect(() => {
     const requestedPage = getFiltersFromURL().page;
@@ -558,8 +580,8 @@ const SnippetsPage = () => {
                 id="username-input"
                 type="text"
                 placeholder="Enter username"
-                value={filters.username || ''}
-                onChange={e => handleFiltersChange('username', e.target.value)}
+                value={usernameInputValue}
+                onChange={e => handleUsernameChange(e.target.value)}
                 aria-label="Username"
               />
             </div>
