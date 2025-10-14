@@ -32,8 +32,10 @@ const SnippetsPage = () => {
 
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const visibilityDropdownRef = useRef<HTMLDivElement>(null);
+  const perPageDropdownRef = useRef<HTMLDivElement>(null);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
+  const [isPerPageDropdownOpen, setIsPerPageDropdownOpen] = useState(false);
 
   useOnClickOutside(languageDropdownRef as React.RefObject<HTMLElement>, () => {
     setIsLanguageDropdownOpen(false);
@@ -41,6 +43,10 @@ const SnippetsPage = () => {
 
   useOnClickOutside(visibilityDropdownRef as React.RefObject<HTMLElement>, () => {
     setIsVisibilityDropdownOpen(false);
+  });
+
+  useOnClickOutside(perPageDropdownRef as React.RefObject<HTMLElement>, () => {
+    setIsPerPageDropdownOpen(false);
   });
 
   const location = useLocation();
@@ -116,7 +122,7 @@ const SnippetsPage = () => {
   }
 
   function handleFiltersChange(key: keyof FiltersType, value: any) {
-    const nextPage = 1;
+    const nextPage = key === 'page' ? value : 1;
 
     const params = new URLSearchParams(location.search);
 
@@ -127,6 +133,7 @@ const SnippetsPage = () => {
         } else {
           params.delete('language');
         }
+        setIsLanguageDropdownOpen(false);
         break;
       case 'visibility':
         if (value === 'private') {
@@ -136,6 +143,7 @@ const SnippetsPage = () => {
         } else {
           params.delete('visibility');
         }
+        setIsVisibilityDropdownOpen(false);
         break;
       case 'tags':
         params.delete('tags');
@@ -166,12 +174,44 @@ const SnippetsPage = () => {
           params.delete('username');
         }
         break;
+      case 'per_page': {
+
+        params.set('per_page', String(value));
+
+        setIsPerPageDropdownOpen(false);
+        break;
+      }
+      case 'page':
+        if (value && value >= 1) {
+          if (value !== 1) {
+            params.set('page', String(value));
+          } else {
+            params.delete('page');
+          }
+        } else {
+          params.delete('page');
+        }
+        break;
       default:
         break;
     }
 
-    params.set('page', String(nextPage));
-    params.set('per_page', String(filters.per_page ?? 10));
+    if (key !== 'page') {
+      if (nextPage !== 1) {
+        params.set('page', String(nextPage));
+      } else {
+        params.delete('page');
+      }
+    }
+
+    if (key !== 'per_page') {
+      const currentPerPage = filters.per_page ?? 10;
+      if (currentPerPage !== 10) {
+        params.set('per_page', String(currentPerPage));
+      } else {
+        params.delete('per_page');
+      }
+    }
 
     let updatedFilters = { ...filters, [key]: value, page: nextPage };
     if (key === 'language' && typeof value === 'string') {
@@ -305,7 +345,7 @@ const SnippetsPage = () => {
           />
         </div>
 
-        <label htmlFor="snippet-search" className="visually-hidden">
+        <label htmlFor="snippet-search" className="visually-hidden" id="snippet-search-label">
           Search your snippets
         </label>
         <input
@@ -315,7 +355,7 @@ const SnippetsPage = () => {
           placeholder='Search your snippets...'
           value={searchInputValue}
           className={styles.input}
-          aria-label="Search your snippets"
+          aria-labelledby="snippet-search-label"
         />
 
         <section
@@ -327,6 +367,10 @@ const SnippetsPage = () => {
             <button
               className={styles.filtersButton}
               onClick={() => setIsFiltersVisible(prev => !prev)}
+              aria-expanded={isFiltersVisible}
+              aria-controls="filters-content"
+              aria-pressed={isFiltersVisible}
+              type="button"
             >
               {isFiltersVisible ? 'Hide Filters -' : 'Show Filters +'}
             </button>
@@ -337,18 +381,70 @@ const SnippetsPage = () => {
               ${styles.filtersContent} 
               ${isFiltersVisible ? styles.filtersExpanded : styles.filtersCollapsed}
             `}
+            id="filters-content"
+            aria-hidden={!isFiltersVisible}
           >
             <div className={styles.filtersItem}>
-              <label>Items per Page</label>
-              <input
-                min={1}
-                max={20}
-                type="number"
-                placeholder="e.g. 10"
-              />
+              <label htmlFor="per-page-input">Items per Page</label>
+              <div className="dropdown" ref={perPageDropdownRef}>
+                <button
+                  type="button"
+                  className={`
+                    dropdownTrigger
+                    ${isPerPageDropdownOpen ? ' dropdownTriggerActive' : ''}
+                  `}
+                  aria-haspopup="listbox"
+                  aria-expanded={isPerPageDropdownOpen}
+                  aria-controls="per-page-listbox"
+                  id="per-page-dropdown"
+                  onClick={() => setIsPerPageDropdownOpen(prev => !prev)}
+                >
+                  {filters.per_page || 10}
+                </button>
+                {isPerPageDropdownOpen && (
+                  <div className="dropdownMenu" role="listbox" id="per-page-listbox" aria-labelledby="per-page-dropdown">
+                    <button
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.per_page === 5}
+                      onClick={() => handleFiltersChange('per_page', 5)}
+                      tabIndex={0}
+                    >
+                      5
+                    </button>
+                    <button
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.per_page === 10}
+                      onClick={() => handleFiltersChange('per_page', 10)}
+                      tabIndex={0}
+                    >
+                      10
+                    </button>
+                    <button
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.per_page === 15}
+                      onClick={() => handleFiltersChange('per_page', 15)}
+                      tabIndex={0}
+                    >
+                      15
+                    </button>
+                    <button
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.per_page === 20}
+                      onClick={() => handleFiltersChange('per_page', 20)}
+                      tabIndex={0}
+                    >
+                      20
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <div className={styles.filtersItem}>
-              <label>Visibility</label>
+              <label id="visibility-label">Visibility</label>
               <div className="dropdown" ref={visibilityDropdownRef}>
                 <button
                   type="button"
@@ -358,13 +454,21 @@ const SnippetsPage = () => {
                   `}
                   aria-haspopup="listbox"
                   aria-expanded={isVisibilityDropdownOpen}
+                  aria-controls="visibility-listbox"
+                  aria-labelledby="visibility-label"
+                  id="visibility-dropdown"
                   onClick={() => setIsVisibilityDropdownOpen(prev => !prev)}
                 >
                   {filters.visibility === undefined ? 'All' : filters.visibility.charAt(0).toUpperCase() + filters.visibility.slice(1) + ' Only'}
                 </button>
                 {isVisibilityDropdownOpen && (
-                  <div className="dropdownMenu" role="listbox">
-                    <div
+                  <div
+                    className="dropdownMenu"
+                    role="listbox"
+                    id="visibility-listbox"
+                    aria-labelledby="visibility-dropdown visibility-label"
+                  >
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === undefined}
@@ -372,8 +476,8 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       All
-                    </div>
-                    <div
+                    </button>
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === 'public'}
@@ -381,8 +485,8 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       Public Only
-                    </div>
-                    <div
+                    </button>
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === 'private'}
@@ -390,13 +494,13 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       Private Only
-                    </div>
+                    </button>
                   </div>
                 )}
               </div>
             </div>
             <div className={styles.filtersItem}>
-              <label>Language</label>
+              <label id="language-label">Language</label>
               <div className="dropdown" ref={languageDropdownRef}>
                 <button
                   type="button"
@@ -405,14 +509,19 @@ const SnippetsPage = () => {
                     ${isLanguageDropdownOpen ? ' dropdownTriggerActive' : ''}
                   `}
                   aria-haspopup="listbox"
-                  aria-expanded="false"
+                  aria-expanded={isLanguageDropdownOpen}
+                  aria-controls="language-listbox"
+                  aria-labelledby="language-label"
+                  id="language-dropdown"
                   onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
                 >
-                  {filters.language || 'All'}
+                  {filters.language
+                    ? filters.language.charAt(0).toUpperCase() + filters.language.slice(1)
+                    : 'All'}
                 </button>
                 {isLanguageDropdownOpen && (
-                  <div className="dropdownMenu" role="listbox">
-                    <div
+                  <div className="dropdownMenu" role="listbox" id="language-listbox" aria-labelledby="language-dropdown language-label">
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={!filters.language}
@@ -420,8 +529,8 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       All
-                    </div>
-                    <div
+                    </button>
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.language === 'JavaScript'}
@@ -429,8 +538,8 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       JavaScript
-                    </div>
-                    <div
+                    </button>
+                    <button
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.language === 'Python'}
@@ -438,16 +547,20 @@ const SnippetsPage = () => {
                       tabIndex={0}
                     >
                       Python
-                    </div>
+                    </button>
                   </div>
                 )}
               </div>
             </div>
             <div className={styles.filtersItem}>
-              <label>Username</label>
+              <label htmlFor="username-input">Username</label>
               <input
+                id="username-input"
                 type="text"
                 placeholder="Enter username"
+                value={filters.username || ''}
+                onChange={e => handleFiltersChange('username', e.target.value)}
+                aria-label="Username"
               />
             </div>
             <div className={styles.filtersItem}>
@@ -457,6 +570,7 @@ const SnippetsPage = () => {
                 type="date"
                 value={filters.created_before || ''}
                 onChange={e => handleFiltersChange('created_before', e.target.value || undefined)}
+                aria-label="Created before date"
               />
             </div>
             <div className={styles.filtersItem}>
@@ -466,6 +580,7 @@ const SnippetsPage = () => {
                 type="date"
                 value={filters.created_after || ''}
                 onChange={e => handleFiltersChange('created_after', e.target.value || undefined)}
+                aria-label="Created after date"
               />
             </div>
           </div>
@@ -474,9 +589,10 @@ const SnippetsPage = () => {
               ${styles.filtersContent} 
               ${isFiltersVisible ? styles.filtersExpanded : styles.filtersCollapsed}
             `}
+            aria-hidden={!isFiltersVisible}
           >
             <div className={styles.filtersItem}>
-              <label htmlFor="tags">Tags</label>
+              <label htmlFor="tags">Tags (comma or Enter to add)</label>
               <input
                 placeholder="e.g., react, hooks"
                 type="text"
@@ -500,7 +616,11 @@ const SnippetsPage = () => {
                     handleAddTag(currentTag.trim());
                   }
                 }}
+                aria-label="Add tag"
               />
+              <span id="tags-hint" hidden>
+                Enter a tag, then press comma or Enter to add. Maximum 10 tags, minimum 2 characters per tag.
+              </span>
               <div className={styles.tagsList}>
                 {Array.isArray(filters.tags) && filters.tags.map(tag => (
                   <Tag
@@ -540,16 +660,14 @@ const SnippetsPage = () => {
         )}
       </section>
 
-      {
-        (totalPages > 1 && !isLoading) && (
-          <Pagination
-            totalPages={totalPages}
-            paginationItems={getPaginationItems()}
-            currentPage={filters.page ?? 1}
-            handleFiltersChange={handleFiltersChange}
-          />
-        )
-      }
+      {(totalPages > 1 && !isLoading) && (
+        <Pagination
+          totalPages={totalPages}
+          paginationItems={getPaginationItems()}
+          currentPage={filters.page ?? 1}
+          handleFiltersChange={handleFiltersChange}
+        />
+      )}
     </main >
   )
 }

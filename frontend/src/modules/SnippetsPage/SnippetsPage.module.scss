@@ -154,6 +154,7 @@
     border-top-color: var(--notification-color);
     border-top-width: 1px;
     border-top-style: solid;
+    overflow: visible;
   }
 
   &Item {
