@@ -83,14 +83,14 @@ class SnippetRepository:
         if visibility == "private":
             visibility_filter = and_(
                 SnippetModel.is_private.is_(True),
-                SnippetModel.user_id == current_user_id
+                SnippetModel.user_id == current_user_id,
             )
         elif visibility == "public":
             visibility_filter = SnippetModel.is_private.is_(False)
         else:
             visibility_filter = or_(
                 SnippetModel.is_private.is_(False),
-                SnippetModel.user_id == current_user_id
+                SnippetModel.user_id == current_user_id,
             )
         base_query = select(SnippetModel).where(visibility_filter)
 
