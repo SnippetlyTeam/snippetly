@@ -30,6 +30,7 @@ const SnippetsPage = () => {
 
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
 
   useOnClickOutside(languageDropdownRef as React.RefObject<HTMLElement>, () => {
     setIsLanguageDropdownOpen(false);
@@ -299,27 +300,128 @@ const SnippetsPage = () => {
 
           <div className={styles.filtersContent}>
             <div className={styles.filtersItem}>
-              <strong id="snippet-lang-label">Language</strong>
-
-              <div className='dropdown' ref={languageDropdownRef}>
+              <label>Items per Page</label>
+              <input type="text" />
+            </div>
+            <div className={styles.filtersItem}>
+              <label>Visibility</label>
+              <div className="dropdown">
                 <button
-                  className='dropdownTrigger'
-                  onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
-                >All languages</button>
-
-                {isLanguageDropdownOpen && (
-                  <div className='dropdownMenu'>
-                    <div className='dropdownItem'>Python</div>
-                    <div className='dropdownItem'>JavaScript</div>
+                  type="button"
+                  className="dropdownTrigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  onClick={() => setIsVisibilityDropdownOpen(prev => !prev)}
+                >
+                  {filters.visibility || 'All'}
+                </button>
+                {isVisibilityDropdownOpen && (
+                  <div className="dropdownMenu" role="listbox">
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={!filters.language}
+                      onClick={() => handleFiltersChange({ language: undefined })}
+                      tabIndex={0}
+                    >
+                      All
+                    </div>
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.language === 'JavaScript'}
+                      onClick={() => handleFiltersChange({ language: 'JavaScript' })}
+                      tabIndex={0}
+                    >
+                      Public
+                    </div>
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.language === 'Python'}
+                      onClick={() => handleFiltersChange({ language: 'Python' })}
+                      tabIndex={0}
+                    >
+                      Private
+                    </div>
                   </div>
                 )}
               </div>
             </div>
             <div className={styles.filtersItem}>
-              <strong id="snippet-visibility-label">Visibility</strong>
+              <label>Language</label>
+              <div className="dropdown">
+                <button
+                  type="button"
+                  className="dropdownTrigger"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  onClick={() => setIsLanguageDropdownOpen(prev => !prev)}
+                >
+                  {filters.language || 'All'}
+                </button>
+                {isLanguageDropdownOpen && (
+                  <div className="dropdownMenu" role="listbox">
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={!filters.language}
+                      onClick={() => handleFiltersChange({ language: undefined })}
+                      tabIndex={0}
+                    >
+                      All
+                    </div>
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.language === 'JavaScript'}
+                      onClick={() => handleFiltersChange({ language: 'JavaScript' })}
+                      tabIndex={0}
+                    >
+                      JavaScript
+                    </div>
+                    <div
+                      className="dropdownItem"
+                      role="option"
+                      aria-selected={filters.language === 'Python'}
+                      onClick={() => handleFiltersChange({ language: 'Python' })}
+                      tabIndex={0}
+                    >
+                      Python
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <div className={styles.filtersItem}>
-              <strong id="snippet-searchby-label">Search by</strong>
+              <label>Username</label>
+              <input type="text" />
+            </div>
+            <div className={styles.filtersItem}>
+              <label htmlFor="created-before">Created Before</label>
+              <input
+                id="created-before"
+                type="date"
+                value={filters.created_before || ''}
+                onChange={e => handleFiltersChange({ created_before: e.target.value || undefined })}
+              />
+            </div>
+            <div className={styles.filtersItem}>
+              <label htmlFor="created-after">Created After</label>
+              <input
+                id="created-after"
+                type="date"
+                value={filters.created_after || ''}
+                onChange={e => handleFiltersChange({ created_after: e.target.value || undefined })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.line} />
+          <div className={styles.filtersContent}>
+            <div className={styles.filtersItem}>
+              <label htmlFor="">Tags</label>
+              <input type="text" />
             </div>
           </div>
         </section>
@@ -348,7 +450,7 @@ const SnippetsPage = () => {
       </section>
 
       {(totalPages > 1 && !isLoading) && (
-        <Pagination 
+        <Pagination
           totalPages={totalPages}
           paginationItems={getPaginationItems()}
           currentPage={filters.page ?? 1}
