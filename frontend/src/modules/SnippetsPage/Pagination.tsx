@@ -1,10 +1,11 @@
+import type { FiltersType } from '../../types/FiltersType';
 import styles from './SnippetsPage.module.scss';
 
 type Props = {
   totalPages: number;
   currentPage: number;
   paginationItems: (string | number)[]
-  handleFiltersChange: (newFilters: { page?: number }) => void;
+  handleFiltersChange: (key: keyof FiltersType, value: any) => void;
 }
 
 const Pagination: React.FC<Props> = ({
@@ -19,7 +20,7 @@ const Pagination: React.FC<Props> = ({
   >
     <button
       className={styles.paginationSwitcher}
-      onClick={() => handleFiltersChange({ page: currentPage - 1 })}
+      onClick={() => handleFiltersChange('page', currentPage - 1)}
       disabled={currentPage === 1}
       aria-disabled={currentPage === 1}
       aria-label="Previous page"
@@ -37,7 +38,7 @@ const Pagination: React.FC<Props> = ({
                   ${styles.paginationItem} 
                   ${currentPage === item ? styles.paginationItemActive : ''}
                 `}
-            onClick={() => handleFiltersChange({ page: item })}
+            onClick={() => handleFiltersChange('page', item)}
             disabled={currentPage === item}
             aria-current={currentPage === item ? "page" : undefined}
             aria-label={`Go to page ${item}`}
@@ -58,7 +59,7 @@ const Pagination: React.FC<Props> = ({
 
     <button
       className={styles.paginationSwitcher}
-      onClick={() => handleFiltersChange({ page: currentPage + 1 })}
+      onClick={() => handleFiltersChange('page', currentPage + 1)}
       disabled={currentPage === totalPages}
       aria-disabled={currentPage === totalPages}
       aria-label="Next page"

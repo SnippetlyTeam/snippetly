@@ -12,6 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { FiltersType } from '../../types/FiltersType';
 import Pagination from './Pagination';
+import Tag from '../../components/Tag/Tag';
 
 const SnippetsPage = () => {
   const SIBLING_COUNT = 2;
@@ -26,7 +27,7 @@ const SnippetsPage = () => {
 
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isFiltersVisible, setIsFiltersVisible] = useState(true);
+  const [isFiltersVisible, setIsFiltersVisible] = useState(false);
   const [totalPages, setTotalPages] = useState<number>(0);
 
   const languageDropdownRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,7 @@ const SnippetsPage = () => {
   const getFiltersFromURL = (): FiltersType => {
     const params = new URLSearchParams(location.search);
 
-    const tags = params.getAll('tags');
+    const tags = [...new Set(params.getAll('tags'))];
 
     return {
       page: params.get('page') ? Number(params.get('page')) : 1,
@@ -68,7 +69,8 @@ const SnippetsPage = () => {
     };
   };
 
-  const [filters, setFilters] = useState<FiltersType>(getFiltersFromURL());
+  const filters = getFiltersFromURL();
+  const [currentTag, setCurrentTag] = useState('');
 
   function getParams() {
     return new URLSearchParams(location.search);
@@ -98,53 +100,88 @@ const SnippetsPage = () => {
     }
   };
 
-  function handleFiltersChange(newFilters: Partial<typeof filters>) {
-    const nextPage =
-      typeof newFilters.page === 'number' && !isNaN(newFilters.page) && newFilters.page > 0
-        ? newFilters.page
-        : 1;
+  function handleAddTag(tagContent: string) {
+    const trimmedTag = tagContent.trim();
+    if (
+      trimmedTag.length >= 2 &&
+      (!filters.tags || filters.tags.length < 10) &&
+      !(filters.tags && filters.tags.includes(trimmedTag))
+    ) {
+      const newTags = Array.isArray(filters.tags)
+        ? [...filters.tags, trimmedTag]
+        : [trimmedTag];
+      handleFiltersChange('tags', newTags);
+    }
+    setCurrentTag('');
+  }
 
-    setFilters(prev => ({
-      ...prev,
-      ...newFilters,
-      page: nextPage,
-    }));
+  function handleFiltersChange(key: keyof FiltersType, value: any) {
+    const nextPage = 1;
 
     const params = new URLSearchParams(location.search);
 
-    if (newFilters.language !== undefined) {
-      params.set('language', newFilters.language.toLowerCase());
-    } else {
-      params.delete('language');
-    }
-
-    if (newFilters.visibility !== undefined) {
-      if (newFilters.visibility === 'private') {
-        params.set('visibility', 'private');
-      } else if (newFilters.visibility === 'public') {
-        params.set('visibility', 'public');
-      }
-    } else {
-      params.delete('visibility');
-    }
-
-    const currentTags =
-      newFilters.tags !== undefined
-        ? newFilters.tags
-        : filters.tags;
-
-    params.delete('tags');
-    if (Array.isArray(currentTags) && currentTags.length > 0) {
-      currentTags.forEach(tag => {
-        params.append('tags', tag);
-      });
+    switch (key) {
+      case 'language':
+        if (value !== undefined && value !== null && value !== '') {
+          params.set('language', value.toLowerCase());
+        } else {
+          params.delete('language');
+        }
+        break;
+      case 'visibility':
+        if (value === 'private') {
+          params.set('visibility', 'private');
+        } else if (value === 'public') {
+          params.set('visibility', 'public');
+        } else {
+          params.delete('visibility');
+        }
+        break;
+      case 'tags':
+        params.delete('tags');
+        if (Array.isArray(value) && value.length > 0) {
+          value.forEach((tag: string) => {
+            params.append('tags', tag);
+          });
+        }
+        break;
+      case 'created_before':
+        if (value) {
+          params.set('created_before', value);
+        } else {
+          params.delete('created_before');
+        }
+        break;
+      case 'created_after':
+        if (value) {
+          params.set('created_after', value);
+        } else {
+          params.delete('created_after');
+        }
+        break;
+      case 'username':
+        if (value) {
+          params.set('username', value);
+        } else {
+          params.delete('username');
+        }
+        break;
+      default:
+        break;
     }
 
     params.set('page', String(nextPage));
     params.set('per_page', String(filters.per_page ?? 10));
 
+    let updatedFilters = { ...filters, [key]: value, page: nextPage };
+    if (key === 'language' && typeof value === 'string') {
+      updatedFilters.language = value;
+    }
+    if (key === 'tags' && (!value || value.length === 0)) {
+      updatedFilters.tags = undefined;
+    }
+
     navigate(`${location.pathname}?${params.toString()}`, { replace: true });
-    fetchSnippets({ ...filters, ...newFilters, page: nextPage });
   }
 
   function getPaginationItems(): (number | string)[] {
@@ -214,35 +251,24 @@ const SnippetsPage = () => {
     if (accessToken) {
       const currentURLFilters = getFiltersFromURL();
 
-      setFilters(currentURLFilters);
       setIsLoading(true);
       fetchSnippets(currentURLFilters);
     }
   }, [isTokenLoading, accessToken, isAuthenticated, location.search]);
 
   useEffect(() => {
-    const requestedPage = filters.page;
+    const requestedPage = getFiltersFromURL().page;
     if (totalPages > 0 && requestedPage !== undefined) {
       if (requestedPage > totalPages) {
-        setFilters(prev => ({
-          ...prev,
-          page: totalPages,
-        }));
-
         const params = getParams();
         params.set('page', totalPages.toString());
         navigate({
           pathname: location.pathname,
           search: params.toString()
         }, { replace: true });
-      } else if (requestedPage !== (filters.page ?? 1)) {
-        setFilters(prev => ({
-          ...prev,
-          page: requestedPage,
-        }));
       }
     }
-  }, [totalPages, location.pathname, navigate, filters.page])
+  }, [totalPages, location.pathname, navigate]);
 
   useEffect(() => {
     if (
@@ -318,6 +344,7 @@ const SnippetsPage = () => {
                 min={1}
                 max={20}
                 type="number"
+                placeholder="e.g. 10"
               />
             </div>
             <div className={styles.filtersItem}>
@@ -333,7 +360,7 @@ const SnippetsPage = () => {
                   aria-expanded={isVisibilityDropdownOpen}
                   onClick={() => setIsVisibilityDropdownOpen(prev => !prev)}
                 >
-                  {filters.visibility === undefined ? 'All' : filters.visibility.charAt(0).toUpperCase() + filters.visibility.slice(1)}
+                  {filters.visibility === undefined ? 'All' : filters.visibility.charAt(0).toUpperCase() + filters.visibility.slice(1) + ' Only'}
                 </button>
                 {isVisibilityDropdownOpen && (
                   <div className="dropdownMenu" role="listbox">
@@ -341,7 +368,7 @@ const SnippetsPage = () => {
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === undefined}
-                      onClick={() => handleFiltersChange({ visibility: undefined })}
+                      onClick={() => handleFiltersChange('visibility', undefined)}
                       tabIndex={0}
                     >
                       All
@@ -350,19 +377,19 @@ const SnippetsPage = () => {
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === 'public'}
-                      onClick={() => handleFiltersChange({ visibility: 'public' })}
+                      onClick={() => handleFiltersChange('visibility', 'public')}
                       tabIndex={0}
                     >
-                      Public
+                      Public Only
                     </div>
                     <div
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.visibility === 'private'}
-                      onClick={() => handleFiltersChange({ visibility: 'private' })}
+                      onClick={() => handleFiltersChange('visibility', 'private')}
                       tabIndex={0}
                     >
-                      Private
+                      Private Only
                     </div>
                   </div>
                 )}
@@ -389,7 +416,7 @@ const SnippetsPage = () => {
                       className="dropdownItem"
                       role="option"
                       aria-selected={!filters.language}
-                      onClick={() => handleFiltersChange({ language: undefined })}
+                      onClick={() => handleFiltersChange('language', undefined)}
                       tabIndex={0}
                     >
                       All
@@ -398,7 +425,7 @@ const SnippetsPage = () => {
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.language === 'JavaScript'}
-                      onClick={() => handleFiltersChange({ language: 'JavaScript' })}
+                      onClick={() => handleFiltersChange('language', 'JavaScript')}
                       tabIndex={0}
                     >
                       JavaScript
@@ -407,7 +434,7 @@ const SnippetsPage = () => {
                       className="dropdownItem"
                       role="option"
                       aria-selected={filters.language === 'Python'}
-                      onClick={() => handleFiltersChange({ language: 'Python' })}
+                      onClick={() => handleFiltersChange('language', 'Python')}
                       tabIndex={0}
                     >
                       Python
@@ -418,7 +445,10 @@ const SnippetsPage = () => {
             </div>
             <div className={styles.filtersItem}>
               <label>Username</label>
-              <input type="text" />
+              <input
+                type="text"
+                placeholder="Enter username"
+              />
             </div>
             <div className={styles.filtersItem}>
               <label htmlFor="created-before">Created Before</label>
@@ -426,7 +456,7 @@ const SnippetsPage = () => {
                 id="created-before"
                 type="date"
                 value={filters.created_before || ''}
-                onChange={e => handleFiltersChange({ created_before: e.target.value || undefined })}
+                onChange={e => handleFiltersChange('created_before', e.target.value || undefined)}
               />
             </div>
             <div className={styles.filtersItem}>
@@ -435,7 +465,7 @@ const SnippetsPage = () => {
                 id="created-after"
                 type="date"
                 value={filters.created_after || ''}
-                onChange={e => handleFiltersChange({ created_after: e.target.value || undefined })}
+                onChange={e => handleFiltersChange('created_after', e.target.value || undefined)}
               />
             </div>
           </div>
@@ -446,12 +476,47 @@ const SnippetsPage = () => {
             `}
           >
             <div className={styles.filtersItem}>
-              <label htmlFor="">Tags</label>
-              <input type="text" />
+              <label htmlFor="tags">Tags</label>
+              <input
+                placeholder="e.g., react, hooks"
+                type="text"
+                id="tags"
+                name="tags"
+                autoComplete="off"
+                aria-describedby="tags-hint"
+                minLength={2}
+                maxLength={20}
+                value={currentTag}
+                onChange={event => {
+                  if (event.target.value.endsWith(',')) {
+                    handleAddTag(event.target.value.slice(0, -1));
+                  } else {
+                    setCurrentTag(event.target.value);
+                  }
+                }}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault();
+                    handleAddTag(currentTag.trim());
+                  }
+                }}
+              />
+              <div className={styles.tagsList}>
+                {Array.isArray(filters.tags) && filters.tags.map(tag => (
+                  <Tag
+                    key={tag}
+                    content={tag}
+                    onClose={() => handleFiltersChange(
+                      'tags',
+                      filters.tags?.filter((item: string) => item !== tag)
+                    )}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </section>
-      </div>
+      </div >
 
       <section
         className={styles.snippets}
@@ -475,15 +540,17 @@ const SnippetsPage = () => {
         )}
       </section>
 
-      {(totalPages > 1 && !isLoading) && (
-        <Pagination
-          totalPages={totalPages}
-          paginationItems={getPaginationItems()}
-          currentPage={filters.page ?? 1}
-          handleFiltersChange={handleFiltersChange}
-        />
-      )}
-    </main>
+      {
+        (totalPages > 1 && !isLoading) && (
+          <Pagination
+            totalPages={totalPages}
+            paginationItems={getPaginationItems()}
+            currentPage={filters.page ?? 1}
+            handleFiltersChange={handleFiltersChange}
+          />
+        )
+      }
+    </main >
   )
 }
 

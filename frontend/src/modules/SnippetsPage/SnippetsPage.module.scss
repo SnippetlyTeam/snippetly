@@ -171,4 +171,13 @@
 .container {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  padding-top: 8px;
+}
+
+.tagsList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
