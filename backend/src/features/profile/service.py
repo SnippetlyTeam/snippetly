@@ -23,6 +23,11 @@ class ProfileService(ProfileServiceInterface):
     async def get_profile(self, user_id: int) -> UserProfileModel:
         return await self._repo.get_by_user_id(user_id)
 
+    async def get_specific_user_profile(
+        self, username: str
+    ) -> UserProfileModel:
+        return await self._repo.get_by_username(username)
+
     async def update_profile(
         self, user_id: int, data: ProfileUpdateRequestSchema
     ) -> UserProfileModel:
