@@ -35,7 +35,7 @@ const ProfilePage = () => {
         <>
           <div className={styles.head}>
             <div className={styles.userInfo}>
-              <h3>{profile.user_id}</h3>
+              <h3></h3>
             </div>
             <div className={styles.navigation}></div>
           </div>

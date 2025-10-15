@@ -49,7 +49,7 @@ export const resetRequest = (email: string) => {
 export const resetComplete = (
   password: string,
   email: string,
-  token: string | undefined
+  password_reset_token: string | undefined
 ) => {
-  return authClient.post('/reset-password/complete', { password, email, token });
+  return authClient.post('/reset-password/complete', { password, email, password_reset_token });
 }

@@ -368,7 +368,7 @@ const SnippetFormPage = () => {
               </div>
 
               <div className={`${styles.formItem} ${styles.tag}`}>
-                <label htmlFor="tags">Tags</label>
+                <label htmlFor="tags">Tags (use comma or Enter to add)</label>
                 <input
                   placeholder="e.g., react, hooks"
                   type="text"
