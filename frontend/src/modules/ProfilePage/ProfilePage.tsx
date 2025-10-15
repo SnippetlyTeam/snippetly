@@ -1,74 +1,98 @@
-import { useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import styles from './ProfilePage.module.scss';
 import { getProfile } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useEffect, useState } from 'react';
-import type { ProfileType } from '../../types/ProfileType';
 import { Loader } from '../../components/Loader';
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { accessToken } = useAuthContext();
-  const emptyProfile: ProfileType = {
-    first_name: "",
-    last_name: "",
-    gender: "male",
-    date_of_birth: "",
-    info: "",
-    id: 0,
-    user_id: 0,
-    avatar_url: "",
-  };
-  const [profile, setProfile] = useState<ProfileType>(emptyProfile);
   const navigate = useNavigate();
 
-  const { mutate: loadProfile, isPending } = useMutation({
-    mutationFn: () => getProfile(accessToken),
-    onSuccess: (response) => {
-      console.log(response.data)
-      setProfile(response.data);
-    },
+  const { data: profile, isLoading, isError } = useQuery({
+    queryKey: ['profile', accessToken],
+    queryFn: () => getProfile(accessToken).then(res => res.data),
+    enabled: !!accessToken,
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+  if (isError) {
+    return <div>Error loading profile.</div>;
+  }
+  if (isLoading || !profile) {
+    return <Loader />;
+  }
 
   return (
     <main className={styles.main}>
-      {isPending ? <Loader /> : (
-        <>
-          <div className={styles.head}>
-            <div className={styles.user}>
-              <div className={styles.container}>
-                <div className={styles.avatar}>
-                  <img
-                    src={profile.avatar_url}
-                    alt=""
-                    className={styles.avatarContent}
-                  />
-                </div>
-                <div className={styles.userInfo}>
-                  <h3 className={styles.name}>
-                    {profile.first_name + ' '}
-                    {profile.last_name}
-                  </h3>
-                  <span className={styles.username}>@{profile.user_id}</span>
-                </div>
+      <div className={styles.mainContent}>
+        <div className={styles.head}>
+          <div className={styles.user}>
+            <div className={styles.container}>
+              <div className={styles.avatar}>
+                <img
+                  src={profile.avatar_url}
+                  alt="Avatar Image"
+                  className={styles.avatarContent}
+                />
               </div>
-
-              <button 
-                className={styles.editButton}
-                onClick={() => navigate('/profile/edit')}
-              >Edit Profile</button>
+              <div className={styles.userInfo}>
+                <h3 className={styles.name}>
+                  {profile.first_name + ' '}
+                  {profile.last_name}
+                </h3>
+                {/* Невелике виправлення: user_id краще брати з об'єкта user, якщо він є */}
+                <span className={styles.username}>@{profile.user_id}</span>
+              </div>
             </div>
-            <div className={styles.navigation}></div>
-          </div>
 
-          <div className={styles.profileDetails}></div>
-          <div className={styles.statistics}></div>
-        </>
-      )}
+            <button
+              className={styles.editButton}
+              onClick={() => navigate('/profile/edit')}
+            >Edit Profile</button>
+          </div>
+          <nav className={styles.nav} aria-label="Profile sections">
+            <ul className={styles.navList} role="tablist">
+              <li className={styles.navItem}>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) => `
+                    ${styles.navLink} 
+                    ${isActive ? styles.navLinkActive : ''}
+                  `}
+                  end
+                >
+                  Overview
+                </NavLink>
+              </li>
+              <li className={styles.navItem}>
+                <NavLink
+                  to="/profile/snippets"
+                  className={({ isActive }) => `
+                    ${styles.navLink} 
+                    ${isActive ? styles.navLinkActive : ''}
+                  `}
+                >
+                  Snippets
+                </NavLink>
+              </li>
+              <li className={styles.navItem}>
+                <NavLink
+                  to="/profile/settings"
+                  className={({ isActive }) => `
+                    ${styles.navLink} 
+                    ${isActive ? styles.navLinkActive : ''}
+                  `}
+                >
+                  Settings
+                </NavLink>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <div className={styles.profile}>
+          <Outlet context={{ profile }} />
+        </div>
+      </div>
     </main>
   );
 }

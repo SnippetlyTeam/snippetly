@@ -1,11 +1,27 @@
 .main {
   @include page-padding-inline;
+  padding-top: 80px;
+
+  &Content {
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  h3 {
+    margin: 0;
+  }
 }
 
 .head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   background-color: var(--secondary-bg-color);
   border-radius: 6px;
   padding: 16px;
+  box-shadow: 0 2px 16px 0 rgba(20, 20, 20, 0.24),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
 .avatar {
@@ -24,6 +40,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid var(--notification-color);
 
   &Info {
     display: flex;
@@ -31,8 +48,14 @@
   }
 }
 
-.name {
-  margin: 0;
+.nav {
+  display: flex;
+
+  &List {
+    display: flex;
+    gap: 40px;
+    padding: 0;
+  }
 }
 
 .username {
@@ -57,4 +80,44 @@
   border-radius: 99px;
   height: 40px;
   cursor: pointer;
+}
+
+.profile {
+  display: flex;
+  gap: 24px;
+
+  &Details {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-grow: 1;
+  
+    background-color: var(--secondary-bg-color);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 2px 16px 0 rgba(20, 20, 20, 0.24),
+      0 1.5px 4px 0 rgba(0, 0, 0, 0.2);
+  
+      &Title {
+        color: var(--color-accent);
+        border-bottom: 1px solid var(--notification-color);
+        padding-bottom: 6px;
+      }
+  }
+
+  &Statistics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 8px;
+
+    &Title {
+      grid-column: 1 / -1;
+      color: var(--color-accent);
+      font-size: 18px;
+    }
+
+    &Content {
+      font-size: 14px;
+    }
+  }
 }
