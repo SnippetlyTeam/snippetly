@@ -5,6 +5,7 @@ import { useAuthContext } from '../../contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import type { ProfileType } from '../../types/ProfileType';
 import { Loader } from '../../components/Loader';
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { accessToken } = useAuthContext();
@@ -19,10 +20,14 @@ const ProfilePage = () => {
     avatar_url: "",
   };
   const [profile, setProfile] = useState<ProfileType>(emptyProfile);
+  const navigate = useNavigate();
 
   const { mutate: loadProfile, isPending } = useMutation({
     mutationFn: () => getProfile(accessToken),
-    onSuccess: (response) => setProfile(response.data),
+    onSuccess: (response) => {
+      console.log(response.data)
+      setProfile(response.data);
+    },
   });
 
   useEffect(() => {
@@ -34,8 +39,28 @@ const ProfilePage = () => {
       {isPending ? <Loader /> : (
         <>
           <div className={styles.head}>
-            <div className={styles.userInfo}>
-              <h3></h3>
+            <div className={styles.user}>
+              <div className={styles.container}>
+                <div className={styles.avatar}>
+                  <img
+                    src={profile.avatar_url}
+                    alt=""
+                    className={styles.avatarContent}
+                  />
+                </div>
+                <div className={styles.userInfo}>
+                  <h3 className={styles.name}>
+                    {profile.first_name + ' '}
+                    {profile.last_name}
+                  </h3>
+                  <span className={styles.username}>@{profile.user_id}</span>
+                </div>
+              </div>
+
+              <button 
+                className={styles.editButton}
+                onClick={() => navigate('/profile/edit')}
+              >Edit Profile</button>
             </div>
             <div className={styles.navigation}></div>
           </div>

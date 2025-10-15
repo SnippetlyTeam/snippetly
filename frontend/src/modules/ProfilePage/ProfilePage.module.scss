@@ -7,3 +7,54 @@
   border-radius: 6px;
   padding: 16px;
 }
+
+.avatar {
+  padding: 16px;
+
+  &Content {
+    width: 56px;
+    height: 56px;
+    display: block;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+}
+
+.user {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &Info {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.name {
+  margin: 0;
+}
+
+.username {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  color: #999999;
+}
+
+.container {
+  display: flex;
+}
+
+.editButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 16px;
+  background-color: var(--color-accent);
+  border: none;
+  border-radius: 99px;
+  height: 40px;
+  cursor: pointer;
+}
