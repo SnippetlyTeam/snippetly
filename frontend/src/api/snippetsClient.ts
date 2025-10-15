@@ -13,27 +13,39 @@ export const snippetsClient: AxiosInstance = axios.create({
   }
 });
 
-export const getAll = (token: string, page: number, perPage: number): Promise<AxiosResponse> => {
-  return snippetsClient.get<SnippetType[]>(
-    '/',
+export const getAll = (
+  token: string,
+  params: { page?: number; per_page?: number; language?: string; is_private?: boolean; tags?: string[] } = {}
+): Promise<AxiosResponse> => {
+  const { tags, ...otherParams } = params;
+  const searchParams = new URLSearchParams();
+  Object.entries(otherParams).forEach(([key, value]) => {
+    if (value !== undefined) {
+      searchParams.append(key, String(value));
+    }
+  });
+  if (tags && Array.isArray(tags)) {
+    tags.forEach(tag => {
+      searchParams.append('tags', tag);
+    });
+  }
+
+  return snippetsClient.get(
+    `/?${searchParams.toString()}`,
     {
       headers: { 'Authorization': `Bearer ${token}` },
-      params: {
-        page: page,
-        per_page: perPage,
-      }
-    },
+    }
   );
 };
 
-export const getById = (uuid: string, token: string | null): Promise<AxiosResponse<SnippetDetailsType>> => {
+export const getById = (uuid: string, token: string | undefined): Promise<AxiosResponse<SnippetDetailsType>> => {
   return snippetsClient.get<SnippetDetailsType>(
     `/${uuid}`,
     { headers: { 'Authorization': `Bearer ${token}` } },
   );
 };
 
-export const create = (snippet: NewSnippetType, token: string | null): Promise<AxiosResponse<SnippetType>> => {
+export const create = (snippet: NewSnippetType, token: string | undefined): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.post(
     '/create',
     snippet,
@@ -44,7 +56,7 @@ export const create = (snippet: NewSnippetType, token: string | null): Promise<A
 export const update = (
   uuid: string,
   snippet: Partial<NewSnippetType>,
-  token: string | null,
+  token: string | undefined,
 ): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.patch<SnippetType>(
     `/${uuid}`,

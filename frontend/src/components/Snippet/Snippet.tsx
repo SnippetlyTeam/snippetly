@@ -11,7 +11,7 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
   const navigate = useNavigate();
 
   return (
-    <div
+    <button
       className={styles.snippet}
       onClick={() => navigate(`/snippets/${snippet.uuid}`)}
     >
@@ -31,7 +31,7 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
           <Tag content={tag} key={tag}/>
         ))}
       </div>
-    </div>
+    </button>
   );
 }
 
