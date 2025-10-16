@@ -1,17 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import styles from './ProfilePage.module.scss';
-import { getProfile } from '../../api/profileClient';
+import { getProfile, getProfileByUsername } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
-import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet, useParams } from 'react-router-dom';
 
 const ProfilePage = () => {
   const { accessToken } = useAuthContext();
   const navigate = useNavigate();
+  const { username } = useParams();
 
   const { data: profile, isLoading, isError } = useQuery({
     queryKey: ['profile', accessToken],
-    queryFn: () => getProfile(accessToken).then(res => res.data),
+    queryFn: () => {
+      if (username) {
+        return getProfileByUsername(username, accessToken).then(res => res.data);
+      }
+
+      return getProfile(accessToken).then(res => res.data);
+    },
     enabled: !!accessToken,
   });
 
@@ -46,14 +53,14 @@ const ProfilePage = () => {
 
             <button
               className={styles.editButton}
-              onClick={() => navigate('/profile/edit')}
+              onClick={() => navigate(`/profile/${profile.username}/edit`)}
             >Edit Profile</button>
           </div>
           <nav className={styles.nav} aria-label="Profile sections">
             <ul className={styles.navList} role="tablist">
               <li className={styles.navItem}>
                 <NavLink
-                  to="/profile"
+                  to={`/profile/${profile.username}`}
                   className={({ isActive }) => `
                     ${styles.navLink} 
                     ${isActive ? styles.navLinkActive : ''}
@@ -65,7 +72,7 @@ const ProfilePage = () => {
               </li>
               <li className={styles.navItem}>
                 <NavLink
-                  to="/profile/snippets"
+                  to={`/profile/${profile.username}/snippets`}
                   className={({ isActive }) => `
                     ${styles.navLink} 
                     ${isActive ? styles.navLinkActive : ''}
@@ -76,7 +83,7 @@ const ProfilePage = () => {
               </li>
               <li className={styles.navItem}>
                 <NavLink
-                  to="/profile/settings"
+                  to={`/profile/${profile.username}/settings`}
                   className={({ isActive }) => `
                     ${styles.navLink} 
                     ${isActive ? styles.navLinkActive : ''}
