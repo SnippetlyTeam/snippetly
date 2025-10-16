@@ -166,7 +166,9 @@
 .snippets {
   display: flex;
   flex-direction: column;
+  width: 100%;
   gap: 36px;
+
   &List {
     display: flex;
     justify-content: center;
