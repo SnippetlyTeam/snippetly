@@ -15,6 +15,12 @@ export const getProfile = (token: string | undefined): Promise<AxiosResponse<Pro
   });
 };
 
+export const getProfileByUsername = (username: string, token: string | undefined): Promise<AxiosResponse<ProfileType>> => {
+  return profileClient.get<ProfileType>(`/${username}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
 export const updateProfile = (
   token: string,
   profile: Partial<ProfileType>

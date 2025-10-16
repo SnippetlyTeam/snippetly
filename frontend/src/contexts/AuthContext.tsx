@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader } from "../components/Loader";
-
-type AccessToken = string | undefined;
-type RefreshToken = string | undefined;
+import type { AccessToken, RefreshToken } from "../types/Tokens";
 
 type AuthContextType = {
   accessToken: AccessToken;
@@ -28,7 +26,16 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 
   const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
-  const [email, setEmail] = useState<string>('');
+  const [email, setEmailState] = useState<string>(() => localStorage.getItem('reset_email') || '');
+
+  const setEmail = (newEmail: string) => {
+    setEmailState(newEmail);
+    if (newEmail) {
+      localStorage.setItem('reset_email', newEmail);
+    } else {
+      localStorage.removeItem('reset_email');
+    }
+  };
 
   const refreshAuthToken = async (): Promise<AccessToken> => {
     const storedRefreshToken: RefreshToken = localStorage.getItem('refresh_token') || undefined;
