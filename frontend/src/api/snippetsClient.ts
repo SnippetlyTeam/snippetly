@@ -3,6 +3,9 @@ import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { SnippetType } from '../types/SnippetType';
 import type { NewSnippetType } from '../types/NewSnippetType';
 import type { SnippetDetailsType } from '../types/SnippetDetailsType';
+import type { AccessToken } from '../types/Tokens';
+import type { FiltersType } from '../types/FiltersType';
+import type { SnippetListResponse } from '../types/SnippetListResponse';
 
 const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
 
@@ -14,9 +17,9 @@ export const snippetsClient: AxiosInstance = axios.create({
 });
 
 export const getAll = (
-  token: string,
-  params: { page?: number; per_page?: number; language?: string; is_private?: boolean; tags?: string[] } = {}
-): Promise<AxiosResponse> => {
+  token: AccessToken,
+  params: FiltersType = {}
+): Promise<AxiosResponse<SnippetListResponse>> => {
   const { tags, ...otherParams } = params;
   const searchParams = new URLSearchParams();
   Object.entries(otherParams).forEach(([key, value]) => {
@@ -30,7 +33,7 @@ export const getAll = (
     });
   }
 
-  return snippetsClient.get(
+  return snippetsClient.get<SnippetListResponse>(
     `/?${searchParams.toString()}`,
     {
       headers: { 'Authorization': `Bearer ${token}` },

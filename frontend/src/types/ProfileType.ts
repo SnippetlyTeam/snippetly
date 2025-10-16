@@ -4,7 +4,6 @@ export type ProfileType = {
   gender?: 'male' | 'female';
   date_of_birth?: string;
   info?: string;
-  id?: number;
-  user_id?: number;
   avatar_url?: string;
+  username: string;
 };

@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader } from "../components/Loader";
-
-type AccessToken = string | undefined;
-type RefreshToken = string | undefined;
+import type { AccessToken, RefreshToken } from "../types/Tokens";
 
 type AuthContextType = {
   accessToken: AccessToken;

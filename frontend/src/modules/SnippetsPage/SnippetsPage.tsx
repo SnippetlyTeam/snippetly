@@ -11,14 +11,11 @@ import CustomToast from '../../components/CustomToast/CustomToast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { FiltersType } from '../../types/FiltersType';
-import Pagination from './Pagination';
+import Pagination from '../../components/Pagination/Pagination';
 import Tag from '../../components/Tag/Tag';
 import debounce from 'lodash.debounce';
 
 const SnippetsPage = () => {
-  const SIBLING_COUNT = 2;
-  const EDGE_COUNT = 2;
-
   const [searchInputValue, setSearchInputValue] = useState('');
   const [usernameInputValue, setUsernameInputValue] = useState('');
   const {
@@ -225,59 +222,6 @@ const SnippetsPage = () => {
 
     navigate(`${location.pathname}?${params.toString()}`, { replace: true });
   }
-
-  function getPaginationItems(): (number | string)[] {
-    const page = filters.page ?? 1;
-    const pages: (number | string)[] = [];
-    if (totalPages <= EDGE_COUNT * 2 + SIBLING_COUNT * 2 + 1) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-      return pages;
-    }
-
-    const startPages = [];
-    for (let i = 1; i <= EDGE_COUNT; i++) {
-      startPages.push(i);
-    }
-    const endPages = [];
-    for (let i = totalPages - EDGE_COUNT + 1; i <= totalPages; i++) {
-      endPages.push(i);
-    }
-
-    const safePage = typeof page === 'number' && page > 0 ? page : 1;
-
-    const siblingsStart = Math.max(
-      Math.min(
-        safePage - SIBLING_COUNT,
-        totalPages - EDGE_COUNT - SIBLING_COUNT * 2
-      ),
-      EDGE_COUNT + 1
-    );
-    const siblingsEnd = Math.min(
-      Math.max(
-        safePage + SIBLING_COUNT,
-        EDGE_COUNT + SIBLING_COUNT * 2 + 1
-      ),
-      totalPages - EDGE_COUNT
-    );
-
-    pages.push(...startPages);
-
-    if (siblingsStart > EDGE_COUNT + 1) {
-      pages.push('...');
-    }
-
-    for (let i = siblingsStart; i <= siblingsEnd; i++) {
-      pages.push(i);
-    }
-
-    if (siblingsEnd < totalPages - EDGE_COUNT) {
-      pages.push('...');
-    }
-
-    pages.push(...endPages);
-
-    return pages;
-  };
 
   const debouncedFilterFunction = useCallback(
     debounce(
@@ -685,9 +629,8 @@ const SnippetsPage = () => {
       {(totalPages > 1 && !isLoading) && (
         <Pagination
           totalPages={totalPages}
-          paginationItems={getPaginationItems()}
           currentPage={filters.page ?? 1}
-          handleFiltersChange={handleFiltersChange}
+          onPageChange={handleFiltersChange}
         />
       )}
     </main >

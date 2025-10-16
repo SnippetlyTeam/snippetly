@@ -84,7 +84,7 @@
       color: var(--color-accent);
 
       &::after {
-        content: '';
+        content: "";
         display: block;
         position: absolute;
         left: 0;
@@ -160,5 +160,18 @@
     &Content {
       font-size: 14px;
     }
+  }
+}
+
+.snippets {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  &List {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 24px;
   }
 }

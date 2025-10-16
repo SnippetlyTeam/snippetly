@@ -40,8 +40,7 @@ const ProfilePage = () => {
                   {profile.first_name + ' '}
                   {profile.last_name}
                 </h3>
-                {/* Невелике виправлення: user_id краще брати з об'єкта user, якщо він є */}
-                <span className={styles.username}>@{profile.user_id}</span>
+                <span className={styles.username}>@{profile.username}</span>
               </div>
             </div>
 
