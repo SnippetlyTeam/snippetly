@@ -44,7 +44,17 @@ const Snippets = () => {
     <div className={styles.snippets}>
       {isPending ? (
         <Loader />
-      ) : isSuccess && data?.data?.snippets && data.data.snippets.length > 0 ? (
+      ) : !isSuccess ? (
+        <div>
+          <strong>Oops! We couldn't load the snippets.</strong>
+          <br />
+          Please check your connection or try refreshing the page.
+        </div>
+      ) : data?.data?.snippets?.length === 0 ? (
+        <div>
+          You haven't shared any code snippets yet.<br />Start by creating and sharing your awesome code!
+        </div>
+      ) : (
         <>
           <div className={styles.snippetsList}>
             {data.data.snippets.map((item: SnippetType) => (
@@ -58,8 +68,6 @@ const Snippets = () => {
             onPageChange={handlePageChange}
           />
         </>
-      ) : (
-        <div>No snippets found.</div>
       )}
     </div>
   );

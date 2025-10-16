@@ -107,6 +107,7 @@
 
 .container {
   display: flex;
+  align-items: center;
 }
 
 .editButton {
@@ -139,10 +140,20 @@
     box-shadow: 0 2px 16px 0 rgba(20, 20, 20, 0.24),
       0 1.5px 4px 0 rgba(0, 0, 0, 0.2);
 
+    &Item {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     &Title {
       color: var(--color-accent);
       border-bottom: 1px solid var(--notification-color);
       padding-bottom: 6px;
+    }
+
+    &Content {
+      font-size: 14px;
     }
   }
 
@@ -152,6 +163,7 @@
     column-gap: 8px;
 
     &Title {
+      margin: 0;
       grid-column: 1 / -1;
       color: var(--color-accent);
       font-size: 18px;
@@ -202,7 +214,7 @@
     align-items: center;
     background-color: #1e1e1e;
     border-radius: 6px;
-    padding: 8px;
+    padding: 8px 12px;
 
     .link {
       color: var(--color-accent);
