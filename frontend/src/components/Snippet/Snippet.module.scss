@@ -77,3 +77,14 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.button {
+  background-color: transparent;
+  border: none;
+}

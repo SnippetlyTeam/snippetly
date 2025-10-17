@@ -1,0 +1,9 @@
+.main {
+  @include page-padding-inline;
+}
+
+.snippets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}

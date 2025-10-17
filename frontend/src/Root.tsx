@@ -22,6 +22,8 @@ import Overview from "./modules/ProfilePage/Overview";
 import Snippets from "./modules/ProfilePage/Snippets";
 import Settings from "./modules/ProfilePage/Settings";
 import ProfileRedirector from "./modules/ProfilePage/ProfileRedirector";
+import FavoritesPage from "./modules/FavoritesPage/FavoritesPage";
+import { SnippetProvider } from "./contexts/SnippetContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,53 +38,57 @@ export const Root = () => (
   <QueryClientProvider client={queryClient}>
     <Router>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<App />}>
-            <Route index element={<LandingPage />} />
-            <Route
-              path="auth/google"
-              element={
-                <Navigate
-                  to={`/auth-callback${window.location.search}`}
-                  replace
-                />
-              }
-            />
-            <Route path="auth-callback" element={<AuthCallbackPage />} />
+        <SnippetProvider>
+          <Routes>
+            <Route path="/" element={<App />}>
+              <Route index element={<LandingPage />} />
+              <Route
+                path="auth/google"
+                element={
+                  <Navigate
+                    to={`/auth-callback${window.location.search}`}
+                    replace
+                  />
+                }
+              />
+              <Route path="auth-callback" element={<AuthCallbackPage />} />
 
-            <Route element={<PublicOnlyRoute />}>
-              <Route path="sign-in" element={<SignInPage />} />
-              <Route path="sign-up" element={<SignUpPage />} />
-              <Route path="reset-password">
-                <Route index element={<PasswordResetPage />} />
-                <Route path=":token" element={<SetNewPasswordPage />} />
+              <Route element={<PublicOnlyRoute />}>
+                <Route path="sign-in" element={<SignInPage />} />
+                <Route path="sign-up" element={<SignUpPage />} />
+                <Route path="reset-password">
+                  <Route index element={<PasswordResetPage />} />
+                  <Route path=":token" element={<SetNewPasswordPage />} />
+                </Route>
+                <Route path="activate-account">
+                  <Route index element={<FinishRegistrationPage />} />
+                  <Route path=":token" element={<FinishRegistrationTokenPage />} />
+                </Route>
               </Route>
-              <Route path="activate-account">
-                <Route index element={<FinishRegistrationPage />} />
-                <Route path=":token" element={<FinishRegistrationTokenPage />} />
+
+              <Route element={<ProtectedRoute />}>
+                <Route path="snippets">
+                  <Route index element={<SnippetsPage />} />
+                  <Route path="create" element={<SnippetFormPage />} />
+                  <Route path="edit/:snippetId" element={<SnippetFormPage />} />
+                  <Route path=":snippetId" element={<SnippetDetailsPage />} />
+                </Route>
+
+                <Route path="profile" element={<ProfileRedirector />} />
+                <Route path="profile/:username" element={<ProfilePage />}>
+                  <Route index element={<Overview />} />
+                  <Route path="snippets" element={<Snippets />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="*" element={<NotFoundPage />} />
+                </Route>
+
+                <Route path="favorites" element={<FavoritesPage />} />
               </Route>
+
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
-
-            <Route element={<ProtectedRoute />}>
-              <Route path="snippets">
-                <Route index element={<SnippetsPage />} />
-                <Route path="create" element={<SnippetFormPage />} />
-                <Route path="edit/:snippetId" element={<SnippetFormPage />} />
-                <Route path=":snippetId" element={<SnippetDetailsPage />} />
-              </Route>
-
-              <Route path="/profile" element={<ProfileRedirector />} />
-              <Route path="/profile/:username" element={<ProfilePage />}>
-                <Route index element={<Overview />} />
-                <Route path="snippets" element={<Snippets />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFoundPage />} />
-          </Route>
-        </Routes>
+          </Routes>
+        </SnippetProvider>
       </AuthProvider>
 
       <Toaster />
