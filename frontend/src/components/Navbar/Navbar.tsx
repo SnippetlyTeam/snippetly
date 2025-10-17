@@ -34,12 +34,12 @@ const Navbar: React.FC = () => {
         </li>
         <li className={styles.listItem}>
           <NavLink
-            to='/'
+            to='/favorites'
             className={({ isActive }) =>
               `${styles.link} ${isActive ? styles.activeLink : ''}`
             }
           >
-            Favourites
+            Favorites
           </NavLink>
         </li>
         {isAuthenticated ? (
