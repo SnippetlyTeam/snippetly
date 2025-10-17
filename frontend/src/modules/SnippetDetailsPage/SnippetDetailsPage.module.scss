@@ -43,12 +43,14 @@
 }
 
 .copy {
-  border: 1px solid #6c7075;
-  background-color: var(--secondary-bg-color);
-  color: var(--color-white);
+  border: 1px solid var(--notification-color, #5a6270);
+  background-color: var(--color-bg-grey, #22232b);
+  color: var(--color-accent, #a084fa);
 
   &:hover {
-    background-color: var(--snippet-hover-bg-color);
+    background-color: var(--color-bg-grey-light, #282a36);
+    color: var(--color-accent-hover, #c3b3fa);
+    border-color: var(--color-accent, #a084fa);
   }
 }
 
