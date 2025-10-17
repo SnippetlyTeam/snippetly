@@ -2,11 +2,14 @@ import React from 'react';
 import styles from './Navbar.module.scss';
 import Logo from '../Logo/Logo';
 import { NavLink } from 'react-router-dom';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const Navbar: React.FC = () => {
+  const { isAuthenticated } = useAuthContext();
+
   return (
     <nav className={styles.nav}>
-      <Logo type='large'/>
+      <Logo type='large' />
 
       <ul className={styles.list}>
         <li className={styles.listItem}>
@@ -31,26 +34,39 @@ const Navbar: React.FC = () => {
         </li>
         <li className={styles.listItem}>
           <NavLink
-            to='/'
+            to='/favorites'
             className={({ isActive }) =>
               `${styles.link} ${isActive ? styles.activeLink : ''}`
             }
           >
-            About
+            Favorites
           </NavLink>
         </li>
-        <li className={styles.listItem}>
-          <NavLink
-            to='/sign-in'
-            className={({ isActive }) =>
-              `${styles.link} ${isActive ? styles.activeLink : ''}`
-            }
-          >
-            Log In
-          </NavLink>
-        </li>
+        {isAuthenticated ? (
+          <li className={styles.listItem}>
+            <NavLink
+              to='/profile'
+              className={({ isActive }) =>
+                `${styles.link} ${isActive ? styles.activeLink : ''}`
+              }
+            >
+              Profile
+            </NavLink>
+          </li>
+        ) : (
+          <li className={styles.listItem}>
+            <NavLink
+              to='/sign-in'
+              className={({ isActive }) =>
+                `${styles.link} ${isActive ? styles.activeLink : ''}`
+              }
+            >
+              Log In
+            </NavLink>
+          </li>
+        )}
       </ul>
-    </nav>
+    </nav >
   );
 };
 

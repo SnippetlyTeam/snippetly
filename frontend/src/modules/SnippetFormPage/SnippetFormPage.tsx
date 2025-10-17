@@ -11,7 +11,7 @@ import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
 import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomAuthToast/CustomToast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
 
@@ -46,8 +46,7 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: (response) => {
-      console.log(response.data)
+    onSuccess: () => {
       setSnippet(emptySnippet);
       toast.custom((t: Toast) => (
         <CustomToast
@@ -60,9 +59,6 @@ const SnippetFormPage = () => {
         duration: 2500,
       });
     },
-    onError: (error) => {
-      console.log(error)
-    }
   });
 
   const {
@@ -158,8 +154,8 @@ const SnippetFormPage = () => {
       return;
     }
 
-    if (tagContent.length < 3) {
-      setTagsError('Tag must be at least 3 characters');
+    if (tagContent.length < 2) {
+      setTagsError('Tag must be at least 2 characters');
       return;
     }
 
@@ -324,14 +320,14 @@ const SnippetFormPage = () => {
             <div className={styles.container}>
               <div className={`${styles.formItem} ${styles.language}`}>
                 <label id="language-label" htmlFor="language-dropdown-trigger">Language</label>
-                <div ref={dropdownRef} className={styles.dropdown}>
+                <div ref={dropdownRef} className='dropdown'>
                   <button
                     id="language-dropdown-trigger"
                     type="button"
                     className={`
-                    ${styles.dropdownTrigger} 
-                    ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
-                  `}
+                      dropdownTrigger 
+                      ${isLanguageDropDownOpen ? styles.dropdownTriggerActive : ''}
+                    `}
                     aria-haspopup="listbox"
                     aria-expanded={isLanguageDropDownOpen}
                     aria-labelledby="language-label language-dropdown-trigger"
@@ -342,7 +338,7 @@ const SnippetFormPage = () => {
 
                   {isLanguageDropDownOpen && (
                     <div
-                      className={styles.dropdownMenu}
+                      className='dropdownMenu'
                       role="listbox"
                       aria-labelledby="language-label"
                       tabIndex={-1}
@@ -354,7 +350,7 @@ const SnippetFormPage = () => {
                           name="language"
                           value={lang}
                           onClick={() => handleSnippetDetailsChange('language', lang)}
-                          className={styles.dropdownItem}
+                          className='dropdownItem'
                           role="option"
                           aria-selected={snippet.language === lang}
                           tabIndex={0}
@@ -368,7 +364,7 @@ const SnippetFormPage = () => {
               </div>
 
               <div className={`${styles.formItem} ${styles.tag}`}>
-                <label htmlFor="tags">Tags</label>
+                <label htmlFor="tags">Tags (use comma or Enter to add)</label>
                 <input
                   placeholder="e.g., react, hooks"
                   type="text"
@@ -377,7 +373,8 @@ const SnippetFormPage = () => {
                   autoComplete="off"
                   aria-describedby="tags-hint"
                   aria-disabled="true"
-                  maxLength={50}
+                  minLength={2}
+                  maxLength={20}
                   value={currentTag}
                   onChange={event => handleSnippetDetailsChange('tags', event.target.value)}
                   onKeyDown={event => {

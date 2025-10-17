@@ -1,22 +1,43 @@
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import styles from './Snippet.module.scss';
 import type { SnippetType } from '../../types/SnippetType';
 import Tag from '../Tag/Tag';
+import { useSnippetContext } from '../../contexts/SnippetContext';
+import Heart from '../Heart/Heart';
 
 type Props = {
   snippet: SnippetType,
 }
 
 const Snippet: React.FC<Props> = ({ snippet }) => {
-  const navigate = useNavigate();
+  const { favoriteSnippetsIds, setFavoriteSnippetsIds } = useSnippetContext();
+
+  function handleHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (favoriteSnippetsIds.includes(snippet.uuid)) {
+      setFavoriteSnippetsIds(prev => prev.filter(id => id !== snippet.uuid));
+    } else {
+      setFavoriteSnippetsIds(prev => [...prev, snippet.uuid]);
+    }
+  }
 
   return (
-    <div
+    <Link
+      to={`/snippets/${snippet.uuid}`}
       className={styles.snippet}
-      onClick={() => navigate(`/snippets/${snippet.uuid}`)}
     >
       <div className={styles.head}>
-        <h3 className={styles.title}>{snippet.title}</h3>
+        <div className={styles.container}>
+          <h3 className={styles.title}>{snippet.title}</h3>
+          <button
+            className={styles.button}
+            onClick={handleHeartClick}
+          >
+            <Heart isFilled={favoriteSnippetsIds.includes(snippet.uuid)} />
+          </button>
+        </div>
         <p className={styles.language}>Language: {snippet.language}</p>
       </div>
 
@@ -28,10 +49,10 @@ const Snippet: React.FC<Props> = ({ snippet }) => {
 
       <div className={styles.tags}>
         {snippet.tags.map(tag => (
-          <Tag content={tag} key={tag}/>
+          <Tag content={tag} key={tag} />
         ))}
       </div>
-    </div>
+    </Link>
   );
 }
 

@@ -1,0 +1,56 @@
+.pagination {
+  display: flex;
+  align-self: center;
+  gap: 16px;
+
+  > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &Pages {
+    display: flex;
+    gap: 8px;
+  }
+
+  &Switcher {
+    background-color: #252525;
+    color: #d4d4d4;
+    border: 1px solid #3a4047;
+    border-radius: 4px;
+    font-weight: 400;
+    width: 70px;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.2s, background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #178ca4;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &Item {
+    background-color: var(--snippet-hover-bg-color);
+    border: 1px solid #3a4047;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: var(--color-white);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 12px 16px;
+
+    &:not(&Active):hover {
+      background-color: #3a4047;
+    }
+
+    &Active {
+      background-color: #178ca4;
+    }
+  }
+}

@@ -48,8 +48,46 @@ async def get_profile_details(
     try:
         profile = await service.get_profile(user.id)
     except exc.ProfileNotFoundError as e:
-        raise HTTPException(status_code=404, detail="Profile not found") from e
-    return ProfileResponseSchema.model_validate(profile)
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    combined_data = {**profile.__dict__, "username": user.username}
+    return ProfileResponseSchema.model_construct(**combined_data)
+
+
+@router.get(
+    "/{username}",
+    dependencies=[Depends(get_current_user)],
+    summary="Get specific user's profile details",
+    description="Endpoint for getting specific user's profile "
+    "details by username",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples={
+                **exm.NOT_FOUND_ERRORS_EXAMPLES,
+                "profile_not_found": "Profile with this username "
+                "was not found",
+            },
+        ),
+    },
+)
+async def get_specific_user_profile(
+    username: str,
+    service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
+) -> ProfileResponseSchema:
+    try:
+        profile = await service.get_specific_user_profile(username)
+    except exc.ProfileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    combined_data = {**profile.__dict__, "username": username}
+    return ProfileResponseSchema.model_construct(**combined_data)
 
 
 @router.patch(

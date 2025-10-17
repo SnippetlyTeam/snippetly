@@ -201,7 +201,7 @@ class SnippetService(SnippetServiceInterface):
                 request, page, per_page, total
             )
 
-            mongo_ids = [snippet.mongodb_id for snippet in snippets]
+            mongo_ids = [snippet.mongodb_id for snippet in snippets]  # type:ignore
             documents = await self._doc_repo.get_by_ids(mongo_ids)
 
             documents_map = {str(doc.id): doc for doc in documents}

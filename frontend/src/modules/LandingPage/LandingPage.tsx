@@ -1,8 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import CodeEditor from '../../components/CodeEditor/CodeEditor';
 import MainButton from '../../components/MainButton/MainButton';
 import styles from './LandingPage.module.scss';
 
 const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <main className={styles.main}>
       <div className={styles.description}>
@@ -27,7 +30,7 @@ const LandingPage: React.FC = () => {
           '',
           "saveSnippet(\"console.log('Hello, snippets!');\");"
         ].join('\n')} language='javascript' />
-      <MainButton content='Start Coding' />
+      <MainButton content='Start Coding' onClick={() => navigate('/snippets')} />
     </main>
   )
 }

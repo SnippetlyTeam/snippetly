@@ -21,6 +21,20 @@ class ProfileServiceInterface(ABC):
         pass
 
     @abstractmethod
+    async def get_specific_user_profile(
+        self, username: str
+    ) -> UserProfileModel:
+        """
+        Method for getting specific user's profile by username
+
+        :param username: Specific user's username
+        :type: str
+        :return: User profile record
+        :rtype: UserProfileModel
+        :raises: ProfileNotFoundError: If profile doesn't exist
+        """
+
+    @abstractmethod
     async def update_profile(
         self, user_id: int, data: ProfileUpdateRequestSchema
     ) -> UserProfileModel:

@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.13-slim-bookworm
 # Install uv - dependency manager
 COPY --from=ghcr.io/astral-sh/uv:0.8.19 /uv /uvx /bin/
 

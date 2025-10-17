@@ -31,6 +31,5 @@ class ProfileUpdateRequestSchema(BaseProfileSchema):
 
 # --- Responses ---
 class ProfileResponseSchema(BaseProfileSchema):
-    id: int = Field(...)
-    user_id: int = Field(...)
     avatar_url: Optional[str] = Field(None)
+    username: str = Field(..., min_length=3, max_length=40)

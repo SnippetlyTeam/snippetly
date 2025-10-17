@@ -5,7 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import src.core.exceptions as exc
-from src.adapters.postgres.models import UserProfileModel, GenderEnum
+from src.adapters.postgres.models import (
+    UserProfileModel,
+    GenderEnum,
+    UserModel,
+)
 
 
 class UserProfileRepository:
@@ -45,6 +49,21 @@ class UserProfileRepository:
         if profile is None:
             raise exc.ProfileNotFoundError(
                 "Profile with this user ID was not found"
+            )
+        return profile
+
+    async def get_by_username(self, username: str) -> UserProfileModel:
+        query = (
+            select(UserProfileModel)
+            .join(UserModel)
+            .where(UserModel.username == username)
+        )
+
+        result = await self._db.execute(query)
+        profile = result.scalar_one_or_none()
+        if profile is None:
+            raise exc.ProfileNotFoundError(
+                "Profile with this username was not found"
             )
         return profile
 
