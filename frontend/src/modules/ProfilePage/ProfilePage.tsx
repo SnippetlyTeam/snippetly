@@ -93,7 +93,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
-            {isMyProfile && (
+            {(isMyProfile && !location.pathname.includes('/edit')) && (
               <button
                 className={styles.editButton}
                 onClick={() => navigate(`/profile/${profile.username}/edit`)}
@@ -107,7 +107,11 @@ const ProfilePage = () => {
                   to={`/profile/${profile.username}`}
                   className={({ isActive }) => `
                     ${styles.navLink} 
-                    ${isActive ? styles.navLinkActive : ''}
+                    ${
+                      isActive || location.pathname.includes('/edit')
+                        ? styles.navLinkActive
+                        : ''
+                    }
                   `}
                   end
                 >

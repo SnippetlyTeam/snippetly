@@ -5,7 +5,7 @@ import { useRef, useState } from 'react';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import { updateProfile } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import toast from 'react-hot-toast';
 import CustomToast from '../../components/CustomToast/CustomToast';
@@ -16,6 +16,7 @@ const Edit = () => {
   const [isGenderDropdownOpen, setIsGenderDropdownOpen] = useState(false);
   const genderDropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const formatDateForInput = (dateString?: string): string => {
     if (!dateString) return '';
@@ -52,12 +53,18 @@ const Edit = () => {
 
   function handleFormDataChange(key: keyof typeof formData, value: string) {
     const updatedFormData = { ...formData, [key]: value };
-    setIsChanged(
-      Object.entries(initialData).some(
-        ([k, v]) =>
-          updatedFormData[k as keyof typeof updatedFormData] !== v
-      )
+
+    const isAllEqual = Object.entries(initialData.current).every(
+      ([k, v]) => {
+        const currentValue = updatedFormData[k as keyof typeof updatedFormData];
+        if (k === 'first_name' || k === 'last_name' || k === 'info') {
+          return (currentValue?.toString().trim() || '') === (v?.toString().trim() || '');
+        }
+        return currentValue === v;
+      }
     );
+
+    setIsChanged(!isAllEqual);
 
     setFormData(prev => ({
       ...prev,
@@ -70,11 +77,19 @@ const Edit = () => {
       const changedFields = Object.fromEntries(
         Object.entries(formData).filter(
           ([key, value]) => initialData.current[key as keyof EditableProfileFields] !== value
-        )
+        ).map(([key, value]) => {
+          const trimmedValue = (key === 'first_name' || key === 'last_name' || key === 'info') 
+            ? value?.toString().trim() 
+            : value;
+          return [key, trimmedValue];
+        })
       );
       return updateProfile(accessToken, changedFields);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', profile.username, accessToken] });
+      queryClient.invalidateQueries({ queryKey: ['myProfile', accessToken] });
+      
       navigate(`/profile/${profile.username}`, {
         state: {
           title: 'Profile Updated',
@@ -146,7 +161,7 @@ const Edit = () => {
               className="dropdownTrigger"
               onClick={() => setIsGenderDropdownOpen(prev => !prev)}
             >
-              {formData.gender} .
+              {formData.gender}
             </button>
             {isGenderDropdownOpen && (
               <div className="dropdownMenu">

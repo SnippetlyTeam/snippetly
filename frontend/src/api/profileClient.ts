@@ -26,7 +26,6 @@ export const updateProfile = (
   token: AccessToken,
   profile: Partial<ProfileType>
 ): Promise<AxiosResponse<ProfileType>> => {
-  console.log(profile)
   return profileClient.patch<ProfileType>(
     '/',
     profile,
