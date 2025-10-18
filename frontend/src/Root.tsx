@@ -37,8 +37,8 @@ const queryClient = new QueryClient({
 
 export const Root = () => (
   <QueryClientProvider client={queryClient}>
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <SnippetProvider>
           <Routes>
             <Route path="/" element={<App />}>
@@ -91,9 +91,8 @@ export const Root = () => (
             </Route>
           </Routes>
         </SnippetProvider>
-      </AuthProvider>
-
-      <Toaster />
-    </Router>
+        <Toaster />
+      </Router>
+    </AuthProvider>
   </QueryClientProvider >
 )

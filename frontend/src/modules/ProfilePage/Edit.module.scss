@@ -22,8 +22,6 @@
   grid-template-columns: 1fr 1fr;
   column-gap: 40px;
   row-gap: 16px;
-  border-bottom: 1px solid var(--notification-color);
-  padding-bottom: 16px;
 
   &Item {
     display: flex;
@@ -70,18 +68,23 @@
   justify-content: flex-end;
   gap: 16px;
   padding-inline: 16px;
+  border-top: 1px solid var(--notification-color);
+  padding-top: 16px;
+  grid-column: 1 / -1;
 
-  * {
-    border: none;
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    width: 100px;
+    height: 45px;
     border-radius: 99px;
     font-size: 16px;
     font-weight: 600;
-    padding: 12px 24px;
     cursor: pointer;
-    transition:
-      border-color 0.15s,
-      background-color 0.15s,
-      box-shadow 0.15s,
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s,
       color 0.2s;
   }
 
@@ -91,13 +94,19 @@
     box-shadow: 0 2px 12px 0 rgba(160, 132, 250, 0.25),
       0 1.5px 4px 0 rgba(0, 0, 0, 0.07);
     border: 1px solid var(--color-accent, #a084fa);
+    box-sizing: border-box;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: var(--color-accent-hover, #c3b3fa);
       color: #fff;
       box-shadow: 0 4px 18px 0 rgba(160, 132, 250, 0.36),
         0 2px 8px 0 rgba(0, 0, 0, 0.14);
       border-color: var(--color-accent-hover, #c3b3fa);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
   }
 
