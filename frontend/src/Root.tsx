@@ -24,6 +24,7 @@ import Settings from "./modules/ProfilePage/Settings";
 import ProfileRedirector from "./modules/ProfilePage/ProfileRedirector";
 import FavoritesPage from "./modules/FavoritesPage/FavoritesPage";
 import { SnippetProvider } from "./contexts/SnippetContext";
+import Edit from "./modules/ProfilePage/Edit";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,8 +37,8 @@ const queryClient = new QueryClient({
 
 export const Root = () => (
   <QueryClientProvider client={queryClient}>
-    <Router>
-      <AuthProvider>
+    <AuthProvider>
+      <Router>
         <SnippetProvider>
           <Routes>
             <Route path="/" element={<App />}>
@@ -79,6 +80,7 @@ export const Root = () => (
                   <Route index element={<Overview />} />
                   <Route path="snippets" element={<Snippets />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="edit" element={<Edit />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
 
@@ -89,9 +91,8 @@ export const Root = () => (
             </Route>
           </Routes>
         </SnippetProvider>
-      </AuthProvider>
-
-      <Toaster />
-    </Router>
+        <Toaster />
+      </Router>
+    </AuthProvider>
   </QueryClientProvider >
 )

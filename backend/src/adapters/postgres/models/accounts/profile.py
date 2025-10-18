@@ -35,7 +35,7 @@ class UserProfileModel(Base):
     )
 
     user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="profile"
+        "UserModel", back_populates="profile", lazy="joined"
     )
 
     def __repr__(self) -> str:

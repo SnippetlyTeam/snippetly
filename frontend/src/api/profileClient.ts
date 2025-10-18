@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { ProfileType } from '../types/ProfileType';
+import type { AccessToken } from '../types/Tokens';
 
 const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
 
@@ -9,31 +10,31 @@ export const profileClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 })
 
-export const getProfile = (token: string | undefined): Promise<AxiosResponse<ProfileType>> => {
-  return profileClient.get<ProfileType>('', {
+export const getProfile = (token: AccessToken): Promise<AxiosResponse<ProfileType>> => {
+  return profileClient.get<ProfileType>('/', {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
 
-export const getProfileByUsername = (username: string, token: string | undefined): Promise<AxiosResponse<ProfileType>> => {
+export const getProfileByUsername = (username: string, token: AccessToken): Promise<AxiosResponse<ProfileType>> => {
   return profileClient.get<ProfileType>(`/${username}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
 
 export const updateProfile = (
-  token: string,
+  token: AccessToken,
   profile: Partial<ProfileType>
 ): Promise<AxiosResponse<ProfileType>> => {
   return profileClient.patch<ProfileType>(
-    '',
+    '/',
     profile,
     { headers: { Authorization: `Bearer ${token}` } }
   );
 };
 
 export const setAvatar = (
-  token: string,
+  token: AccessToken,
   avatarFile: File
 ): Promise<AxiosResponse<ProfileType>> => {
   const formData = new FormData();

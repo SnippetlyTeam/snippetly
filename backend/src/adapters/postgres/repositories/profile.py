@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,25 +71,11 @@ class UserProfileRepository:
     async def update(
         self,
         user_id: int,
-        first_name: Optional[str] = None,
-        last_name: Optional[str] = None,
-        gender: Optional[GenderEnum] = None,
-        date_of_birth: Optional[date] = None,
-        info: Optional[str] = None,
+        **kwargs: Union[str, None, GenderEnum, date]
     ) -> UserProfileModel:
         profile: UserProfileModel = await self.get_by_user_id(user_id)
-
-        if first_name:
-            profile.first_name = first_name
-        if last_name:
-            profile.last_name = last_name
-        if gender:
-            profile.gender = gender
-        if date_of_birth:
-            profile.date_of_birth = date_of_birth
-        if info:
-            profile.info = info
-
+        for key, value in kwargs.items():
+            setattr(profile, key, value)
         self._db.add(profile)
         return profile
 

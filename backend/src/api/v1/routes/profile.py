@@ -58,7 +58,7 @@ async def get_profile_details(
     dependencies=[Depends(get_current_user)],
     summary="Get specific user's profile details",
     description="Endpoint for getting specific user's profile "
-    "details by username",
+                "details by username",
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -73,7 +73,7 @@ async def get_profile_details(
             examples={
                 **exm.NOT_FOUND_ERRORS_EXAMPLES,
                 "profile_not_found": "Profile with this username "
-                "was not found",
+                                     "was not found",
             },
         ),
     },
@@ -131,7 +131,8 @@ async def update_profile_details(
             status_code=500,
             detail="Something went wrong during profile update",
         ) from e
-    return ProfileResponseSchema.model_validate(profile)
+    combined_data = {**profile.__dict__, "username": user.username}
+    return ProfileResponseSchema.model_construct(**combined_data)
 
 
 @router.delete(
@@ -157,7 +158,7 @@ async def update_profile_details(
             description="Internal Server Error",
             examples={
                 "internal_server": "Something went wrong during "
-                "avatar deletion"
+                                   "avatar deletion"
             },
         ),
     },
@@ -205,7 +206,8 @@ async def delete_profile_avatar(
                 "size": "Image size exceeds 2 MB limit",
                 "error": "Invalid image format",
                 "invalid_format": "Unsupported image format: "
-                "{image_format}. Use one of: JPEG, PNG, WEBP",
+                                  "{image_format}. Use one of: JPEG, PNG, "
+                                  "WEBP",
             },
         ),
         500: create_error_examples(
