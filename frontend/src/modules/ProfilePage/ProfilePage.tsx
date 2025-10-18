@@ -107,10 +107,9 @@ const ProfilePage = () => {
                   to={`/profile/${profile.username}`}
                   className={({ isActive }) => `
                     ${styles.navLink} 
-                    ${
-                      isActive || location.pathname.includes('/edit')
-                        ? styles.navLinkActive
-                        : ''
+                    ${isActive || location.pathname.includes('/edit')
+                      ? styles.navLinkActive
+                      : ''
                     }
                   `}
                   end

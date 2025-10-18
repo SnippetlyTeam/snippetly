@@ -158,15 +158,23 @@
   }
 
   &Statistics {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    column-gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-grow: 1;
+    background-color: var(--secondary-bg-color);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 0 2px 16px 0 rgba(20, 20, 20, 0.18),
+      0 1.5px 4px 0 rgba(0, 0, 0, 0.12);
 
     &Title {
-      margin: 0;
-      grid-column: 1 / -1;
+      margin: 0 0 8px 0;
       color: var(--color-accent);
       font-size: 18px;
+      border-bottom: 1px solid var(--notification-color);
+      padding-bottom: 6px;
+      width: 100%;
     }
 
     &Content {

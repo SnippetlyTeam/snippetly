@@ -10,6 +10,20 @@ import { Loader } from '../../components/Loader';
 import toast from 'react-hot-toast';
 import CustomToast from '../../components/CustomToast/CustomToast';
 
+const GENDER_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'other', label: 'Other' },
+  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
+];
+
+const GENDER_NOT_SPECIFIED_LABEL = 'Not specified';
+function getGenderLabel(val: string | null | undefined) {
+  if (!val) return GENDER_NOT_SPECIFIED_LABEL;
+  const found = GENDER_OPTIONS.find(o => o.value === val);
+  return found ? found.label : GENDER_NOT_SPECIFIED_LABEL;
+}
+
 const Edit = () => {
   const { profile } = useOutletContext<{ profile: ProfileType }>();
   const { accessToken } = useAuthContext();
@@ -36,7 +50,7 @@ const Edit = () => {
     first_name: string;
     last_name: string;
     date_of_birth: string;
-    gender: 'male' | 'female' | null;
+    gender: string | null;
     info: string;
   };
 
@@ -44,11 +58,14 @@ const Edit = () => {
     first_name: profile.first_name ?? '',
     last_name: profile.last_name ?? '',
     date_of_birth: formatDateForInput(profile.date_of_birth),
-    gender: (profile.gender === 'male' || profile.gender === 'female') ? profile.gender : null,
+    gender: typeof profile.gender === 'string' &&
+      (profile.gender === 'male' || profile.gender === 'female' || profile.gender === 'other' || profile.gender === 'prefer_not_to_say')
+      ? profile.gender
+      : null,
     info: profile.info ?? '',
   });
 
-  const [formData, setFormData] = useState<Partial<ProfileType>>(initialData.current);
+  const [formData, setFormData] = useState<EditableProfileFields>(initialData.current);
   const [isChanged, setIsChanged] = useState(false);
 
   function handleFormDataChange(key: keyof typeof formData, value: string) {
@@ -57,6 +74,13 @@ const Edit = () => {
     const isAllEqual = Object.entries(initialData.current).every(
       ([k, v]) => {
         const currentValue = updatedFormData[k as keyof typeof updatedFormData];
+        
+        if (k === 'gender') {
+          const isCurrentNotSpecified = !currentValue || currentValue === 'other' || currentValue === 'prefer_not_to_say';
+          const isInitialNotSpecified = !v || v === 'other' || v === 'prefer_not_to_say';
+          return isCurrentNotSpecified === isInitialNotSpecified;
+        }
+        
         if (k === 'first_name' || k === 'last_name' || k === 'info') {
           return (currentValue?.toString().trim() || '') === (v?.toString().trim() || '');
         }
@@ -72,15 +96,28 @@ const Edit = () => {
     }));
   }
 
+  function handleGenderChange(value: string) {
+    handleFormDataChange('gender', value);
+    setIsGenderDropdownOpen(false);
+  }
+
   const { mutate, isPending } = useMutation({
     mutationFn: () => {
       const changedFields = Object.fromEntries(
         Object.entries(formData).filter(
           ([key, value]) => initialData.current[key as keyof EditableProfileFields] !== value
         ).map(([key, value]) => {
-          const trimmedValue = (key === 'first_name' || key === 'last_name' || key === 'info') 
-            ? value?.toString().trim() 
-            : value;
+          if (key === 'gender') {
+            if (value === 'male' || value === 'female') {
+              return [key, value];
+            } else {
+              return [key, null];
+            }
+          }
+          const trimmedValue =
+            key === 'first_name' || key === 'last_name' || key === 'info'
+              ? value?.toString().trim()
+              : value;
           return [key, trimmedValue];
         })
       );
@@ -89,7 +126,7 @@ const Edit = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', profile.username, accessToken] });
       queryClient.invalidateQueries({ queryKey: ['myProfile', accessToken] });
-      
+
       navigate(`/profile/${profile.username}`, {
         state: {
           title: 'Profile Updated',
@@ -154,21 +191,27 @@ const Edit = () => {
 
         <div className={styles.formItem}>
           <label htmlFor="gender">Gender</label>
-
           <div className="dropdown" ref={genderDropdownRef}>
             <button
               type="button"
               className="dropdownTrigger"
               onClick={() => setIsGenderDropdownOpen(prev => !prev)}
             >
-              {formData.gender}
+              {getGenderLabel(formData.gender)}
             </button>
             {isGenderDropdownOpen && (
               <div className="dropdownMenu">
-                <button className="dropdownItem" type="button" value="male">Male</button>
-                <button className="dropdownItem" type="button" value="female">Female</button>
-                <button className="dropdownItem" type="button" value="other">Other</button>
-                <button className="dropdownItem" type="button" value="prefer_not_to_say">Prefer not to say</button>
+                {GENDER_OPTIONS.map(option => (
+                  <button
+                    key={option.value}
+                    className="dropdownItem"
+                    type="button"
+                    value={option.value}
+                    onClick={() => handleGenderChange(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
