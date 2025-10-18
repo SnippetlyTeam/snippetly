@@ -7,6 +7,8 @@ import { updateProfile } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
+import toast from 'react-hot-toast';
+import CustomToast from '../../components/CustomToast/CustomToast';
 
 const Edit = () => {
   const { profile } = useOutletContext<{ profile: ProfileType }>();
@@ -29,15 +31,23 @@ const Edit = () => {
     }
   };
 
-  const initialData: Partial<ProfileType> = {
-    first_name: profile.first_name,
-    last_name: profile.last_name,
-    date_of_birth: formatDateForInput(profile.date_of_birth),
-    gender: (profile.gender as 'male' | 'female') || null,
-    info: profile.info,
-  }
+  type EditableProfileFields = {
+    first_name: string;
+    last_name: string;
+    date_of_birth: string;
+    gender: 'male' | 'female' | null;
+    info: string;
+  };
 
-  const [formData, setFormData] = useState<Partial<ProfileType>>(initialData);
+  const initialData = useRef<EditableProfileFields>({
+    first_name: profile.first_name ?? '',
+    last_name: profile.last_name ?? '',
+    date_of_birth: formatDateForInput(profile.date_of_birth),
+    gender: (profile.gender === 'male' || profile.gender === 'female') ? profile.gender : null,
+    info: profile.info ?? '',
+  });
+
+  const [formData, setFormData] = useState<Partial<ProfileType>>(initialData.current);
   const [isChanged, setIsChanged] = useState(false);
 
   function handleFormDataChange(key: keyof typeof formData, value: string) {
@@ -58,15 +68,33 @@ const Edit = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: () => {
       const changedFields = Object.fromEntries(
-        Object.entries(formData).filter(([key, value]) => initialData[key as keyof typeof initialData] !== value)
+        Object.entries(formData).filter(
+          ([key, value]) => initialData.current[key as keyof EditableProfileFields] !== value
+        )
       );
       return updateProfile(accessToken, changedFields);
     },
     onSuccess: () => {
-      navigate(`/profile/${profile.username}`);
+      navigate(`/profile/${profile.username}`, {
+        state: {
+          title: 'Profile Updated',
+          message: 'Your profile has been updated successfully.',
+          type: 'success'
+        }
+      });
     },
     onError: (error) => {
       console.error('Error updating profile:', error);
+      toast.custom(t => (
+        <CustomToast
+          t={t}
+          title="Update Failed"
+          message="There was an error updating your profile. Please try again."
+          type="error"
+        />
+      ), {
+        duration: 2500,
+      });
     }
   });
 

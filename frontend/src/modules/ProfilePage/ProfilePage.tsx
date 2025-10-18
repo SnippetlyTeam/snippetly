@@ -3,11 +3,15 @@ import styles from './ProfilePage.module.scss';
 import { getProfile, getProfileByUsername } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
-import { NavLink, useNavigate, Outlet, useParams } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet, useParams, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import CustomToast from '../../components/CustomToast/CustomToast';
+import { toast, type Toast } from 'react-hot-toast';
 
 const ProfilePage = () => {
   const { accessToken } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
   const { username } = useParams();
 
   const { data: myProfile } = useQuery({
@@ -29,6 +33,28 @@ const ProfilePage = () => {
 
   const isMyProfile =
     !!myProfile && !!profile && myProfile.username === profile.username;
+
+  useEffect(() => {
+    if (
+      location.state &&
+      (location.state.title || location.state.message || location.state.type)
+    ) {
+      const { title = '', message = '', type = 'info' } = location.state || {};
+
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={title}
+          message={message}
+          type={type}
+        />
+      ), {
+        duration: 2500,
+      });
+
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   if (isError) {
     return <div>Error loading profile.</div>;
