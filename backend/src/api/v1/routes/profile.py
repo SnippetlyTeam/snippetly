@@ -206,7 +206,8 @@ async def delete_profile_avatar(
                 "size": "Image size exceeds 2 MB limit",
                 "error": "Invalid image format",
                 "invalid_format": "Unsupported image format: "
-                                  "{image_format}. Use one of: JPEG, PNG, WEBP",
+                                  "{image_format}. Use one of: JPEG, PNG, "
+                                  "WEBP",
             },
         ),
         500: create_error_examples(

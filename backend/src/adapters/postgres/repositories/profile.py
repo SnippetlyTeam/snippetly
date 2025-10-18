@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, Union
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,7 +71,7 @@ class UserProfileRepository:
     async def update(
         self,
         user_id: int,
-        **kwargs
+        **kwargs: Union[str, None, GenderEnum, date]
     ) -> UserProfileModel:
         profile: UserProfileModel = await self.get_by_user_id(user_id)
         for key, value in kwargs.items():
