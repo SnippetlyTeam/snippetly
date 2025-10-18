@@ -29,7 +29,7 @@ const Edit = () => {
     }
   };
 
-  const initialData = {
+  const initialData: Partial<ProfileType> = {
     first_name: profile.first_name,
     last_name: profile.last_name,
     date_of_birth: formatDateForInput(profile.date_of_birth),
@@ -41,6 +41,14 @@ const Edit = () => {
   const [isChanged, setIsChanged] = useState(false);
 
   function handleFormDataChange(key: keyof typeof formData, value: string) {
+    const updatedFormData = { ...formData, [key]: value };
+    setIsChanged(
+      Object.entries(initialData).some(
+        ([k, v]) =>
+          updatedFormData[k as keyof typeof updatedFormData] !== v
+      )
+    );
+
     setFormData(prev => ({
       ...prev,
       [key]: value,
@@ -48,7 +56,12 @@ const Edit = () => {
   }
 
   const { mutate, isPending } = useMutation({
-    mutationFn: () => updateProfile(accessToken, formData),
+    mutationFn: () => {
+      const changedFields = Object.fromEntries(
+        Object.entries(formData).filter(([key, value]) => initialData[key as keyof typeof initialData] !== value)
+      );
+      return updateProfile(accessToken, changedFields);
+    },
     onSuccess: () => {
       navigate(`/profile/${profile.username}`);
     },
