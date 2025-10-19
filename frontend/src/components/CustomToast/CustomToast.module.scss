@@ -11,6 +11,7 @@
   background-color: var(--notification-color);
   color: var(--secondary-text-color);
   min-width: 300px;
+  max-width: 500px;
   padding: 12px;
 
   transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),

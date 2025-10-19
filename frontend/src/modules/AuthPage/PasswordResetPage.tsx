@@ -5,10 +5,10 @@ import { useState } from 'react';
 import MainButton from '../../components/MainButton/MainButton';
 import { resetRequest } from '../../api/authClient';
 import { useAuthContext } from '../../contexts/AuthContext';
+import { useMutation } from '@tanstack/react-query';
 
 const PasswordResetPage: React.FC = () => {
   const [emailInputValue, setEmailInputValue] = useState('');
-  const [isSent, setIsSent] = useState(false);
 
   const navigate = useNavigate();
 
@@ -42,6 +42,10 @@ const PasswordResetPage: React.FC = () => {
     }
   }
 
+  const { mutate, isSuccess, isError } = useMutation({
+    mutationFn: (email: string) => resetRequest(email),
+  })
+
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     let hasError = false;
@@ -59,23 +63,14 @@ const PasswordResetPage: React.FC = () => {
     if (hasError) return;
 
     setEmail(emailInputValue);
-
-    resetRequest(emailInputValue)
-      .then(response => {
-        if (response.status === 202) {
-          setIsSent(true);
-          return;
-        }
-
-        setErrorContent(errors.server);
-      });
+    mutate(emailInputValue);
   }
 
   return (
     <main className={styles.main}>
       <h2>Reset Your Password</h2>
 
-      {errorContent === errors.server ? (
+      {isError ? (
         <div className={styles.form}>
           {errors.server}
 
@@ -84,7 +79,7 @@ const PasswordResetPage: React.FC = () => {
             onClick={() => { navigate('/') }}
           />
         </div>
-      ) : isSent ? (
+      ) : isSuccess ? (
         <div className={styles.form}>
           If an account with that email exists,
           we've sent password reset instructions.

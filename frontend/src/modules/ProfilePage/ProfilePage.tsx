@@ -71,7 +71,7 @@ const ProfilePage = () => {
             <div className={styles.container}>
               <div className={styles.avatar}>
                 <img
-                  src={profile.avatar_url}
+                  src={profile.avatar_url || '/'}
                   alt="Avatar Image"
                   className={styles.avatarContent}
                   referrerPolicy="no-referrer"
