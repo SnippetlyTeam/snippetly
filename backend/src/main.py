@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from src.adapters.mongo.client import init_mongo_client
+from src.admin import admin
 from src.api.v1.routes import v1_router
 from src.core.config import get_settings
 from src.core.utils.logger import setup_logger, logger
@@ -35,7 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+admin.mount_to(app)
 app.mount(
     "/static",
     StaticFiles(directory=settings.PROJECT_ROOT / "static"),
