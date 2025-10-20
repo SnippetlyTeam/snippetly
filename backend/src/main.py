@@ -4,8 +4,10 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from src.adapters.mongo.client import init_mongo_client
+from src.admin import admin
 from src.api.v1.routes import v1_router
 from src.core.config import get_settings
 from src.core.utils.logger import setup_logger, logger
@@ -35,7 +37,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.add_middleware(
+    SessionMiddleware, secret_key=settings.SECRET_KEY_ACCESS.get_secret_value()
+)
+admin.mount_to(app)
 app.mount(
     "/static",
     StaticFiles(directory=settings.PROJECT_ROOT / "static"),

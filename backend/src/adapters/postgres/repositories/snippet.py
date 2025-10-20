@@ -101,9 +101,11 @@ class SnippetRepository:
             )
 
         if tags:
-            base_query = base_query.join(SnippetModel.tags).where(
-                TagModel.name.in_(tags)
-            ).distinct()
+            base_query = (
+                base_query.join(SnippetModel.tags)
+                .where(TagModel.name.in_(tags))
+                .distinct()
+            )
 
         if created_before:
             end_date = created_before + timedelta(days=1)

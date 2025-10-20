@@ -22,9 +22,7 @@ class BaseSnippetSchema(BaseModel):
     is_private: bool = Field(...)
     content: str = Field(..., min_length=1, max_length=1000)
     description: str = Field(default="", max_length=500)
-    tags: List[str] = Field(
-        default_factory=list, min_length=0, max_length=10
-    )
+    tags: List[str] = Field(default_factory=list, min_length=0, max_length=10)
 
     @field_validator("tags", mode="before")
     @classmethod
@@ -42,9 +40,7 @@ class SnippetUpdateRequestSchema(BaseModel):
     is_private: Optional[bool] = None
     content: Optional[str] = Field(None, min_length=1, max_length=1000)
     description: Optional[str] = Field(None, max_length=500)
-    tags: List[str] = Field(
-        default_factory=list, min_length=0, max_length=10
-    )
+    tags: List[str] = Field(default_factory=list, min_length=0, max_length=10)
 
     @field_validator("tags", mode="before")
     @classmethod
