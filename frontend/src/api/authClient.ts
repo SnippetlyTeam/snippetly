@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosResponse } from 'axios';
+import type { AccessToken } from '../types/Tokens';
 
 const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
@@ -52,4 +53,19 @@ export const resetComplete = (
   password_reset_token: string | undefined
 ) => {
   return authClient.post('/reset-password/complete', { password, email, password_reset_token });
+}
+
+export const changePassword = (
+  old_password: string,
+  new_password: string,
+  token: AccessToken
+) => {
+  return authClient.post('/change-password', {
+    old_password,
+    new_password
+  }, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }

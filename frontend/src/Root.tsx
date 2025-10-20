@@ -25,6 +25,7 @@ import ProfileRedirector from "./modules/ProfilePage/ProfileRedirector";
 import FavoritesPage from "./modules/FavoritesPage/FavoritesPage";
 import { SnippetProvider } from "./contexts/SnippetContext";
 import Edit from "./modules/ProfilePage/Edit";
+import ChangePasswordPage from "./modules/ChangePasswordPage/ChangePasswordPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ export const Root = () => (
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
 
+                <Route path="change-password" element={<ChangePasswordPage />} />
                 <Route path="favorites" element={<FavoritesPage />} />
               </Route>
 

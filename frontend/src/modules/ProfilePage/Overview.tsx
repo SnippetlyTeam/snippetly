@@ -26,8 +26,6 @@ const Overview = () => {
       })
   }, []);
 
-  console.log(favoriteSnippetsIds)
-
   return (
     <>
       <div className={styles.profileDetails}>
