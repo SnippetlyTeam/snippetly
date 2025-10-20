@@ -11,8 +11,13 @@ from src.adapters.postgres.models import (
     SnippetFavoritesModel,
     RefreshTokenModel,
 )
+from .auth import SnippetlyAuthProvider
 
-admin = Admin(engine, title="Snippetly Admin Dashboard")
+admin = Admin(
+    engine,
+    title="Snippetly Admin Dashboard",
+    auth_provider=SnippetlyAuthProvider(),
+)
 
 admin.add_view(ModelView(UserModel, "fa fa-users", label="Users"))
 admin.add_view(
