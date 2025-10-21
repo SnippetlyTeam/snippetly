@@ -69,9 +69,7 @@ class UserProfileRepository:
 
     # --- Update ---
     async def update(
-        self,
-        user_id: int,
-        **kwargs: Union[str, None, GenderEnum, date]
+        self, user_id: int, **kwargs: Union[str, None, GenderEnum, date]
     ) -> UserProfileModel:
         profile: UserProfileModel = await self.get_by_user_id(user_id)
         for key, value in kwargs.items():
