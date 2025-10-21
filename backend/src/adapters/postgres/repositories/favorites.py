@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 import src.core.exceptions as exc
-from src.api.v1.schemas.favorites import FavoritesSortingEnum
+from src.api.v1.schemas.snippets import FavoritesSortingEnum
 from .snippet import SnippetRepository
 from ..models import (
     UserModel,

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from fastapi import UploadFile
 
 from src.adapters.postgres.models import UserProfileModel
-from src.api.v1.schemas.profiles import ProfileUpdateRequestSchema
+from src.api.v1.schemas.accounts import ProfileUpdateRequestSchema
 
 
 class ProfileServiceInterface(ABC):

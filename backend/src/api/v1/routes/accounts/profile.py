@@ -8,11 +8,11 @@ import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
 from src.api.docs.openapi import create_error_examples
-from src.api.v1.schemas.common import MessageResponseSchema
-from src.api.v1.schemas.profiles import (
+from src.api.v1.schemas.accounts import (
     ProfileResponseSchema,
     ProfileUpdateRequestSchema,
 )
+from src.api.v1.schemas.common import MessageResponseSchema
 from src.core.dependencies.auth import get_current_user
 from src.core.dependencies.profile import get_profile_service
 from src.features.profile import ProfileServiceInterface

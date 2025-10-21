@@ -11,8 +11,11 @@ import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.common import MessageResponseSchema
-from src.api.v1.schemas.favorites import FavoritesSchema, FavoritesSortingEnum
-from src.api.v1.schemas.snippets import GetSnippetsResponseSchema
+from src.api.v1.schemas.snippets import (
+    FavoritesSchema,
+    FavoritesSortingEnum,
+    GetSnippetsResponseSchema,
+)
 from src.core.dependencies.auth import get_current_user
 from src.core.dependencies.snippets import get_favorites_service
 from src.features.snippets import FavoritesServiceInterface

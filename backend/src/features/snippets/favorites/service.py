@@ -9,8 +9,10 @@ import src.core.exceptions as exc
 from src.adapters.mongo.repo import SnippetDocumentRepository
 from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.adapters.postgres.repositories import FavoritesRepository
-from src.api.v1.schemas.favorites import FavoritesSortingEnum
-from src.api.v1.schemas.snippets import GetSnippetsResponseSchema
+from src.api.v1.schemas.snippets import (
+    FavoritesSortingEnum,
+    GetSnippetsResponseSchema,
+)
 from src.core.utils import Paginator
 from .interface import FavoritesServiceInterface
 from ..merger import SnippetDataMerger

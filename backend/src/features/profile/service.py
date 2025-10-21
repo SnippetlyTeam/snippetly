@@ -8,7 +8,7 @@ from src.adapters.postgres.models import UserProfileModel
 from src.adapters.postgres.repositories import UserProfileRepository
 from src.adapters.storage import StorageInterface
 from src.adapters.storage.validation import validate_image
-from src.api.v1.schemas.profiles import ProfileUpdateRequestSchema
+from src.api.v1.schemas.accounts import ProfileUpdateRequestSchema
 from src.core.utils.logger import logger
 from .interface import ProfileServiceInterface
 

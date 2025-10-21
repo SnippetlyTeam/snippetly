@@ -5,8 +5,10 @@ from uuid import UUID
 from fastapi.requests import Request
 
 from src.adapters.postgres.models import UserModel, LanguageEnum
-from src.api.v1.schemas.favorites import FavoritesSortingEnum
-from src.api.v1.schemas.snippets import GetSnippetsResponseSchema
+from src.api.v1.schemas.snippets import (
+    GetSnippetsResponseSchema,
+    FavoritesSortingEnum,
+)
 
 
 class FavoritesServiceInterface(ABC):

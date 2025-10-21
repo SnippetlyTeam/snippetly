@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, constr, field_validator
 
 from src.adapters.postgres.models import LanguageEnum
-from .common import BaseListSchema
+from ..common import BaseListSchema
 
 TagStr = constr(min_length=2, max_length=20)
 
