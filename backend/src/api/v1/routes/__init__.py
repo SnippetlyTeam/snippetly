@@ -1,14 +1,13 @@
 from fastapi import APIRouter
 
-from .auth_login import router as auth_router
-from .auth_password import router as password_router
-from .auth_registration import router as registration_router
-from .favorites import router as favorites_router
-from .oauth2 import router as oauth2_router
-from .profile import router as profile_router
-from .snippets import router as snippets_router
-
-snippets_router.include_router(favorites_router)
+from .accounts import (
+    registration_router,
+    auth_router,
+    oauth2_router,
+    password_router,
+    profile_router,
+)
+from .snippets import snippets_router
 
 v1_router = APIRouter(prefix="/v1")
 v1_router.include_router(registration_router)
