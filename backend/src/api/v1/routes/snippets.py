@@ -85,8 +85,9 @@ async def create_snippet(
 
 @router.get(
     "/",
-    summary="Get all NOT private snippets",
-    description="Get all snippets, if access token provided",
+    summary="Get all snippets",
+    description="Get all snippets except of other user's private snippets, "
+    "if access token provided",
     responses={
         401: create_error_examples(
             description="Unauthorized",

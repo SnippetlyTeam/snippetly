@@ -30,7 +30,7 @@ class SnippetDataMerger:
                     language=snippet.language,
                     is_private=snippet.is_private,
                     content=content,
-                    description=description,
+                    description=description,  # type: ignore
                     uuid=snippet.uuid,
                     tags=[tag.name for tag in snippet.tags],
                 )

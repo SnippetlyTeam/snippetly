@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.exc import SQLAlchemyError
@@ -6,8 +7,9 @@ from starlette.requests import Request
 
 import src.core.exceptions as exc
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.adapters.postgres.repositories import FavoritesRepository
+from src.api.v1.schemas.favorites import FavoritesSortingEnum
 from src.api.v1.schemas.snippets import GetSnippetsResponseSchema
 from src.core.utils import Paginator
 from .interface import FavoritesServiceInterface
@@ -48,12 +50,15 @@ class FavoritesService(FavoritesServiceInterface):
         page: int,
         per_page: int,
         user_id: int,
-        **filters,
+        sort_by: FavoritesSortingEnum,
+        language: Optional[LanguageEnum] = None,
+        tags: Optional[list[str]] = None,
+        username: Optional[str] = None,
     ) -> GetSnippetsResponseSchema:
         offset = self._paginator.calculate_offset(page, per_page)
 
         favorites, total = await self._repo.get_favorites_paginated(
-            offset, per_page, user_id, **filters
+            offset, per_page, user_id, sort_by, language, tags, username
         )
 
         prev_page, next_page = self._paginator.build_links(

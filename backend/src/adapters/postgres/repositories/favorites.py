@@ -116,4 +116,4 @@ class FavoritesRepository:
         data_query = base_query.offset(offset).limit(limit)
         result = await self._db.execute(data_query)
 
-        return result.scalars().all(), total
+        return result.scalars().all(), total  # type: ignore

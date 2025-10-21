@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 from uuid import UUID
 
 from fastapi.requests import Request
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, LanguageEnum
+from src.api.v1.schemas.favorites import FavoritesSortingEnum
 from src.api.v1.schemas.snippets import GetSnippetsResponseSchema
 
 
@@ -45,7 +47,10 @@ class FavoritesServiceInterface(ABC):
         page: int,
         per_page: int,
         user_id: int,
-        **filters,
+        sort_by: FavoritesSortingEnum,
+        language: Optional[LanguageEnum] = None,
+        tags: Optional[list[str]] = None,
+        username: Optional[str] = None,
     ) -> GetSnippetsResponseSchema:
         """
         Method for getting favorite Snippets with pagination
@@ -57,8 +62,15 @@ class FavoritesServiceInterface(ABC):
         :param per_page: Number of items per page
         :type: int
         :param user_id: Current user id
-        :param filters: Additional filters and sortings
         :type: int
+        :param sort_by: what snippets to sort by
+        :type: FavoritesSortingEnum
+        :param language: Optional param programing language
+        :type: LanguageEnum | None
+        :param tags: Optional param tags
+        :type: list[str] | None
+        :param username: Optional param snippet's author username
+        :type: str | None
         :return: Schema of favorite snippets with pagination
         :rtype: GetSnippetsResponseSchema
         """

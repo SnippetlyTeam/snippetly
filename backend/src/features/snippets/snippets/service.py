@@ -180,7 +180,8 @@ class SnippetService(SnippetServiceInterface):
             )
 
             snippet_list = await SnippetDataMerger.merge_with_documents(
-                snippets, self._doc_repo
+                snippets,  # type: ignore
+                self._doc_repo,
             )
         except SQLAlchemyError:
             raise

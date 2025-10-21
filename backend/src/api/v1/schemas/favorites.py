@@ -5,9 +5,9 @@ from pydantic import BaseModel
 
 
 class FavoritesSortingEnum(str, Enum):
-    date_added = "date_added"
-    snippet_date = "snippet_date"
-    title = "title"
+    DATE_ADDED = "date_added"
+    SNIPPET_DATE = "snippet_date"
+    TITLE = "title"
 
 
 class FavoritesSchema(BaseModel):
