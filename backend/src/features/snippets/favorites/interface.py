@@ -44,7 +44,8 @@ class FavoritesServiceInterface(ABC):
         request: Request,
         page: int,
         per_page: int,
-        current_user_id: int,
+        user_id: int,
+        **filters,
     ) -> GetSnippetsResponseSchema:
         """
         Method for getting favorite Snippets with pagination
@@ -55,7 +56,8 @@ class FavoritesServiceInterface(ABC):
         :type: int
         :param per_page: Number of items per page
         :type: int
-        :param current_user_id: Current user id
+        :param user_id: Current user id
+        :param filters: Additional filters and sortings
         :type: int
         :return: Schema of favorite snippets with pagination
         :rtype: GetSnippetsResponseSchema
