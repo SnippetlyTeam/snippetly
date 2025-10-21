@@ -114,6 +114,9 @@ class SnippetFavoritesModel(Base):
     snippet_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("snippets.id", ondelete="CASCADE"), nullable=False
     )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
 
     __table_args__ = (
         UniqueConstraint(
