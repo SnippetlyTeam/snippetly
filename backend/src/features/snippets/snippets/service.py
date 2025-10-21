@@ -26,8 +26,8 @@ from src.api.v1.schemas.snippets import (
     SnippetListItemSchema,
     SnippetUpdateRequestSchema,
 )
+from src.core.utils.logger import logger
 from .interface import SnippetServiceInterface
-from ...core.utils.logger import logger
 
 
 class SnippetService(SnippetServiceInterface):

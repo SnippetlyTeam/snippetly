@@ -25,5 +25,7 @@ async def remove_snippet(
 ) -> MessageResponseSchema: ...
 
 
-@router.get("/", summary="Get favorites", dependencies=[Depends(get_current_user)])
+@router.get(
+    "/", summary="Get favorites", dependencies=[Depends(get_current_user)]
+)
 async def get_favorites() -> GetSnippetsResponseSchema: ...

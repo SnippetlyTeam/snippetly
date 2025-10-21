@@ -36,3 +36,7 @@ class NoPermissionError(Exception):
 
 class ProfileNotFoundError(Exception):
     pass
+
+
+class FavoritesAlreadyError(Exception):
+    pass
