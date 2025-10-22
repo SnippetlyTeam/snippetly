@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.postgres.connection import get_db
 from src.core.config import Settings, get_settings
-from src.core.dependencies.token_manager import get_jwt_manager
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.core.security.oauth2 import OAuth2Manager, OAuth2ManagerInterface
 from src.features.auth import OAuth2ServiceInterface, OAuth2Service
+from .token_manager import get_jwt_manager
 
 
 def get_oauth_manager(

@@ -49,6 +49,8 @@ class SnippetSearchService(SnippetSearchServiceInterface):
         cached = await self._redis_client.get(cache_key)
         return cached
 
-    async def _cache_result(self, title: str, user_id: int, result: str) -> None:
+    async def _cache_result(
+        self, title: str, user_id: int, result: str
+    ) -> None:
         cache_key = f"search:{user_id}:{title.lower()}"
         await self._redis_client.setex(cache_key, 60, result)

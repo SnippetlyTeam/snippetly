@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.postgres.connection import get_db
 from src.adapters.postgres.models import UserModel
 from src.core.config import Settings, get_settings
-from src.core.dependencies.token_manager import get_jwt_manager
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth import (
     AuthService,
@@ -15,6 +14,7 @@ from src.features.auth import (
     UserServiceInterface,
     UserService,
 )
+from .token_manager import get_jwt_manager
 
 
 def get_token(request: Request) -> str:

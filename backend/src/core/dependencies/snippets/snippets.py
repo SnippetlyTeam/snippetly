@@ -13,7 +13,7 @@ from src.features.snippets import (
     SnippetSearchService,
     SnippetSearchServiceInterface,
 )
-from .redis import get_redis_client
+from ..infrastructure import get_redis_client
 
 
 def get_snippet_service(

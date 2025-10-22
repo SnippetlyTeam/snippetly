@@ -5,7 +5,7 @@ from fastapi.params import Depends
 
 from src.adapters.postgres.models import UserModel
 from src.api.v1.schemas.snippets import SnippetSearchResponseSchema
-from src.core.dependencies.auth import get_current_user
+from src.core.dependencies.accounts import get_current_user
 from src.core.dependencies.snippets import get_search_service
 from src.features.snippets.search.interface import (
     SnippetSearchServiceInterface,

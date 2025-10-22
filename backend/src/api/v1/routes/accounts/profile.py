@@ -13,8 +13,10 @@ from src.api.v1.schemas.accounts import (
     ProfileUpdateRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
-from src.core.dependencies.auth import get_current_user
-from src.core.dependencies.profile import get_profile_service
+from src.core.dependencies.accounts import (
+    get_current_user,
+    get_profile_service,
+)
 from src.features.profile import ProfileServiceInterface
 
 router = APIRouter(prefix="/profile", tags=["Profile Management"])

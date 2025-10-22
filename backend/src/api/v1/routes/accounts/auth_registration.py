@@ -13,8 +13,8 @@ from src.api.v1.schemas.accounts import (
     EmailBaseSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
-from src.core.dependencies.auth import get_user_service
-from src.core.dependencies.email import get_email_sender
+from src.core.dependencies.accounts import get_user_service
+from src.core.dependencies.infrastructure import get_email_sender
 from src.core.email import EmailSenderInterface
 from src.features.auth import UserServiceInterface
 

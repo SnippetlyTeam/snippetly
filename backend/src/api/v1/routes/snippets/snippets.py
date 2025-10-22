@@ -21,7 +21,7 @@ from src.api.v1.schemas.snippets import (
     SnippetUpdateRequestSchema,
     VisibilityFilterEnum,
 )
-from src.core.dependencies.auth import get_current_user
+from src.core.dependencies.accounts import get_current_user
 from src.core.dependencies.snippets import get_snippet_service
 from src.core.utils.logger import logger
 from src.features.snippets import SnippetServiceInterface

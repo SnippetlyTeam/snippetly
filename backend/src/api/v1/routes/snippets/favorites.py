@@ -16,7 +16,7 @@ from src.api.v1.schemas.snippets import (
     FavoritesSortingEnum,
     GetSnippetsResponseSchema,
 )
-from src.core.dependencies.auth import get_current_user
+from src.core.dependencies.accounts import get_current_user
 from src.core.dependencies.snippets import get_favorites_service
 from src.features.snippets import FavoritesServiceInterface
 
