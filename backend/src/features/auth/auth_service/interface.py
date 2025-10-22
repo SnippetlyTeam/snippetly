@@ -5,12 +5,12 @@ from src.adapters.postgres.models import UserModel
 
 class AuthServiceInterface(ABC):
     @abstractmethod
-    async def login_user(self, email_or_username: str, password: str) -> dict:
+    async def login_user(self, login: str, password: str) -> dict:
         """
         Authenticate user and return access and refresh tokens.
 
-        :param email_or_username: User's email or username
-        :type email_or_username: str
+        :param login: User's email or username
+        :type login: str
         :param password: User's password
         :type password: str
         :return: Dictionary with access_token, refresh_token, and token_type

@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Any
+from typing import Optional, Dict, Any
 
 from redis.asyncio.client import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,13 +25,12 @@ class SnippetSearchService(SnippetSearchServiceInterface):
     ) -> SnippetSearchResponseSchema:
         cached = await self._get_cached(title, user_id)
         if cached:
-            data = json.loads(cached)
-            return SnippetSearchResponseSchema(**data)
+            return SnippetSearchResponseSchema(**cached)
 
         snippets = await self._repo.get_by_title(title, user_id, limit)
 
         snippet_list = []
-        for snippet in snippets:
+        for snippet in snippets:  # type: ignore
             snippet_list.append(
                 SnippetSearchItemSchema(
                     uuid=snippet.uuid,
@@ -45,10 +44,14 @@ class SnippetSearchService(SnippetSearchServiceInterface):
 
         return response
 
-    async def _get_cached(self, title: str, user_id: int) -> Optional[Any]:
+    async def _get_cached(
+        self, title: str, user_id: int
+    ) -> Optional[Dict[str, Any]]:
         cache_key = f"search:{user_id}:{title.lower()}"
         cached = await self._redis_client.get(cache_key)
-        return cached
+        if cached is None:
+            return None
+        return json.loads(cached)
 
     async def _cache_result(
         self, title: str, user_id: int, result: str
