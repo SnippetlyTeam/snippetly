@@ -8,7 +8,6 @@ import src.core.exceptions as exc
 from src.adapters.postgres.models import (
     UserModel,
     ActivationTokenModel,
-    PasswordResetTokenModel,
 )
 from src.adapters.postgres.repositories import (
     UserRepository,
@@ -21,22 +20,25 @@ from .interface import UserServiceInterface
 
 
 class UserService(UserServiceInterface):
-    def __init__(self, db: AsyncSession, settings: Settings):
+    def __init__(
+        self,
+        db: AsyncSession,
+        settings: Settings,
+        user_repo: UserRepository,
+        activation_token_repo: TokenRepository,
+        password_reset_token_repo: TokenRepository,
+    ):
         self._db = db
-        self.settings = settings
+        self._settings = settings
 
-        self.user_repo = UserRepository(self._db)
-        self.activation_token_repo = TokenRepository(
-            self._db, ActivationTokenModel
-        )
-        self.password_reset_token_repo = TokenRepository(
-            self._db, PasswordResetTokenModel
-        )
+        self._user_repo = user_repo
+        self._activation_token_repo = activation_token_repo
+        self._password_reset_token_repo = password_reset_token_repo
 
     async def register_user(
         self, email: str, username: str, password: str
     ) -> Tuple[UserModel, str]:
-        existing_user = await self.user_repo.get_by_email_or_username(
+        existing_user = await self._user_repo.get_by_email_or_username(
             email, username
         )
         if existing_user:
@@ -48,11 +50,11 @@ class UserService(UserServiceInterface):
         profile_repo = UserProfileRepository(self._db)
         token = generate_secure_token()
 
-        user = await self.user_repo.create(email, username, password)
+        user = await self._user_repo.create(email, username, password)
         await self._db.flush()
         await profile_repo.create(user.id)
-        activation_token = await self.activation_token_repo.create(
-            user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
+        activation_token = await self._activation_token_repo.create(
+            user.id, token, self._settings.ACTIVATION_TOKEN_LIFE
         )
 
         try:
@@ -65,20 +67,20 @@ class UserService(UserServiceInterface):
             raise
 
     async def new_activation_token(self, email: str) -> ActivationTokenModel:
-        user = await self.user_repo.get_by_email(email)
+        user = await self._user_repo.get_by_email(email)
         if not user:
             raise exc.UserNotFoundError
 
         if user.is_active:
             raise ValueError
 
-        existing_token = await self.activation_token_repo.get_by_user(user.id)
+        existing_token = await self._activation_token_repo.get_by_user(user.id)
         if existing_token:
-            await self.activation_token_repo.delete(existing_token.token)
+            await self._activation_token_repo.delete(existing_token.token)
 
         token = generate_secure_token()
-        new_token = await self.activation_token_repo.create(
-            user.id, token, self.settings.ACTIVATION_TOKEN_LIFE
+        new_token = await self._activation_token_repo.create(
+            user.id, token, self._settings.ACTIVATION_TOKEN_LIFE
         )
 
         try:
@@ -90,7 +92,7 @@ class UserService(UserServiceInterface):
             raise
 
     async def activate_account(self, token: str) -> None:
-        result = await self.activation_token_repo.get_with_user(token)
+        result = await self._activation_token_repo.get_with_user(token)
         if not result:
             raise exc.TokenNotFoundError("Activation token was not found")
 
@@ -101,7 +103,7 @@ class UserService(UserServiceInterface):
 
         user.is_active = True
 
-        await self.activation_token_repo.delete(token)
+        await self._activation_token_repo.delete(token)
 
         try:
             await self._db.commit()
@@ -111,13 +113,13 @@ class UserService(UserServiceInterface):
             raise
 
     async def reset_password_token(self, email: str) -> Tuple[UserModel, str]:
-        user = await self.user_repo.get_by_email(email)
+        user = await self._user_repo.get_by_email(email)
         if not user:
             raise exc.UserNotFoundError
 
         token = generate_secure_token()
-        password_reset_token = await self.password_reset_token_repo.create(
-            user.id, token, self.settings.PASSWORD_RESET_TOKEN_LIFE
+        password_reset_token = await self._password_reset_token_repo.create(
+            user.id, token, self._settings.PASSWORD_RESET_TOKEN_LIFE
         )
 
         try:
@@ -131,7 +133,7 @@ class UserService(UserServiceInterface):
     async def reset_password_complete(
         self, email: str, password: str, token: str
     ) -> None:
-        result = await self.password_reset_token_repo.get_with_user(token)
+        result = await self._password_reset_token_repo.get_with_user(token)
         if not result:
             raise exc.TokenNotFoundError("Password reset token was not found")
 
@@ -144,7 +146,7 @@ class UserService(UserServiceInterface):
             )
 
         user.password = password
-        await self.password_reset_token_repo.delete(token)
+        await self._password_reset_token_repo.delete(token)
 
         try:
             await self._db.commit()

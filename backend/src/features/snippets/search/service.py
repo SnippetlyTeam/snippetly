@@ -13,14 +13,15 @@ from .interface import SnippetSearchServiceInterface
 
 
 class SnippetSearchService(SnippetSearchServiceInterface):
-    def __init__(self, db: AsyncSession, redis_client: Redis):
+    def __init__(
+        self, db: AsyncSession, redis_client: Redis, repo: SnippetRepository
+    ):
         self._db = db
-
-        self._repo = SnippetRepository(db)
         self._redis_client = redis_client
+        self._repo = repo
 
     async def search_by_title(
-        self, title: str, user_id: int, limit: int = 10
+        self, title: str, user_id: int, limit: int
     ) -> SnippetSearchResponseSchema:
         cached = await self._get_cached(title, user_id)
         if cached:

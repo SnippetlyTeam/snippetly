@@ -14,11 +14,15 @@ from .interface import ProfileServiceInterface
 
 
 class ProfileService(ProfileServiceInterface):
-    def __init__(self, db: AsyncSession, storage: StorageInterface):
+    def __init__(
+        self,
+        db: AsyncSession,
+        storage: StorageInterface,
+        profile_repo: UserProfileRepository,
+    ):
         self._db = db
         self._storage = storage
-
-        self._repo = UserProfileRepository(db)
+        self._repo = profile_repo
 
     async def get_profile(self, user_id: int) -> UserProfileModel:
         return await self._repo.get_by_user_id(user_id)

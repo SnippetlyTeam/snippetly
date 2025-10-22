@@ -19,11 +19,16 @@ from ..merger import SnippetDataMerger
 
 
 class FavoritesService(FavoritesServiceInterface):
-    def __init__(self, db: AsyncSession):
+    def __init__(
+        self,
+        db: AsyncSession,
+        repo: FavoritesRepository,
+        doc_repo: SnippetDocumentRepository,
+    ):
         self._db = db
+        self._repo = repo
+        self._doc_repo = doc_repo
 
-        self._doc_repo = SnippetDocumentRepository()
-        self._repo = FavoritesRepository(db)
         self._paginator = Paginator
 
     async def add_to_favorites(self, user: UserModel, uuid: UUID) -> None:
