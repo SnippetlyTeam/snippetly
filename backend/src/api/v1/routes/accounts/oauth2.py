@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.docs.openapi import create_error_examples
-from src.api.v1.schemas.auth import UserLoginResponseSchema
+from src.api.v1.schemas.accounts import UserLoginResponseSchema
 from src.core.dependencies.oauth import get_oauth_manager, get_oauth_service
 from src.core.security.oauth2 import OAuth2ManagerInterface
 from src.features.auth import OAuth2ServiceInterface

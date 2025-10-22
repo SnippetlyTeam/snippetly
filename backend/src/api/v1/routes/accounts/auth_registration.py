@@ -6,7 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
 from src.api.docs.openapi import create_error_examples, create_json_examples
-from src.api.v1.schemas.auth import (
+from src.api.v1.schemas.accounts import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
     ActivationRequestSchema,

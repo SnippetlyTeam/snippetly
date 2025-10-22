@@ -23,11 +23,11 @@ from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetResponseSchema,
     GetSnippetsResponseSchema,
-    SnippetListItemSchema,
     SnippetUpdateRequestSchema,
 )
+from src.core.utils import Paginator
 from .interface import SnippetServiceInterface
-from ...core.utils.logger import logger
+from ..merger import SnippetDataMerger
 
 
 class SnippetService(SnippetServiceInterface):
@@ -36,29 +36,7 @@ class SnippetService(SnippetServiceInterface):
 
         self._doc_repo = SnippetDocumentRepository()
         self._model_repo = SnippetRepository(db)
-
-    @staticmethod
-    def _calculate_offset(page: int, per_page: int) -> int:
-        return (page - 1) * per_page
-
-    @staticmethod
-    def _build_pagination_links(
-        request: Request, page: int, per_page: int, total: int
-    ) -> tuple[Optional[str], Optional[str]]:
-        params = dict(request.query_params)
-        params["per_page"] = str(per_page)
-
-        prev_page = None
-        if page > 1:
-            params["page"] = str(page - 1)
-            prev_page = str(request.url.replace_query_params(**params))
-
-        next_page = None
-        if (page * per_page) < total:
-            params["page"] = str(page + 1)
-            next_page = str(request.url.replace_query_params(**params))
-
-        return prev_page, next_page
+        self._paginator = Paginator
 
     @staticmethod
     def _build_snippet_response(
@@ -184,7 +162,7 @@ class SnippetService(SnippetServiceInterface):
         username: Optional[str],
     ) -> GetSnippetsResponseSchema:
         try:
-            offset = self._calculate_offset(page, per_page)
+            offset = self._paginator.calculate_offset(page, per_page)
             snippets, total = await self._model_repo.get_snippets_paginated(
                 offset,
                 per_page,
@@ -197,34 +175,14 @@ class SnippetService(SnippetServiceInterface):
                 username,
             )
 
-            prev_page, next_page = self._build_pagination_links(
+            prev_page, next_page = self._paginator.build_links(
                 request, page, per_page, total
             )
 
-            mongo_ids = [snippet.mongodb_id for snippet in snippets]  # type:ignore
-            documents = await self._doc_repo.get_by_ids(mongo_ids)
-
-            documents_map = {str(doc.id): doc for doc in documents}
-
-            snippet_list = []
-            for snippet in snippets:  # type:ignore
-                document = documents_map.get(snippet.mongodb_id)
-
-                doc_content = document.content if document else None
-                doc_description = document.description if document else None
-
-                logger.debug(f"snippet {snippet}")
-                snippet_list.append(
-                    SnippetListItemSchema(
-                        title=snippet.title,
-                        language=snippet.language,
-                        is_private=snippet.is_private,
-                        content=doc_content or "",
-                        description=doc_description or "",
-                        uuid=snippet.uuid,
-                        tags=[tag.name for tag in snippet.tags],
-                    )
-                )
+            snippet_list = await SnippetDataMerger.merge_with_documents(
+                snippets,  # type: ignore
+                self._doc_repo,
+            )
         except SQLAlchemyError:
             raise
 
@@ -235,7 +193,7 @@ class SnippetService(SnippetServiceInterface):
             next_page=next_page,
             total_items=total,
             snippets=snippet_list,
-            total_pages=(total + per_page - 1) // per_page,
+            total_pages=self._paginator.total_pages(total, per_page),
         )
 
     async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:

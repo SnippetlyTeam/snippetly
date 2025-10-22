@@ -9,4 +9,5 @@ from .exceptions import (
     SnippetNotFoundError,
     NoPermissionError,
     ProfileNotFoundError,
+    FavoritesAlreadyError,
 )

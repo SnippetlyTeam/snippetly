@@ -1,2 +1,2 @@
-from .interface import SnippetServiceInterface
-from .snippet_service import SnippetService
+from .favorites import FavoritesServiceInterface, FavoritesService
+from .snippets import SnippetServiceInterface, SnippetService

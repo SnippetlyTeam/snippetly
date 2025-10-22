@@ -17,7 +17,7 @@ from src.adapters.postgres.repositories import (
 )
 from src.core.config import Settings
 from src.core.security import generate_secure_token
-from src.features.auth import UserServiceInterface
+from .interface import UserServiceInterface
 
 
 class UserService(UserServiceInterface):

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated, Optional
 from uuid import UUID
 
@@ -9,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, LanguageEnum
 from src.api.docs.openapi import create_error_examples
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.api.v1.schemas.snippets import (
@@ -18,7 +19,7 @@ from src.api.v1.schemas.snippets import (
     GetSnippetsResponseSchema,
     SnippetResponseSchema,
     SnippetUpdateRequestSchema,
-    SnippetsFilterParams,
+    VisibilityFilterEnum,
 )
 from src.core.dependencies.auth import get_current_user
 from src.core.dependencies.snippets import get_snippet_service
@@ -84,8 +85,9 @@ async def create_snippet(
 
 @router.get(
     "/",
-    summary="Get all NOT private snippets",
-    description="Get all snippets, if access token provided",
+    summary="Get all snippets",
+    description="Get all snippets except of other user's private snippets, "
+    "if access token provided",
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -111,23 +113,52 @@ async def get_all_snippets(
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
-    filters: Annotated[SnippetsFilterParams, Depends()],
-    page: int = Query(1, ge=1, description="Page number (1-based index)"),
-    per_page: int = Query(
-        10, ge=1, le=20, description="Number of items per page"
-    ),
-    tags: Annotated[
-        Optional[list[str]], Query(description="Filter snippets by tags")
+    language: Annotated[
+        Optional[LanguageEnum],
+        Query(description="Filter snippets by language"),
     ] = None,
+    created_before: Annotated[
+        Optional[date],
+        Query(description="Created before date snippets filter"),
+    ] = None,
+    created_after: Annotated[
+        Optional[date],
+        Query(
+            description="Created after date snippets filter included",
+        ),
+    ] = None,
+    username: Annotated[
+        Optional[str],
+        Query(description="Filter snippets by username"),
+    ] = None,
+    visibility: Annotated[
+        Optional[VisibilityFilterEnum],
+        Query(description="Filter snippets by private flag"),
+    ] = None,
+    tags: Annotated[
+        Optional[list[str]],
+        Query(description="Filter snippets by tags"),
+    ] = None,
+    page: Annotated[
+        int, Query(ge=1, description="Page number (1-based index)")
+    ] = 1,
+    per_page: Annotated[
+        int,
+        Query(ge=1, le=20, description="Number of items per page"),
+    ] = 10,
 ) -> GetSnippetsResponseSchema:
     try:
         return await snippet_service.get_snippets(
-            request,
-            page,
-            per_page,
-            user.id,
+            request=request,
+            page=page,
+            per_page=per_page,
+            current_user_id=user.id,
+            visibility=visibility,
+            language=language,
             tags=tags,
-            **filters.model_dump(exclude_unset=True),
+            created_before=created_before,
+            created_after=created_after,
+            username=username,
         )
     except SQLAlchemyError as e:
         raise HTTPException(

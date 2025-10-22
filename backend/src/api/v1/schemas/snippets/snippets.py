@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field, constr, field_validator
 
 from src.adapters.postgres.models import LanguageEnum
-from .common import BaseListSchema
+from ..common import BaseListSchema
 
 TagStr = constr(min_length=2, max_length=20)
 
@@ -67,21 +67,3 @@ class SnippetResponseSchema(BaseSnippetSchema):
 class VisibilityFilterEnum(str, Enum):
     PRIVATE = "private"
     PUBLIC = "public"
-
-
-class SnippetsFilterParams(BaseModel):
-    language: Optional[LanguageEnum] = Field(
-        default=None, description="Filter snippets by language"
-    )
-    created_before: Optional[date] = Field(
-        default=None, description="Created before date snippets filter"
-    )
-    created_after: Optional[date] = Field(
-        default=None, description="Created after date snippets filter included"
-    )
-    username: Optional[str] = Field(
-        default=None, description="Filter snippets by username"
-    )
-    visibility: Optional[VisibilityFilterEnum] = Field(
-        default=None, description="Filter snippets by private flag"
-    )
