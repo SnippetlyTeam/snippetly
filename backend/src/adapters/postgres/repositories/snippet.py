@@ -162,6 +162,20 @@ class SnippetRepository:
         result = await self._db.execute(query)
         return result.scalars().all()  # type: ignore
 
+    async def get_by_title(
+        self, title: str, user_id: int, limit: int
+    ) -> Optional[Sequence]:
+        search_access = and_(
+            SnippetModel.title.icontains(title),
+            or_(
+                SnippetModel.is_private.is_(False),
+                SnippetModel.user_id == user_id,
+            ),
+        )
+        query = select(SnippetModel).where(search_access).limit(limit)
+        result = await self._db.execute(query)
+        return result.scalars().all()  # type: ignore
+
     # --- Update ---
     async def update(
         self,
