@@ -31,11 +31,16 @@ from ..merger import SnippetDataMerger
 
 
 class SnippetService(SnippetServiceInterface):
-    def __init__(self, db: AsyncSession):
+    def __init__(
+        self,
+        db: AsyncSession,
+        model_repo: SnippetRepository,
+        doc_repo: SnippetDocumentRepository,
+    ):
         self._db = db
+        self._doc_repo = doc_repo
+        self._model_repo = model_repo
 
-        self._doc_repo = SnippetDocumentRepository()
-        self._model_repo = SnippetRepository(db)
         self._paginator = Paginator
 
     @staticmethod

@@ -17,12 +17,12 @@ from src.api.v1.schemas.accounts import (
     LogoutRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
-from src.core.dependencies.auth import (
+from src.core.dependencies.accounts import get_jwt_manager
+from src.core.dependencies.accounts import (
     get_token,
     get_current_user,
     get_auth_service,
 )
-from src.core.dependencies.token_manager import get_jwt_manager
 from src.core.security.jwt_manager import JWTAuthInterface
 from src.features.auth import AuthServiceInterface
 

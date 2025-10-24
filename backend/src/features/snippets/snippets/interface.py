@@ -95,7 +95,7 @@ class SnippetServiceInterface(ABC):
 
     @abstractmethod
     async def update_snippet(
-        self, uuid: UUID, data: SnippetUpdateRequestSchema, user_id: UserModel
+        self, uuid: UUID, data: SnippetUpdateRequestSchema, user: UserModel
     ) -> SnippetResponseSchema:
         """
         Method that updates Snippet by UUID using data dict
@@ -104,7 +104,7 @@ class SnippetServiceInterface(ABC):
         :type: UUID
         :param data: Snippet data
         :type: SnippetUpdateRequestSchema
-        :param user_id: User that expected to be Snippet owner or admin
+        :param user: User that expected to be Snippet owner or admin
         :type: int
         :return: SnippetResponseSchema
         :raises: SnippetNotFoundError: If Snippet was not found in db

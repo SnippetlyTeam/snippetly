@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.adapters.postgres.models import (
     UserModel,
     UserProfileModel,
-    RefreshTokenModel,
 )
 from src.adapters.postgres.repositories import (
     UserRepository,
@@ -28,15 +27,17 @@ class OAuth2Service(OAuth2ServiceInterface):
         oauth_manager: OAuth2ManagerInterface,
         jwt_manager: JWTAuthInterface,
         settings: Settings,
+        user_repo: UserRepository,
+        profile_repo: UserProfileRepository,
+        refresh_token_repo: TokenRepository,
     ):
-        self.db = db
-        self.oauth_manager = oauth_manager
-        self.jwt_manager = jwt_manager
-        self.settings = settings
-
-        self.user_repo = UserRepository(db)
-        self.profile_repo = UserProfileRepository(db)
-        self.refresh_token_repo = TokenRepository(db, RefreshTokenModel)
+        self._db = db
+        self._oauth_manager = oauth_manager
+        self._jwt_manager = jwt_manager
+        self._settings = settings
+        self._user_repo = user_repo
+        self._profile_repo = profile_repo
+        self._refresh_token_repo = refresh_token_repo
 
     @staticmethod
     def _generate_username(email: str) -> str:
@@ -53,7 +54,7 @@ class OAuth2Service(OAuth2ServiceInterface):
 
     async def _create_user(self, email: str, username: str) -> UserModel:
         password = self._generate_password()
-        user = await self.user_repo.create(email, username, password=password)
+        user = await self._user_repo.create(email, username, password=password)
         return user
 
     async def _create_profile(
@@ -63,7 +64,7 @@ class OAuth2Service(OAuth2ServiceInterface):
         last_name: str,
         avatar_url: str,
     ) -> UserProfileModel:
-        profile = await self.profile_repo.create(
+        profile = await self._profile_repo.create(
             user_id=user_id,
             first_name=first_name,
             last_name=last_name,
@@ -73,7 +74,7 @@ class OAuth2Service(OAuth2ServiceInterface):
 
     async def login_user_via_oauth(self, code: str) -> dict:
         try:
-            data = await self.oauth_manager.handle_google_code(code)
+            data = await self._oauth_manager.handle_google_code(code)
 
             email = data.get("email")
             first_name = data.get("first_name", "")
@@ -83,13 +84,13 @@ class OAuth2Service(OAuth2ServiceInterface):
             if not email:
                 raise ValueError("Email is required for OAuth login")
 
-            user = await self.user_repo.get_by_email(email)
+            user = await self._user_repo.get_by_email(email)
 
             if not user:
                 username = self._generate_username(email)
                 user = await self._create_user(email=email, username=username)
 
-                await self.db.flush()
+                await self._db.flush()
 
                 await self._create_profile(
                     user_id=user.id,
@@ -101,10 +102,10 @@ class OAuth2Service(OAuth2ServiceInterface):
                 user.is_active = True
 
                 try:
-                    await self.db.commit()
-                    await self.db.refresh(user)
+                    await self._db.commit()
+                    await self._db.refresh(user)
                 except SQLAlchemyError as e:
-                    await self.db.rollback()
+                    await self._db.rollback()
                     raise SQLAlchemyError(
                         "Error occurred during user creation"
                     ) from e
@@ -118,18 +119,18 @@ class OAuth2Service(OAuth2ServiceInterface):
                 "email": email,
                 "is_admin": user.is_admin,
             }
-            refresh_token = self.jwt_manager.create_refresh_token(user_data)
-            access_token = await self.jwt_manager.create_access_token(
+            refresh_token = self._jwt_manager.create_refresh_token(user_data)
+            access_token = await self._jwt_manager.create_access_token(
                 user_data
             )
 
             try:
-                await self.refresh_token_repo.create(
-                    user.id, refresh_token, self.settings.REFRESH_TOKEN_LIFE
+                await self._refresh_token_repo.create(
+                    user.id, refresh_token, self._settings.REFRESH_TOKEN_LIFE
                 )
-                await self.db.commit()
+                await self._db.commit()
             except SQLAlchemyError as e:
-                await self.db.rollback()
+                await self._db.rollback()
                 raise SQLAlchemyError(
                     "Error occurred during refresh token creation"
                 ) from e
