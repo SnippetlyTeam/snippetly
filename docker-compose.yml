@@ -73,6 +73,30 @@ services:
       - db
     command: uv run alembic upgrade head
 
+  #  worker:
+  #    build:
+  #      context: ./backend
+  #      dockerfile: Dockerfile
+  #    container_name: snippetly-worker
+  #    env_file:
+  #      - ./backend/.env
+  #    depends_on:
+  #      - db
+  #      - redis
+  #    command: uv run celery -A src.worker.app.app worker --loglevel=info
+  #
+  #  beat:
+  #    build:
+  #      context: ./backend
+  #      dockerfile: Dockerfile
+  #    container_name: snippetly-beat
+  #    env_file:
+  #      - ./backend/.env
+  #    depends_on:
+  #      - db
+  #      - redis
+  #    command: uv run celery -A src.worker.app.app beat --loglevel=info
+
   frontend:
     build:
       context: ./frontend
