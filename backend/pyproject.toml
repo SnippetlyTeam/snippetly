@@ -23,6 +23,7 @@ dependencies = [
     "python-multipart>=0.0.20",
     "starlette-admin>=0.15.1",
     "itsdangerous>=2.2.0",
+    "celery>=5.5.3",
 ]
 
 [dependency-groups]
