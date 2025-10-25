@@ -54,6 +54,7 @@ sqlalchemy.url = "driver://user:pass@localhost/dbname"
 
 
 [tool.pyright]
+reportAttributeAccessIssue = "none"
 include = ["src"]
 exclude = ["src/adapters/postgres/migrations", "**/.venv", "**/venv", "**/__pycache__"]
 typeCheckingMode = "basic"

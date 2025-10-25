@@ -1,55 +1,54 @@
-import asyncio
+from datetime import datetime
 
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
-from src.adapters.postgres.connection import get_db
-from src.adapters.postgres.models import ActivationTokenModel, PasswordResetTokenModel, RefreshTokenModel
-from src.adapters.postgres.repositories import TokenRepository
+from src.adapters.postgres.sync_db import get_db_sync
 from src.core.utils import logger
 from ..app import app
 
 
+def _delete_tokens(token: str, db: Session) -> None:
+    now = datetime.now()
+    db.execute(
+        text(f"DELETE FROM {token} WHERE expires_at < :now"),
+        {"now": now},
+    )
+
+
 @app.task(
-    name="Delete Expired Activation & Password Reset tokens",
+    name="tokens.delete_expired_activation_reset",
     autoretry_for=(SQLAlchemyError,),
     retry_kwargs={"max_retries": 3, "countdown": 10},
     retry_backoff=True,
 )
 def delete_expired_activation_reset_tokens() -> None:
-    async def _delete_expired_tokens() -> None:
-        async for session in get_db():
-            activation_repo = TokenRepository(session, ActivationTokenModel)
-            password_reset_repo = TokenRepository(session, PasswordResetTokenModel)
-            await activation_repo.delete_expired_tokens()
-            await password_reset_repo.delete_expired_tokens()
-            try:
-                await session.commit()
-                logger.info("Expired tokens successfully deleted")
-            except SQLAlchemyError as e:
-                await session.rollback()
-                logger.error(f"Database error occurred during token cleanup: {e}")
-                raise e
-            
-    asyncio.run(_delete_expired_tokens())
+    for session in get_db_sync():
+        _delete_tokens("password_reset_tokens", session)
+        _delete_tokens("activation_tokens", session)
+        try:
+            session.commit()
+            logger.info("Expired tokens successfully deleted")
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error occurred during token cleanup: {e}")
+            raise e
 
 
 @app.task(
-    name="Delete Expired Refresh tokens",
+    name="tokens.delete_expired_refresh",
     autoretry_for=(SQLAlchemyError,),
     retry_kwargs={"max_retries": 3, "countdown": 10},
     retry_backoff=True,
 )
 def delete_expired_refresh_tokens() -> None:
-    async def _delete_expired_tokens() -> None:
-        async for session in get_db():
-            refresh_token_repo = TokenRepository(session, RefreshTokenModel)
-            await refresh_token_repo.delete_expired_tokens()
-            try:
-                await session.commit()
-                logger.info("Expired tokens successfully deleted")
-            except SQLAlchemyError as e:
-                await session.rollback()
-                logger.error(f"Database error occurred during token cleanup: {e}")
-                raise e
-
-    asyncio.run(_delete_expired_tokens())
+    for session in get_db_sync():
+        _delete_tokens("refresh_tokens", session)
+        try:
+            session.commit()
+            logger.info("Expired tokens successfully deleted")
+        except SQLAlchemyError as e:
+            session.rollback()
+            logger.error(f"Database error occurred during token cleanup: {e}")
+            raise e

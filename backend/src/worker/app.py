@@ -9,14 +9,21 @@ app = Celery("snippetly")
 app.conf.broker_url = settings.redis_url
 app.conf.result_backend = settings.redis_url
 app.conf.timezone = "UTC"
+app.conf.result_expires = 3600
 
 app.conf.beat_schedule = {
     "cleanup_expired_activation_password_tokens": {
-        "task": "delete_expired_activation_reset_tokens",
+        "task": "tokens.delete_expired_activation_reset",
         "schedule": crontab(minute=0, hour="*/6"),
     },
     "cleanup_expired_refresh_tokens": {
-        "task": "delete_expired_refresh_tokens",
+        "task": "tokens.delete_expired_refresh",
+        "schedule": crontab(minute=0, hour="*/6"),
+    },
+    "cleanup_unused_tags": {
+        "task": "tags.delete_unused_tags",
         "schedule": crontab(minute=0, hour=0),
-    }
+    },
 }
+
+from .tasks import tags, tokens  # noqa

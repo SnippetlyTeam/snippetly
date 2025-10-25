@@ -37,7 +37,7 @@ def get_token(request: Request) -> str:
         raise HTTPException(
             status_code=401,
             detail="Invalid Authorization header format. "
-                   "Expected 'Bearer <token>'",
+            "Expected 'Bearer <token>'",
         )
 
     return token

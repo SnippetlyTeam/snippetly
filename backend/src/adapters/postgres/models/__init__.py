@@ -12,7 +12,6 @@ from .snippets import (
     SnippetModel,
     SnippetFavoritesModel,
     TagModel,
-    SnippetsTagsTable,
 )
 
 __all__ = [
@@ -28,5 +27,4 @@ __all__ = [
     "SnippetModel",
     "SnippetFavoritesModel",
     "TagModel",
-    "SnippetsTagsTable"
 ]
