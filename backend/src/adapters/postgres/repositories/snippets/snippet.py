@@ -3,12 +3,18 @@ from typing import Optional, Tuple
 from uuid import UUID
 
 from beanie import PydanticObjectId
-from sqlalchemy import select, delete, Sequence, func, or_, and_
+from sqlalchemy import select, delete, Sequence, func, or_, and_, not_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import src.core.exceptions as exc
-from ..models import SnippetModel, LanguageEnum, TagModel, UserModel
+from src.adapters.postgres.models import (
+    SnippetModel,
+    LanguageEnum,
+    TagModel,
+    UserModel,
+    SnippetsTagsTable,
+)
 
 
 class SnippetRepository:
@@ -203,4 +209,15 @@ class SnippetRepository:
     # --- Delete ---
     async def delete(self, uuid: UUID) -> None:
         query = delete(SnippetModel).where(SnippetModel.uuid == uuid)
+        await self._db.execute(query)
+
+    async def delete_unused_tags(self) -> None:
+        query = delete(TagModel).where(
+            not_(
+                select(SnippetsTagsTable.c.tag_id)
+                .where(SnippetsTagsTable.c.tag_id == TagModel.id)
+                .exists()
+            )
+        )
+
         await self._db.execute(query)

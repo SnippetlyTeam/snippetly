@@ -78,6 +78,7 @@ class SnippetService(SnippetServiceInterface):
 
         return tags_to_return
 
+    # TODO: remove
     async def _update_sql_snippet(
         self, snippet: SnippetModel, data: SnippetUpdateRequestSchema
     ) -> None:

@@ -1,6 +1,6 @@
 from starlette_admin.contrib.sqla import Admin, ModelView
 
-from src.adapters.postgres.connection import engine
+from src.adapters.postgres.async_db import engine
 from src.adapters.postgres.models import (
     UserModel,
     ActivationTokenModel,

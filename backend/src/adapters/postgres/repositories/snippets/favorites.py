@@ -6,15 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
 import src.core.exceptions as exc
-from src.api.v1.schemas.snippets import FavoritesSortingEnum
-from .snippet import SnippetRepository
-from ..models import (
+from src.adapters.postgres.models import (
     UserModel,
     SnippetFavoritesModel,
     LanguageEnum,
     SnippetModel,
     TagModel,
 )
+from src.api.v1.schemas.snippets import FavoritesSortingEnum
+from .snippet import SnippetRepository
 
 
 class FavoritesRepository:

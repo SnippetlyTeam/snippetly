@@ -8,7 +8,12 @@ from .accounts import (
 )
 from .base import Base
 from .enums import GenderEnum, LanguageEnum
-from .snippets import SnippetModel, SnippetFavoritesModel, TagModel
+from .snippets import (
+    SnippetModel,
+    SnippetFavoritesModel,
+    TagModel,
+    SnippetsTagsTable,
+)
 
 __all__ = [
     "Base",
@@ -23,4 +28,5 @@ __all__ = [
     "SnippetModel",
     "SnippetFavoritesModel",
     "TagModel",
+    "SnippetsTagsTable"
 ]
