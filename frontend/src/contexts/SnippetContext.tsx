@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { getFavoriteSnippetsIds, saveFavoriteSnippetsIds } from "../modules/shared/services/localStorage";
+import { getFavorites } from "../api/snippetsClient";
+import { useAuthContext } from "./AuthContext";
 
 type SnippetContextType = {
   favoriteSnippetsIds: string[],
@@ -13,7 +14,8 @@ type Props = {
 }
 
 export const SnippetProvider: React.FC<Props> = ({ children }) => {
-  const [favoriteSnippetsIds, setFavoriteSnippetsIds] = useState<string[]>(getFavoriteSnippetsIds());
+  const [favoriteSnippetsIds, setFavoriteSnippetsIds] = useState<string[]>([]);
+  const { accessToken } = useAuthContext();
 
   const value: SnippetContextType = {
     favoriteSnippetsIds,
@@ -21,8 +23,19 @@ export const SnippetProvider: React.FC<Props> = ({ children }) => {
   };
 
   useEffect(() => {
-    saveFavoriteSnippetsIds(favoriteSnippetsIds);
-  }, [favoriteSnippetsIds]);
+    (async () => {
+      try {
+        const response = await getFavorites(accessToken);
+        if (response && response.data && Array.isArray(response.data.snippets)) {
+          setFavoriteSnippetsIds(response.data.snippets.map(snip => snip.uuid));
+        } else {
+          setFavoriteSnippetsIds([]);
+        }
+      } catch (err) {
+        setFavoriteSnippetsIds([]);
+      }
+    })();
+  }, [accessToken]);
 
   return (
     <SnippetContext.Provider value={value}>

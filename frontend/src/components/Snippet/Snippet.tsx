@@ -4,6 +4,8 @@ import type { SnippetType } from '../../types/SnippetType';
 import Tag from '../Tag/Tag';
 import { useSnippetContext } from '../../contexts/SnippetContext';
 import Heart from '../Heart/Heart';
+import { addFavorite, removeFavorite } from '../../api/snippetsClient';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 type Props = {
   snippet: SnippetType,
@@ -11,14 +13,17 @@ type Props = {
 
 const Snippet: React.FC<Props> = ({ snippet }) => {
   const { favoriteSnippetsIds, setFavoriteSnippetsIds } = useSnippetContext();
+  const { accessToken } = useAuthContext();
 
   function handleHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
 
     if (favoriteSnippetsIds.includes(snippet.uuid)) {
+      removeFavorite(accessToken, snippet.uuid);
       setFavoriteSnippetsIds(prev => prev.filter(id => id !== snippet.uuid));
     } else {
+      addFavorite(accessToken, snippet.uuid);
       setFavoriteSnippetsIds(prev => [...prev, snippet.uuid]);
     }
   }

@@ -41,6 +41,13 @@ export const getAll = (
   );
 };
 
+export const getFavorites = (token: AccessToken) => {
+  return snippetsClient.get<SnippetListResponse>(
+    '/favorites/',
+    { headers: { 'Authorization': `Bearer ${token}` } },
+  );
+}
+
 export const getById = (uuid: string, token: string | undefined): Promise<AxiosResponse<SnippetDetailsType>> => {
   return snippetsClient.get<SnippetDetailsType>(
     `/${uuid}`,
@@ -52,6 +59,14 @@ export const create = (snippet: NewSnippetType, token: string | undefined): Prom
   return snippetsClient.post(
     '/create',
     snippet,
+    { headers: { 'Authorization': `Bearer ${token}` } },
+  );
+};
+
+export const addFavorite = (token: AccessToken, uuid: string) => {
+  return snippetsClient.post(
+    '/favorites/',
+    { uuid },
     { headers: { 'Authorization': `Bearer ${token}` } },
   );
 };
@@ -73,4 +88,11 @@ export const remove = (uuid: string, token: string): Promise<AxiosResponse<void>
     `/${uuid}`,
     { headers: { 'Authorization': `Bearer ${token}` } },
   );
+};
+
+export const removeFavorite = (token: AccessToken, uuid: string) => {
+  return snippetsClient.delete(
+    `/favorites/${uuid}`,
+    { headers: { 'Authorization': `Bearer ${token}` } },
+  )
 };
