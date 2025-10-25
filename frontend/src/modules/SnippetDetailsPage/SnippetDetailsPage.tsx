@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import styles from './SnippetDetailsPage.module.scss';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { getById } from '../../api/snippetsClient';
+import { addFavorite, getById, removeFavorite } from '../../api/snippetsClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import CodeEditor from '../../components/CodeEditor/CodeEditor';
@@ -10,6 +10,8 @@ import type { SnippetDetailsType } from '../../types/SnippetDetailsType';
 import Tag from '../../components/Tag/Tag';
 import toast, { type Toast } from 'react-hot-toast';
 import CustomToast from '../../components/CustomToast/CustomToast';
+import Heart from '../../components/Heart/Heart';
+import { useSnippetContext } from '../../contexts/SnippetContext';
 
 const initialSnippet: SnippetDetailsType = {
   title: "",
@@ -28,6 +30,7 @@ const SnippetDetailsPage = () => {
   const [snippet, setSnippet] = useState<SnippetDetailsType>(initialSnippet);
   const { snippetId } = useParams();
   const { accessToken } = useAuthContext();
+  const { favoriteSnippetsIds, setFavoriteSnippetsIds } = useSnippetContext();
   const navigate = useNavigate();
 
   const { mutate: getSnippet, isPending, isError } = useMutation({
@@ -83,12 +86,28 @@ const SnippetDetailsPage = () => {
     );
   }
 
+  function handleHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (favoriteSnippetsIds.includes(snippet.uuid)) {
+      removeFavorite(accessToken, snippet.uuid);
+      setFavoriteSnippetsIds(prev => prev.filter(id => id !== snippet.uuid));
+    } else {
+      addFavorite(accessToken, snippet.uuid);
+      setFavoriteSnippetsIds(prev => [...prev, snippet.uuid]);
+    }
+  }
+
   return (
     <main className={styles.main}>
       <div className={styles.head}>
         <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
 
         <div className={styles.buttons} role="group" aria-label="Snippet actions">
+          <button className={styles.buttonsHeart} onClick={handleHeartClick}>
+            <Heart isFilled={favoriteSnippetsIds.includes(snippet.uuid)} />
+          </button>
           <button
             className={`${styles.buttonsItem} ${styles.copy}`}
             onClick={() => copyContent()}

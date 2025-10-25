@@ -14,7 +14,13 @@
 
 .buttons {
   display: flex;
+  align-items: center;
   gap: 16px;
+
+  &Heart {
+    border: none;
+    background-color: transparent;
+  }
 
   &Item {
     @include set-transition(background-color);
