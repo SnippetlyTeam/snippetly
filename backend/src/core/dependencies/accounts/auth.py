@@ -4,7 +4,7 @@ from fastapi import Request, HTTPException, Depends
 from jwt import PyJWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.connection import get_db
+from src.adapters.postgres.async_db import get_db
 from src.adapters.postgres.models import UserModel
 from src.adapters.postgres.repositories import UserRepository, TokenRepository
 from src.core.config import Settings, get_settings

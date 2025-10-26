@@ -1,13 +1,11 @@
-import logging
 from email.message import EmailMessage
 from typing import Optional
 
 import aiosmtplib
 from pydantic import EmailStr, SecretStr
 
+from src.core.utils.logger import logger
 from .interface import EmailSenderInterface
-
-logger = logging.getLogger(__name__)
 
 
 class EmailSenderManager(EmailSenderInterface):

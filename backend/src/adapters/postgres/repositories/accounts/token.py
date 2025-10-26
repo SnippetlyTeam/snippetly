@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from typing import Optional, Tuple, cast, TypeVar, Generic
 
 from sqlalchemy import select, delete
@@ -54,11 +53,5 @@ class TokenRepository(Generic[T]):
     async def delete_by_user_id(self, user_id: int) -> None:
         query = delete(self.token_model).where(
             self.token_model.user_id == user_id
-        )
-        await self._db.execute(query)
-
-    async def delete_expired_tokens(self) -> None:
-        query = delete(self.token_model).where(
-            self.token_model.expires_at < datetime.now(timezone.utc)
         )
         await self._db.execute(query)

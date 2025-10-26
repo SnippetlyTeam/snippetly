@@ -8,7 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 import src.core.exceptions as exc
-from ..models import SnippetModel, LanguageEnum, TagModel, UserModel
+from src.adapters.postgres.models import (
+    SnippetModel,
+    LanguageEnum,
+    TagModel,
+    UserModel,
+)
 
 
 class SnippetRepository:

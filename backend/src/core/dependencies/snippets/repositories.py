@@ -4,7 +4,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.adapters.mongo.repo import SnippetDocumentRepository
-from src.adapters.postgres.connection import get_db
+from src.adapters.postgres.async_db import get_db
 from src.adapters.postgres.repositories import (
     SnippetRepository,
     FavoritesRepository,

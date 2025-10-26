@@ -8,7 +8,11 @@ from .accounts import (
 )
 from .base import Base
 from .enums import GenderEnum, LanguageEnum
-from .snippets import SnippetModel, SnippetFavoritesModel, TagModel
+from .snippets import (
+    SnippetModel,
+    SnippetFavoritesModel,
+    TagModel,
+)
 
 __all__ = [
     "Base",

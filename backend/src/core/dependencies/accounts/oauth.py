@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.adapters.postgres.connection import get_db
+from src.adapters.postgres.async_db import get_db
 from src.adapters.postgres.repositories import (
     UserRepository,
     TokenRepository,
