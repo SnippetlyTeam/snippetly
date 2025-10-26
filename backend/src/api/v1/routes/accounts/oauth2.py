@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.docs.openapi import create_error_examples
+from src.api.v1.routes.accounts.utils import set_refresh_token
 from src.api.v1.schemas.accounts import UserLoginResponseSchema
 from src.core.app.limiter import limiter
 from src.core.dependencies.accounts import get_oauth_manager, get_oauth_service
@@ -62,4 +63,7 @@ async def google_oauth_callback(
         raise HTTPException(status_code=500, detail=str(e)) from e
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return UserLoginResponseSchema(**result)
+
+    set_refresh_token(response, result["refresh_token"])
+
+    return UserLoginResponseSchema(access_token=result["access_token"])

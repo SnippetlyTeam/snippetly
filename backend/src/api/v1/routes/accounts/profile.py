@@ -76,7 +76,7 @@ async def get_profile_details(
     dependencies=[Depends(get_current_user)],
     summary="Get specific user's profile details",
     description="Endpoint for getting specific user's profile "
-    "details by username",
+                "details by username",
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -91,12 +91,12 @@ async def get_profile_details(
             examples={
                 **exm.NOT_FOUND_ERRORS_EXAMPLES,
                 "profile_not_found": "Profile with this username "
-                "was not found",
+                                     "was not found",
             },
         ),
         429: create_error_examples(
             description="Too many requests",
-            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
             model=ErrorResponseSchema,
         ),
     },
@@ -197,7 +197,7 @@ async def update_profile_details(
             description="Internal Server Error",
             examples={
                 "internal_server": "Something went wrong during "
-                "avatar deletion"
+                                   "avatar deletion"
             },
         ),
     },
@@ -248,8 +248,8 @@ async def delete_profile_avatar(
                 "size": "Image size exceeds 2 MB limit",
                 "error": "Invalid image format",
                 "invalid_format": "Unsupported image format: "
-                "{image_format}. Use one of: JPEG, PNG, "
-                "WEBP",
+                                  "{image_format}. Use one of: JPEG, PNG, "
+                                  "WEBP",
             },
         ),
         429: create_error_examples(

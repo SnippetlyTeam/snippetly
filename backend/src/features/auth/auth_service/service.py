@@ -72,9 +72,9 @@ class AuthService(AuthServiceInterface):
     async def refresh_tokens(self, refresh_token: str) -> dict:
         return await self._jwt_manager.refresh_tokens(self._db, refresh_token)
 
-    async def logout_user(self, refresh_token: str, access_token: str) -> None:
-        token = await self._refresh_token_repo.get_by_token(refresh_token)
-
+    async def logout_user(
+        self, refresh_token: str | None, access_token: str
+    ) -> None:
         access_payload = self._jwt_manager.decode_token(access_token)
         if (
             access_payload
@@ -85,13 +85,15 @@ class AuthService(AuthServiceInterface):
             exp = access_payload["exp"]
             await self._jwt_manager.add_to_blacklist(jti, exp)
 
-        if token:
-            try:
-                await self._db.delete(token)
-                await self._db.commit()
-            except SQLAlchemyError:
-                await self._db.rollback()
-                raise
+        if refresh_token:
+            token = await self._refresh_token_repo.get_by_token(refresh_token)
+            if token:
+                try:
+                    await self._db.delete(token)
+                    await self._db.commit()
+                except SQLAlchemyError:
+                    await self._db.rollback()
+                    raise
 
     # TODO: catch errors with Redis
     async def logout_from_all_sessions(self, user: UserModel) -> None:

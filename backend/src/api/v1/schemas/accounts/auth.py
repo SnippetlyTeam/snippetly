@@ -63,14 +63,6 @@ class UserLoginRequestSchema(PasswordMixin, BaseModel):
         return value.strip()
 
 
-class TokenRefreshRequestSchema(BaseModel):
-    refresh_token: str = Field(..., max_length=512)
-
-
-class LogoutRequestSchema(BaseModel):
-    refresh_token: str = Field(..., max_length=512)
-
-
 class ActivationRequestSchema(BaseModel):
     activation_token: str = Field(..., max_length=64)
 
@@ -95,7 +87,6 @@ class UserRegistrationResponseSchema(
 
 class UserLoginResponseSchema(BaseModel):
     access_token: str
-    refresh_token: str
     token_type: str = "bearer"
 
 
