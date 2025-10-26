@@ -1,14 +1,18 @@
 from pydantic import BaseModel
 
 
-class ErrorResponseSchema(BaseModel):
+class DetailErrorResponseSchema(BaseModel):
     detail: str
+
+
+class ErrorResponseSchema(BaseModel):
+    error: str
 
 
 def create_json_examples(
     description: str,
     examples: dict[str, dict],
-    model: type = ErrorResponseSchema,
+    model: type = DetailErrorResponseSchema,
 ) -> dict:
     return {
         "description": description,
@@ -30,7 +34,7 @@ def create_json_examples(
 def create_error_examples(
     description: str,
     examples: dict[str, str],
-    model: type = ErrorResponseSchema,
+    model: type = DetailErrorResponseSchema,
 ) -> dict:
     error_examples = {
         name: {"detail": detail} for name, detail in examples.items()

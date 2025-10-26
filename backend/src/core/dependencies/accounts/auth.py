@@ -44,6 +44,7 @@ def get_token(request: Request) -> str:
 
 
 async def get_current_user(
+    request: Request,
     token: Annotated[str, Depends(get_token)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -61,6 +62,7 @@ async def get_current_user(
             status_code=403, detail="User account is not activated"
         )
 
+    request.state.current_user = user
     return user
 
 

@@ -1,14 +1,14 @@
 from typing import Annotated
 
 import jwt
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
-from src.api.docs.openapi import create_error_examples
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
 from src.api.v1.schemas.accounts import (
     UserLoginRequestSchema,
     UserLoginResponseSchema,
@@ -17,6 +17,7 @@ from src.api.v1.schemas.accounts import (
     LogoutRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.app.limiter import limiter
 from src.core.dependencies.accounts import get_jwt_manager
 from src.core.dependencies.accounts import (
     get_token,
@@ -52,6 +53,11 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
             description="Forbidden",
             examples={"forbidden": "User account is not activated"},
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -61,7 +67,10 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
         ),
     },
 )
+@limiter.limit("5/minute")
 async def login_user(
+    request: Request,
+    response: Response,
     data: UserLoginRequestSchema,
     service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> UserLoginResponseSchema:
@@ -95,9 +104,17 @@ async def login_user(
             description="Not Found",
             examples={"not_found": "User was not found"},
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
     },
 )
+@limiter.limit("30/minute")
 async def refresh(
+    request: Request,
+    response: Response,
     data: TokenRefreshRequestSchema,
     service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
 ) -> TokenRefreshResponseSchema:
@@ -175,13 +192,21 @@ async def revoke_all_tokens(
             description="Not Found",
             examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Failed to log out. Try again"},
         ),
     },
 )
+@limiter.limit("5/minute")
 async def logout_user(
+    request: Request,
+    response: Response,
     user_data: LogoutRequestSchema,
     service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
     access_token: Annotated[str, Depends(get_token)],
