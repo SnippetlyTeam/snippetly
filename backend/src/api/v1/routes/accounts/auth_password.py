@@ -1,19 +1,26 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    BackgroundTasks,
+    Request,
+    Response,
+)
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
-from src.api.docs.openapi import create_error_examples
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
 from src.api.v1.schemas.accounts import (
     PasswordResetCompletionSchema,
     PasswordResetRequestSchema,
     ChangePasswordRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.app.limiter import limiter, key_func_per_user
 from src.core.dependencies.accounts import (
     get_user_service,
     get_current_user,
@@ -80,6 +87,11 @@ async def reset_password_complete(
     summary="Request Password Reset",
     description="Reset password request, an email will be sent",
     responses={
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 hour"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             "Internal Server Error",
             examples={
@@ -89,7 +101,10 @@ async def reset_password_complete(
         ),
     },
 )
+@limiter.limit("5/hour")
 async def reset_password_request(
+    request: Request,
+    response: Response,
     data: PasswordResetRequestSchema,
     service: Annotated[UserServiceInterface, Depends(get_user_service)],
     email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
@@ -139,6 +154,11 @@ async def reset_password_request(
             description="Not Found",
             examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -148,7 +168,10 @@ async def reset_password_request(
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def change_password(
+    request: Request,
+    response: Response,
     data: ChangePasswordRequestSchema,
     user: Annotated[UserModel, Depends(get_current_user)],
     user_service: Annotated[UserServiceInterface, Depends(get_user_service)],

@@ -1,11 +1,21 @@
 from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    BackgroundTasks,
+    Response,
+    Request,
+)
 from fastapi.params import Depends
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
-from src.api.docs.openapi import create_error_examples, create_json_examples
+from src.api.docs.openapi import (
+    create_error_examples,
+    create_json_examples,
+    ErrorResponseSchema,
+)
 from src.api.v1.schemas.accounts import (
     UserRegistrationRequestSchema,
     UserRegistrationResponseSchema,
@@ -13,6 +23,7 @@ from src.api.v1.schemas.accounts import (
     EmailBaseSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.app.limiter import limiter
 from src.core.dependencies.accounts import get_user_service
 from src.core.dependencies.infrastructure import get_email_sender
 from src.core.email import EmailSenderInterface
@@ -34,6 +45,11 @@ router = APIRouter(prefix="/auth", tags=["Registration"])
                 "username_taken": {"username": "This username is taken."},
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 hour"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -42,7 +58,10 @@ router = APIRouter(prefix="/auth", tags=["Registration"])
         ),
     },
 )
+@limiter.limit("5/hour")
 async def register(
+    request: Request,
+    response: Response,
     data: UserRegistrationRequestSchema,
     service: Annotated[UserServiceInterface, Depends(get_user_service)],
     email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
@@ -66,7 +85,6 @@ async def register(
     return UserRegistrationResponseSchema.model_validate(user)
 
 
-# TODO: resend activation token
 @router.post(
     "/activate",
     status_code=200,
@@ -82,6 +100,11 @@ async def register(
             description="Bad Request",
             examples={"expired": "Activation token has expired"},
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 hour"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -91,7 +114,10 @@ async def register(
         ),
     },
 )
+@limiter.limit("10/hour")
 async def activate_account(
+    request: Request,
+    response: Response,
     service: Annotated[UserServiceInterface, Depends(get_user_service)],
     data: ActivationRequestSchema,
 ) -> MessageResponseSchema:
@@ -116,13 +142,21 @@ async def activate_account(
     summary="Resend activation email",
     description="Endpoint for resending an activation email",
     responses={
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 hour"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Something went wrong"},
         ),
     },
 )
+@limiter.limit("5/hour")
 async def resend_activation(
+    request: Request,
+    response: Response,
     service: Annotated[UserServiceInterface, Depends(get_user_service)],
     email_sender: Annotated[EmailSenderInterface, Depends(get_email_sender)],
     data: EmailBaseSchema,

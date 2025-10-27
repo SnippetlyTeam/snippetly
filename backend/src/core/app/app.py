@@ -5,6 +5,7 @@ from src.admin import admin
 from src.api.v1.routes import v1_router
 from src.core.config import get_settings
 from .lifespan import lifespan
+from .limiter import setup_limiter
 from .middleware import setup_middlewares
 
 
@@ -19,6 +20,7 @@ def create_app() -> FastAPI:
     )
 
     setup_middlewares(app, settings)
+    setup_limiter(app, settings)
 
     admin.mount_to(app)
 

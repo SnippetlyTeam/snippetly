@@ -1,11 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Body, HTTPException
+from fastapi import APIRouter, Depends, Body, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.docs.openapi import create_error_examples
+from src.api.v1.routes.accounts.utils import set_refresh_token
 from src.api.v1.schemas.accounts import UserLoginResponseSchema
+from src.core.app.limiter import limiter
 from src.core.dependencies.accounts import get_oauth_manager, get_oauth_service
 from src.core.security.oauth2 import OAuth2ManagerInterface
 from src.features.auth import OAuth2ServiceInterface
@@ -19,7 +21,10 @@ router = APIRouter(prefix="/auth", tags=["OAuth2"])
     description="Returns the URL to redirect users to "
     "Google OAuth authentication page",
 )
+@limiter.limit("30/hour")
 def get_google_oauth_redirect_url(
+    request: Request,
+    response: Response,
     oauth_service: Annotated[
         OAuth2ManagerInterface, Depends(get_oauth_manager)
     ],
@@ -43,7 +48,10 @@ def get_google_oauth_redirect_url(
         )
     },
 )
+@limiter.limit("30/hour")
 async def google_oauth_callback(
+    request: Request,
+    response: Response,
     oauth_service: Annotated[
         OAuth2ServiceInterface, Depends(get_oauth_service)
     ],
@@ -55,4 +63,7 @@ async def google_oauth_callback(
         raise HTTPException(status_code=500, detail=str(e)) from e
     except SQLAlchemyError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return UserLoginResponseSchema(**result)
+
+    set_refresh_token(response, result["refresh_token"])
+
+    return UserLoginResponseSchema(access_token=result["access_token"])
