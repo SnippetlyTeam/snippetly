@@ -25,10 +25,15 @@ class UserFactory:
         email: str | None = None,
         username: str | None = None,
         password: str = "Test1234!",
+        is_active: bool = False
     ) -> UserModel:
         user = UserFactory.build(
             email=email, username=username, password=password
         )
+
+        if is_active:
+            user.is_active = is_active
+
         db.add(user)
         await db.flush()
         return user

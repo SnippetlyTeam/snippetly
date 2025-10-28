@@ -5,8 +5,7 @@ import pytest
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.core.exceptions as exc
-from src.adapters.postgres.models import UserModel, RefreshTokenModel
-from src.adapters.postgres.repositories import TokenRepository
+from src.adapters.postgres.models import UserModel
 from src.adapters.redis.common import get_access_token
 
 user_data = {
@@ -234,7 +233,7 @@ async def test_refresh_tokens_user_not_found(db, jwt_manager):
 
 
 @pytest.mark.asyncio
-async def test_revoke_all_user_tokens(db, jwt_manager, user_factory):
+async def test_revoke_all_user_tokens(db, jwt_manager, user_factory, refresh_token_repo):
     user = await user_factory.create(db)
     user_data = parse_user_data(user)
     token1 = await jwt_manager.create_access_token(user_data)
@@ -243,8 +242,7 @@ async def test_revoke_all_user_tokens(db, jwt_manager, user_factory):
     payload1 = jwt_manager.decode_token(token1)
     payload2 = jwt_manager.decode_token(token2)
 
-    refresh_repo = TokenRepository(db, RefreshTokenModel)
-    await refresh_repo.create(
+    await refresh_token_repo.create(
         user.id, jwt_manager.create_refresh_token(user_data), 7
     )
     await db.commit()
@@ -252,7 +250,7 @@ async def test_revoke_all_user_tokens(db, jwt_manager, user_factory):
     await jwt_manager.revoke_all_user_tokens(db, user.id)
     assert await jwt_manager.is_blacklisted(payload1["jti"]) is True
     assert await jwt_manager.is_blacklisted(payload2["jti"]) is True
-    assert await refresh_repo.get_by_user(user.id) is None
+    assert await refresh_token_repo.get_by_user(user.id) is None
 
 
 @pytest.mark.asyncio
