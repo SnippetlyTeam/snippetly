@@ -35,12 +35,14 @@ class AuthServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def logout_user(self, refresh_token: str, access_token: str) -> None:
+    async def logout_user(
+        self, refresh_token: str | None, access_token: str
+    ) -> None:
         """
         Log out a user from the current session by invalidating tokens.
 
         :param refresh_token: Refresh token of the session
-        :type refresh_token: str
+        :type refresh_token: str | None
         :param access_token: Access token of the session
         :type access_token: str
         :return: None

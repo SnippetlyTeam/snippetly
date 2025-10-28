@@ -2,7 +2,7 @@ from datetime import date
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Response
 from fastapi.requests import Request
 from pydantic import ValidationError
 from pymongo.errors import PyMongoError
@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel, LanguageEnum
-from src.api.docs.openapi import create_error_examples
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.api.v1.schemas.snippets import (
     BaseSnippetSchema,
@@ -21,6 +21,7 @@ from src.api.v1.schemas.snippets import (
     SnippetUpdateRequestSchema,
     VisibilityFilterEnum,
 )
+from src.core.app.limiter import limiter, key_func_per_user
 from src.core.dependencies.accounts import get_current_user
 from src.core.dependencies.snippets import get_snippet_service
 from src.core.utils.logger import logger
@@ -55,13 +56,21 @@ router = APIRouter(
             description="Validation Error",
             examples={"validation_error": "Invalid input data"},
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"snippet_creation": "Failed to create snippet"},
         ),
     },
 )
+@limiter.limit("5/minute", key_func=key_func_per_user)
 async def create_snippet(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     data: BaseSnippetSchema,
     snippet_service: Annotated[
@@ -101,14 +110,21 @@ async def create_snippet(
             description="Not Found",
             examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Something went wrong"},
         ),
     },
 )
+@limiter.limit("30/minute", key_func=key_func_per_user)
 async def get_all_snippets(
     request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
@@ -187,9 +203,17 @@ async def get_all_snippets(
                 "snippet_not_found": "Snippet with this UUID was not found",
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
     },
 )
+@limiter.limit("30/minute", key_func=key_func_per_user)
 async def get_snippet(
+    request: Request,
+    response: Response,
     uuid: UUID,
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
@@ -224,13 +248,21 @@ async def get_snippet(
                 "snippet_not_found": "Snippet with this UUID was not found",
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Failed to update snippet"},
         ),
     },
 )
+@limiter.limit("5/minute", key_func=key_func_per_user)
 async def update_snippet(
+    request: Request,
+    response: Response,
     uuid: UUID,
     data: SnippetUpdateRequestSchema,
     user: Annotated[UserModel, Depends(get_current_user)],
@@ -273,13 +305,21 @@ async def update_snippet(
             description="Not Found",
             examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Failed to delete snippet"},
         ),
     },
 )
+@limiter.limit("5/minute", key_func=key_func_per_user)
 async def delete_snippet(
+    request: Request,
+    response: Response,
     uuid: UUID,
     user: Annotated[UserModel, Depends(get_current_user)],
     snippet_service: Annotated[

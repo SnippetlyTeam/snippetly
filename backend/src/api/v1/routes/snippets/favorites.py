@@ -1,21 +1,21 @@
 from typing import Annotated, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from fastapi.params import Query
 from sqlalchemy.exc import SQLAlchemyError
-from starlette.requests import Request
 
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel, LanguageEnum
-from src.api.docs.openapi import create_error_examples
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
 from src.api.v1.schemas.common import MessageResponseSchema
 from src.api.v1.schemas.snippets import (
     FavoritesSchema,
     FavoritesSortingEnum,
     GetSnippetsResponseSchema,
 )
+from src.core.app.limiter import limiter, key_func_per_user
 from src.core.dependencies.accounts import get_current_user
 from src.core.dependencies.snippets import get_favorites_service
 from src.features.snippets import FavoritesServiceInterface
@@ -47,13 +47,21 @@ router = APIRouter(prefix="/favorites", tags=["Favorite Snippets"])
             description="Conflict",
             examples={"conflict": "Snippet with this UUID already favorited"},
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Something went wrong"},
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def add_snippet(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[
         FavoritesServiceInterface, Depends(get_favorites_service)
@@ -102,13 +110,21 @@ async def add_snippet(
                 "conflict": "Snippet with this UUID already not favorited"
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={"internal_server": "Something went wrong"},
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def remove_snippet(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[
         FavoritesServiceInterface, Depends(get_favorites_service)
@@ -147,10 +163,17 @@ async def remove_snippet(
             description="Not Found",
             examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
     },
 )
+@limiter.limit("30/minute", key_func=key_func_per_user)
 async def get_favorites(
     request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[
         FavoritesServiceInterface, Depends(get_favorites_service)

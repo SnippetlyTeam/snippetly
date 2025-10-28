@@ -1,18 +1,26 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    UploadFile,
+    Request,
+    Response,
+)
 from fastapi.params import File
 from sqlalchemy.exc import SQLAlchemyError
 
 import src.api.docs.auth_error_examples as exm
 import src.core.exceptions as exc
 from src.adapters.postgres.models import UserModel
-from src.api.docs.openapi import create_error_examples
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
 from src.api.v1.schemas.accounts import (
     ProfileResponseSchema,
     ProfileUpdateRequestSchema,
 )
 from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.app.limiter import limiter, key_func_per_user
 from src.core.dependencies.accounts import (
     get_current_user,
     get_profile_service,
@@ -41,9 +49,17 @@ router = APIRouter(prefix="/profile", tags=["Profile Management"])
                 "profile_not_found": "Profile with this user ID was not found",
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 20 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
     },
 )
+@limiter.limit("20/minute", key_func=key_func_per_user)
 async def get_profile_details(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
 ) -> ProfileResponseSchema:
@@ -60,7 +76,7 @@ async def get_profile_details(
     dependencies=[Depends(get_current_user)],
     summary="Get specific user's profile details",
     description="Endpoint for getting specific user's profile "
-    "details by username",
+                "details by username",
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -75,12 +91,20 @@ async def get_profile_details(
             examples={
                 **exm.NOT_FOUND_ERRORS_EXAMPLES,
                 "profile_not_found": "Profile with this username "
-                "was not found",
+                                     "was not found",
             },
+        ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
         ),
     },
 )
+@limiter.limit("10/minute")
 async def get_specific_user_profile(
+    request: Request,
+    response: Response,
     username: str,
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
 ) -> ProfileResponseSchema:
@@ -111,6 +135,11 @@ async def get_specific_user_profile(
                 "profile_not_found": "Profile with this user ID was not found",
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
@@ -119,7 +148,10 @@ async def get_specific_user_profile(
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def update_profile_details(
+    request: Request,
+    response: Response,
     data: ProfileUpdateRequestSchema,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
@@ -156,16 +188,24 @@ async def update_profile_details(
                 "profile_not_found": "Profile with this user ID was not found",
             },
         ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
         500: create_error_examples(
             description="Internal Server Error",
             examples={
                 "internal_server": "Something went wrong during "
-                "avatar deletion"
+                                   "avatar deletion"
             },
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def delete_profile_avatar(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
 ) -> MessageResponseSchema:
@@ -208,9 +248,14 @@ async def delete_profile_avatar(
                 "size": "Image size exceeds 2 MB limit",
                 "error": "Invalid image format",
                 "invalid_format": "Unsupported image format: "
-                "{image_format}. Use one of: JPEG, PNG, "
-                "WEBP",
+                                  "{image_format}. Use one of: JPEG, PNG, "
+                                  "WEBP",
             },
+        ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 10 per 1 minute"},
+            model=ErrorResponseSchema,
         ),
         500: create_error_examples(
             description="Internal Server Error",
@@ -218,7 +263,10 @@ async def delete_profile_avatar(
         ),
     },
 )
+@limiter.limit("10/minute", key_func=key_func_per_user)
 async def set_profile_avatar(
+    request: Request,
+    response: Response,
     user: Annotated[UserModel, Depends(get_current_user)],
     service: Annotated[ProfileServiceInterface, Depends(get_profile_service)],
     avatar: Annotated[UploadFile, File(...)],

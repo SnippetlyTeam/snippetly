@@ -24,12 +24,17 @@ dependencies = [
     "starlette-admin>=0.15.1",
     "itsdangerous>=2.2.0",
     "celery>=5.5.3",
+    "slowapi>=0.1.9",
 ]
 
 [dependency-groups]
 dev = [
     "pyright>=1.1.406",
     "ruff>=0.13.1",
+]
+test = [
+    "pytest>=8.4.2",
+    "pytest-mock>=3.15.1",
 ]
 
 [tool.ruff]
@@ -58,3 +63,11 @@ reportAttributeAccessIssue = "none"
 include = ["src"]
 exclude = ["src/adapters/postgres/migrations", "**/.venv", "**/venv", "**/__pycache__"]
 typeCheckingMode = "basic"
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+addopts = """
+    --tb=short
+    --strict-markers
+    --maxfail=1
+"""
