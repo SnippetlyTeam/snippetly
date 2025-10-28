@@ -1,16 +1,14 @@
+from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
-from alembic import context
-
-from src.core.config import get_settings
 from src.adapters.postgres.models import *  # noqa: F403
+from src.core.config import get_settings
 
 config = context.config
 settings = get_settings()
 
-
-postgres_url = settings.postgres_url_sync
+postgres_url = settings.database_url_sync
 config.set_main_option("sqlalchemy.url", postgres_url)
 
 target_metadata = Base.metadata

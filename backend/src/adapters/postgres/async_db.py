@@ -10,12 +10,12 @@ from src.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(settings.postgres_url)
-PostgreSQLSessionLocal = async_sessionmaker(autoflush=False, bind=engine)
+engine = create_async_engine(settings.database_url)
+SessionLocal = async_sessionmaker(autoflush=False, bind=engine)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    db = PostgreSQLSessionLocal()
+    db = SessionLocal()
     try:
         yield db
     finally:

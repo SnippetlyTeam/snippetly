@@ -1,6 +1,7 @@
 import os
 from functools import lru_cache
-from .settings import Settings, DevelopmentSettings, ProductionSettings
+
+from .settings import Settings, DevelopmentSettings, ProductionSettings, TestingSettings
 
 
 def _build_settings() -> Settings:
@@ -8,6 +9,8 @@ def _build_settings() -> Settings:
 
     if env == "production":
         return ProductionSettings()
+    if env == "testing":
+        return TestingSettings()
     return DevelopmentSettings()
 
 

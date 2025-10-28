@@ -38,3 +38,13 @@ class ProductionSettings(Settings):
     )
 
     DEBUG: bool = False
+
+
+class TestingSettings(Settings):
+    model_config = SettingsConfigDict(
+        env_file=".env.test",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    DEBUG: bool = False
