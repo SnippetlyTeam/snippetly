@@ -1,7 +1,5 @@
 import pytest
 
-from tests.factories import UserFactory
-
 test_user = {
     "email": "test@email.com",
     "password": "Test1234!",
@@ -21,8 +19,8 @@ async def test_create_user(db, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_id(db, user_repo):
-    user = await UserFactory.create(db)
+async def test_get_user_by_id(db, user_repo, user_factory):
+    user = await user_factory.create(db)
 
     fetched = await user_repo.get_by_id(user.id)
     assert fetched is not None
@@ -30,8 +28,8 @@ async def test_get_user_by_id(db, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_email(db, user_repo):
-    user = await UserFactory.create(db)
+async def test_get_user_by_email(db, user_repo, user_factory):
+    user = await user_factory.create(db)
 
     fetched = await user_repo.get_by_email(user.email)
     assert fetched is not None
@@ -39,8 +37,8 @@ async def test_get_user_by_email(db, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_login_username(db, user_repo):
-    user = await UserFactory.create(db)
+async def test_get_user_by_login_username(db, user_repo, user_factory):
+    user = await user_factory.create(db)
 
     fetched = await user_repo.get_by_login(user.username)
     assert fetched is not None
@@ -48,8 +46,8 @@ async def test_get_user_by_login_username(db, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_user_by_login_email(db, user_repo):
-    user = await UserFactory.create(db)
+async def test_get_user_by_login_email(db, user_repo, user_factory):
+    user = await user_factory.create(db)
 
     fetched = await user_repo.get_by_login(user.email)
     assert fetched is not None
@@ -57,8 +55,8 @@ async def test_get_user_by_login_email(db, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_get_by_email_or_username(db, user_repo):
-    user = await UserFactory.create(db)
+async def test_get_by_email_or_username(db, user_repo, user_factory):
+    user = await user_factory.create(db)
 
     fetched = await user_repo.get_by_email_or_username(
         user.email, user.username

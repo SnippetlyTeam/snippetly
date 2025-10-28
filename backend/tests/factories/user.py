@@ -32,3 +32,21 @@ class UserFactory:
         db.add(user)
         await db.flush()
         return user
+
+    @staticmethod
+    async def create_with_tokens(db, token: str):
+        user = await UserFactory.create(db)
+
+        from src.adapters.postgres.models import (
+            ActivationTokenModel,
+            PasswordResetTokenModel,
+            RefreshTokenModel,
+        )
+        tokens = [
+            ActivationTokenModel.create(user.id, token),
+            PasswordResetTokenModel.create(user.id, token),
+            RefreshTokenModel.create(user.id, token),
+        ]
+        db.add_all(tokens)
+        await db.flush()
+        return user

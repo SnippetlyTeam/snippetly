@@ -49,6 +49,8 @@ services:
       - ./backend/src:/app/src
       - ./backend/tests:/app/tests
       - ./backend/static/avatars:/app/static/avatars
+      - ./backend/pyproject.toml:/app/pyproject.toml
+      - ./backend/uv.lock:/app/uv.lock
 
 volumes:
   pgdata_test:
