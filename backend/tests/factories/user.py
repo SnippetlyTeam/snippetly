@@ -42,6 +42,7 @@ class UserFactory:
             PasswordResetTokenModel,
             RefreshTokenModel,
         )
+
         tokens = [
             ActivationTokenModel.create(user.id, token),
             PasswordResetTokenModel.create(user.id, token),

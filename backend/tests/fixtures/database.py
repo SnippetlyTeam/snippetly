@@ -18,7 +18,9 @@ async def _engine(settings):
 
 @pytest.fixture(scope="session")
 def _session_local(_engine):
-    return async_sessionmaker(autoflush=False, bind=_engine, expire_on_commit=False)
+    return async_sessionmaker(
+        autoflush=False, bind=_engine, expire_on_commit=False
+    )
 
 
 @pytest_asyncio.fixture(scope="session", autouse=True)

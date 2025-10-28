@@ -1,15 +1,22 @@
 import pytest
 
-from src.adapters.postgres.models import ActivationTokenModel, PasswordResetTokenModel, RefreshTokenModel
+from src.adapters.postgres.models import (
+    ActivationTokenModel,
+    PasswordResetTokenModel,
+    RefreshTokenModel,
+)
 from src.adapters.postgres.repositories import TokenRepository
 from src.core.security import generate_secure_token
 
 
-@pytest.mark.parametrize("token_model", [
-    ActivationTokenModel,
-    PasswordResetTokenModel,
-    RefreshTokenModel,
-])
+@pytest.mark.parametrize(
+    "token_model",
+    [
+        ActivationTokenModel,
+        PasswordResetTokenModel,
+        RefreshTokenModel,
+    ],
+)
 async def test_create_and_get_token(db, user_factory, token_model):
     repo = TokenRepository(db, token_model)
 
@@ -25,11 +32,14 @@ async def test_create_and_get_token(db, user_factory, token_model):
     assert fetched.user_id == user.id
 
 
-@pytest.mark.parametrize("token_model, token_value", [
-    (ActivationTokenModel, "activation_token"),
-    (PasswordResetTokenModel, "reset_token"),
-    (RefreshTokenModel, "refresh_token"),
-])
+@pytest.mark.parametrize(
+    "token_model, token_value",
+    [
+        (ActivationTokenModel, "activation_token"),
+        (PasswordResetTokenModel, "reset_token"),
+        (RefreshTokenModel, "refresh_token"),
+    ],
+)
 async def test_get_with_user(db, user_factory, token_model, token_value):
     user = await user_factory.create_with_tokens(db, token_value)
     repo = TokenRepository(db, token_model)
@@ -40,11 +50,14 @@ async def test_get_with_user(db, user_factory, token_model, token_value):
     assert token.user_id == user.id
 
 
-@pytest.mark.parametrize("token_model, token_value", [
-    (ActivationTokenModel, "activation_token"),
-    (PasswordResetTokenModel, "reset_token"),
-    (RefreshTokenModel, "refresh_token"),
-])
+@pytest.mark.parametrize(
+    "token_model, token_value",
+    [
+        (ActivationTokenModel, "activation_token"),
+        (PasswordResetTokenModel, "reset_token"),
+        (RefreshTokenModel, "refresh_token"),
+    ],
+)
 async def test_get_by_user(db, user_factory, token_model, token_value):
     user = await user_factory.create_with_tokens(db, token_value)
     repo = TokenRepository(db, token_model)
@@ -54,11 +67,14 @@ async def test_get_by_user(db, user_factory, token_model, token_value):
     assert token.token == token_value
 
 
-@pytest.mark.parametrize("token_model, token_value", [
-    (ActivationTokenModel, "activation_token"),
-    (PasswordResetTokenModel, "reset_token"),
-    (RefreshTokenModel, "refresh_token"),
-])
+@pytest.mark.parametrize(
+    "token_model, token_value",
+    [
+        (ActivationTokenModel, "activation_token"),
+        (PasswordResetTokenModel, "reset_token"),
+        (RefreshTokenModel, "refresh_token"),
+    ],
+)
 async def test_delete_by_token(db, user_factory, token_model, token_value):
     await user_factory.create_with_tokens(db, token_value)
     repo = TokenRepository(db, token_model)
@@ -69,11 +85,14 @@ async def test_delete_by_token(db, user_factory, token_model, token_value):
     assert token is None
 
 
-@pytest.mark.parametrize("token_model", [
-    ActivationTokenModel,
-    PasswordResetTokenModel,
-    RefreshTokenModel,
-])
+@pytest.mark.parametrize(
+    "token_model",
+    [
+        ActivationTokenModel,
+        PasswordResetTokenModel,
+        RefreshTokenModel,
+    ],
+)
 async def test_delete_by_user_id(db, user_factory, token_model):
     token_value = generate_secure_token()
     user = await user_factory.create_with_tokens(db, token_value)
