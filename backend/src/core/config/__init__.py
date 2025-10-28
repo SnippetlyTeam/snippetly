@@ -1,7 +1,12 @@
 import os
 from functools import lru_cache
 
-from .settings import Settings, DevelopmentSettings, ProductionSettings, TestingSettings
+from .settings import (
+    Settings,
+    DevelopmentSettings,
+    ProductionSettings,
+    TestingSettings,
+)
 
 
 def _build_settings() -> Settings:

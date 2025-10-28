@@ -44,11 +44,11 @@ services:
       - test_db
       - test_redis
       - test_mongodb
-    command: bash -c "uv run alembic upgrade head && uv run pytest"
+    command: bash -c "uv run alembic upgrade head && uv run pytest; sleep infinity"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/tests:/app/tests
+      - ./backend/static/avatars:/app/static/avatars
 
 volumes:
   pgdata_test:
-
-networks:
-  default:
-    name: snippetly-test-net

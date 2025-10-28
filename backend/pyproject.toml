@@ -33,7 +33,9 @@ dev = [
     "ruff>=0.13.1",
 ]
 test = [
+    "faker>=37.12.0",
     "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
     "pytest-mock>=3.15.1",
 ]
 
@@ -46,6 +48,10 @@ select = [
     "B9", "ANN", "Q0", "N8"
 ]
 ignore = ["N807", "F401", "F405", "ANN204"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/{tests}/*" = ["ANN"]
+
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -65,9 +71,11 @@ exclude = ["src/adapters/postgres/migrations", "**/.venv", "**/venv", "**/__pyca
 typeCheckingMode = "basic"
 
 [tool.pytest.ini_options]
-testpaths = "tests"
+testpaths = "tests/"
 addopts = """
     --tb=short
     --strict-markers
     --maxfail=1
 """
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

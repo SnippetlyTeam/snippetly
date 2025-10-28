@@ -31,11 +31,6 @@ class UserRepository:
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_username(self, username: str) -> Optional[UserModel]:
-        query = select(UserModel).where(UserModel.username == username)
-        result = await self._db.execute(query)
-        return result.scalar_one_or_none()
-
     async def get_by_login(self, login: str) -> Optional[UserModel]:
         query = select(UserModel).where(
             or_(UserModel.email == login, UserModel.username == login)
