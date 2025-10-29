@@ -11,7 +11,9 @@ async def test_register_activate_login(client, email_sender_mock, faker):
     sent_emails = email_sender_mock.get_sent_emails(user_data["email"])
     token = sent_emails[0]["token"]
 
-    activate_response = await client.post(activate_url, json={"activation_token": token})
+    activate_response = await client.post(
+        activate_url, json={"activation_token": token}
+    )
     assert activate_response.status_code == 200
 
     login_response = await client.post(

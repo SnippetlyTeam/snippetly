@@ -48,7 +48,11 @@ class UserFactory:
         password: str | None = None,
     ) -> UserModel:
         return await UserFactory.create(
-            db, email=email, username=username, password=password, is_active=True
+            db,
+            email=email,
+            username=username,
+            password=password,
+            is_active=True,
         )
 
     @staticmethod
@@ -72,7 +76,8 @@ class UserFactory:
 
     @staticmethod
     async def create_with_activation_token(
-        db, token: str,
+        db,
+        token: str,
     ) -> tuple[UserModel, str]:
         from src.adapters.postgres.models import ActivationTokenModel
 
@@ -84,7 +89,8 @@ class UserFactory:
 
     @staticmethod
     async def create_with_reset_token(
-        db, token: str,
+        db,
+        token: str,
     ) -> tuple[UserModel, str]:
         from src.adapters.postgres.models import PasswordResetTokenModel
 

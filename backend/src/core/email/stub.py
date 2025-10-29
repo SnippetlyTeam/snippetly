@@ -27,10 +27,10 @@ class MockEmailService(EmailSenderInterface):
             }
         )
 
-    def get_sent_emails(self, email: str = None):
+    def get_sent_emails(self, email: str = None) -> list:
         if email:
             return [e for e in self.sent_emails if e["to"] == email]
         return self.sent_emails
 
-    def clear(self):
+    def clear(self) -> None:
         self.sent_emails.clear()

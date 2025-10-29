@@ -27,5 +27,5 @@ __all__ = [
     "user_service",
     "logged_in_tokens",
     "inactive_user",
-    "active_user"
+    "active_user",
 ]

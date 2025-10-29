@@ -106,15 +106,14 @@ async def test_activate_user_db_error(
     assert user.is_active is False
 
 
-async def test_new_activation_token_success(user_service, inactive_user, activation_token_repo):
+async def test_new_activation_token_success(
+    user_service, inactive_user, activation_token_repo
+):
     token = await user_service.new_activation_token(inactive_user.email)
 
     assert token is not None
     assert token.user_id == inactive_user.id
-    assert (
-        await activation_token_repo.get_by_token(token.token)
-        is not None
-    )
+    assert await activation_token_repo.get_by_token(token.token) is not None
 
 
 async def test_new_activation_token_user_not_found(user_service):
@@ -132,9 +131,7 @@ async def test_new_activation_token_user_already_active(
 async def test_new_activation_token_db_error(
     db, user_service, inactive_user, mocker
 ):
-    mock = mocker.patch.object(
-        db, "commit", side_effect=SQLAlchemyError
-    )
+    mock = mocker.patch.object(db, "commit", side_effect=SQLAlchemyError)
 
     with pytest.raises(SQLAlchemyError):
         await user_service.new_activation_token(inactive_user.email)

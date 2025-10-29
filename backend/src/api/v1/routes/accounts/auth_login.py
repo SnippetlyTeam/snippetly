@@ -180,7 +180,7 @@ async def revoke_all_tokens(
 
 
 @router.post(
-    "/logout/",
+    "/logout",
     response_model=MessageResponseSchema,
     status_code=200,
     summary="User Logout",
