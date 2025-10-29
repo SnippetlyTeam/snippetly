@@ -1,6 +1,6 @@
 import pytest
 from faker import Faker
-from fastapi.testclient import TestClient
+from httpx import AsyncClient, ASGITransport
 
 from src.adapters.redis import get_redis_client
 from src.core.config import get_settings
@@ -25,10 +25,11 @@ def faker():
 
 
 @pytest.fixture
-def client(email_sender_mock):
+async def client(email_sender_mock):
     app.dependency_overrides[get_email_sender] = lambda: email_sender_mock
 
-    with TestClient(app) as test_client:
-        yield test_client
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
+        yield ac
 
     app.dependency_overrides.clear()
