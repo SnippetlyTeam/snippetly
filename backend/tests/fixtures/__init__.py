@@ -1,6 +1,6 @@
+from .core import jwt_manager, email_sender_stub
 from .database import db, _session_local, _engine, reset_db
 from .factories import user_factory
-from .jwt import jwt_manager
 from .repositories import (
     user_repo,
     activation_token_repo,
@@ -20,6 +20,7 @@ __all__ = [
     "reset_db",
     "user_factory",
     "jwt_manager",
+    "email_sender_stub",
     "auth_service",
     "user_service",
 ]
