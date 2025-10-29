@@ -1,6 +1,7 @@
 import pytest_asyncio
 
 from src.core.email import EmailSenderManager
+from src.core.email.stub import MockEmailService
 from src.core.security.jwt_manager import JWTAuthManager
 
 
@@ -26,3 +27,10 @@ async def email_sender_stub():
         use_tls=True,
         app_url="https://myapp.com",
     )
+
+
+@pytest_asyncio.fixture
+async def email_sender_mock(settings, redis_client):
+    sender = MockEmailService()
+    yield sender
+    sender.clear()

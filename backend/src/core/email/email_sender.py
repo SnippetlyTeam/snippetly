@@ -32,7 +32,7 @@ class EmailSenderManager(EmailSenderInterface):
         self._app_url = app_url
 
     async def _send_email(
-        self, to_email: EmailStr, subject: str, body: str
+        self, to_email: str, subject: str, body: str
     ) -> None:
         message = EmailMessage()
         message["From"] = self._from_email
@@ -63,7 +63,7 @@ class EmailSenderManager(EmailSenderInterface):
             logger.error(f"SMTP general error: {e}")
             raise
 
-    async def send_activation_email(self, email: EmailStr, token: str) -> None:
+    async def send_activation_email(self, email: str, token: str) -> None:
         subject = "Activate your account"
         body = (
             f"Please click the link to activate your "
@@ -71,9 +71,7 @@ class EmailSenderManager(EmailSenderInterface):
         )
         await self._send_email(email, subject, body)
 
-    async def send_password_reset_email(
-        self, email: EmailStr, token: str
-    ) -> None:
+    async def send_password_reset_email(self, email: str, token: str) -> None:
         subject = "Password Reset"
         body = (
             f"Please click the link to reset your "

@@ -1,4 +1,4 @@
-from .core import jwt_manager, email_sender_stub
+from .core import jwt_manager, email_sender_stub, email_sender_mock
 from .database import db, _session_local, _engine, reset_db
 from .factories import user_factory
 from .repositories import (
@@ -8,6 +8,7 @@ from .repositories import (
     refresh_token_repo,
 )
 from .services import auth_service, user_service
+from .users import logged_in_tokens, inactive_user, active_user
 
 __all__ = [
     "user_repo",
@@ -21,6 +22,10 @@ __all__ = [
     "user_factory",
     "jwt_manager",
     "email_sender_stub",
+    "email_sender_mock",
     "auth_service",
     "user_service",
+    "logged_in_tokens",
+    "inactive_user",
+    "active_user"
 ]
