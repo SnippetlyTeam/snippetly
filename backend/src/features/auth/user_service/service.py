@@ -77,6 +77,7 @@ class UserService(UserServiceInterface):
         existing_token = await self._activation_token_repo.get_by_user(user.id)
         if existing_token:
             await self._activation_token_repo.delete(existing_token.token)
+            await self._db.flush()
 
         token = generate_secure_token()
         new_token = await self._activation_token_repo.create(
@@ -99,7 +100,13 @@ class UserService(UserServiceInterface):
         user, token_model = result
 
         if token_model.expires_at < datetime.now(timezone.utc):
-            raise exc.TokenExpiredError("Activation token has expired")
+            try:
+                await self._activation_token_repo.delete(token)
+                await self._db.commit()
+                raise exc.TokenExpiredError("Activation token has expired")
+            except SQLAlchemyError:
+                await self._db.rollback()
+                raise
 
         user.is_active = True
 
@@ -125,10 +132,10 @@ class UserService(UserServiceInterface):
         try:
             await self._db.commit()
             await self._db.refresh(password_reset_token)
-            return user, token
         except SQLAlchemyError:
             await self._db.rollback()
             raise
+        return user, token
 
     async def reset_password_complete(
         self, email: str, password: str, token: str

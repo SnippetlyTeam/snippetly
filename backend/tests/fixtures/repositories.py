@@ -1,6 +1,10 @@
 import pytest_asyncio
 
-from src.adapters.postgres.models import ActivationTokenModel, PasswordResetTokenModel, RefreshTokenModel
+from src.adapters.postgres.models import (
+    ActivationTokenModel,
+    PasswordResetTokenModel,
+    RefreshTokenModel,
+)
 from src.adapters.postgres.repositories import UserRepository, TokenRepository
 
 

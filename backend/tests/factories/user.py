@@ -25,7 +25,7 @@ class UserFactory:
         email: str | None = None,
         username: str | None = None,
         password: str = "Test1234!",
-        is_active: bool = False
+        is_active: bool = False,
     ) -> UserModel:
         user = UserFactory.build(
             email=email, username=username, password=password

@@ -4,7 +4,6 @@ from sqlalchemy.exc import SQLAlchemyError
 import src.core.exceptions as exc
 
 
-@pytest.mark.asyncio
 async def test_login_user_success(db, user_factory, auth_service):
     user = await user_factory.create(db, is_active=True)
 
@@ -14,18 +13,18 @@ async def test_login_user_success(db, user_factory, auth_service):
     assert "token_type" in result
 
 
-@pytest.mark.asyncio
 async def test_login_user_wrong_password(db, user_factory, auth_service):
     user = await user_factory.create(db, is_active=True)
-    message = ("Entered Invalid password! Check your keyboard "
-               "layout or Caps Lock. Forgot your password?")
+    message = (
+        "Entered Invalid password! Check your keyboard "
+        "layout or Caps Lock. Forgot your password?"
+    )
 
     with pytest.raises(exc.InvalidPasswordError) as e:
         await auth_service.login_user(user.email, "WrongPassword")
     assert str(e.value) == message
 
 
-@pytest.mark.asyncio
 async def test_login_user_user_not_active(db, user_factory, auth_service):
     message = "User account is not activated"
     user = await user_factory.create(db)
@@ -36,7 +35,6 @@ async def test_login_user_user_not_active(db, user_factory, auth_service):
     assert str(e.value) == message
 
 
-@pytest.mark.asyncio
 async def test_login_user_not_found(db, auth_service):
     message = "User with such email or username not registered."
     with pytest.raises(exc.UserNotFoundError) as e:
@@ -44,8 +42,9 @@ async def test_login_user_not_found(db, auth_service):
     assert str(e.value) == message
 
 
-@pytest.mark.asyncio
-async def test_login_user_db_error(db, user_factory, auth_service, mocker, refresh_token_repo):
+async def test_login_user_db_error(
+    db, user_factory, auth_service, mocker, refresh_token_repo
+):
     user = await user_factory.create(db, is_active=True)
 
     mock = mocker.patch(
@@ -60,16 +59,20 @@ async def test_login_user_db_error(db, user_factory, auth_service, mocker, refre
     assert await refresh_token_repo.get_by_user(user.id) is None
 
 
-@pytest.mark.asyncio
-async def test_logout_user_success(db, user_factory, auth_service, refresh_token_repo):
+async def test_logout_user_success(
+    db, user_factory, auth_service, refresh_token_repo
+):
     user = await user_factory.create(db, is_active=True)
 
     tokens = await auth_service.login_user(user.email, "Test1234!")
-    await auth_service.logout_user(tokens["refresh_token"], tokens['access_token'])
+    await auth_service.logout_user(
+        tokens["refresh_token"], tokens["access_token"]
+    )
 
 
-@pytest.mark.asyncio
-async def test_logout_user_db_error(db, user_factory, auth_service, refresh_token_repo, mocker):
+async def test_logout_user_db_error(
+    db, user_factory, auth_service, refresh_token_repo, mocker
+):
     user = await user_factory.create(db, is_active=True)
     tokens = await auth_service.login_user(user.email, "Test1234!")
     mock = mocker.patch(
@@ -77,7 +80,9 @@ async def test_logout_user_db_error(db, user_factory, auth_service, refresh_toke
         side_effect=SQLAlchemyError,
     )
     with pytest.raises(SQLAlchemyError):
-        await auth_service.logout_user(tokens["refresh_token"], tokens['access_token'])
+        await auth_service.logout_user(
+            tokens["refresh_token"], tokens["access_token"]
+        )
 
     mock.assert_called_once()
     assert await refresh_token_repo.get_by_user(user.id) is not None

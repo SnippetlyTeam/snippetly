@@ -1,5 +1,3 @@
-import pytest
-
 test_user = {
     "email": "test@email.com",
     "password": "Test1234!",
@@ -7,7 +5,6 @@ test_user = {
 }
 
 
-@pytest.mark.asyncio
 async def test_create_user(db, user_repo):
     user = await user_repo.create(**test_user)
 
@@ -18,7 +15,6 @@ async def test_create_user(db, user_repo):
     assert user._hashed_password != test_user["password"]
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_id(db, user_repo, user_factory):
     user = await user_factory.create(db)
 
@@ -27,7 +23,6 @@ async def test_get_user_by_id(db, user_repo, user_factory):
     assert fetched.email == user.email
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_email(db, user_repo, user_factory):
     user = await user_factory.create(db)
 
@@ -36,7 +31,6 @@ async def test_get_user_by_email(db, user_repo, user_factory):
     assert fetched.id == user.id
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_login_username(db, user_repo, user_factory):
     user = await user_factory.create(db)
 
@@ -45,7 +39,6 @@ async def test_get_user_by_login_username(db, user_repo, user_factory):
     assert fetched.email == user.email
 
 
-@pytest.mark.asyncio
 async def test_get_user_by_login_email(db, user_repo, user_factory):
     user = await user_factory.create(db)
 
@@ -54,7 +47,6 @@ async def test_get_user_by_login_email(db, user_repo, user_factory):
     assert fetched.username == user.username
 
 
-@pytest.mark.asyncio
 async def test_get_by_email_or_username(db, user_repo, user_factory):
     user = await user_factory.create(db)
 

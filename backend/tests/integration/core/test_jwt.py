@@ -25,7 +25,6 @@ def parse_user_data(user: UserModel) -> dict:
     }
 
 
-@pytest.mark.asyncio
 async def test_create_access_token(db, jwt_manager, redis_client):
     token = await jwt_manager.create_access_token(user_data)
     assert token is not None
@@ -38,13 +37,11 @@ async def test_create_access_token(db, jwt_manager, redis_client):
     assert int(stored_user_id) == user_data.get("id")
 
 
-@pytest.mark.asyncio
 async def test_create_refresh_token(db, jwt_manager):
     token = jwt_manager.create_refresh_token(user_data)
     assert token is not None
 
 
-@pytest.mark.asyncio
 async def test_add_to_blacklist(jwt_manager):
     token = await jwt_manager.create_access_token(user_data)
     payload = jwt.decode(token, options={"verify_signature": False})
@@ -56,7 +53,6 @@ async def test_add_to_blacklist(jwt_manager):
     assert await jwt_manager.is_blacklisted(jti) is True
 
 
-@pytest.mark.asyncio
 async def test_decode_token(jwt_manager):
     token = jwt_manager.create_refresh_token(user_data)
     payload = jwt_manager.decode_token(token)
@@ -70,14 +66,12 @@ async def test_decode_token(jwt_manager):
     assert "iat" in payload
 
 
-@pytest.mark.asyncio
 async def test_decode_token_error(jwt_manager):
     token = "not.a.valid.token"
     payload = jwt_manager.decode_token(token)
     assert payload is None
 
 
-@pytest.mark.asyncio
 async def test_verify_token_valid(db, jwt_manager, redis_client, user_factory):
     user = await user_factory.create(db)
     user_data = {
@@ -94,7 +88,6 @@ async def test_verify_token_valid(db, jwt_manager, redis_client, user_factory):
     assert payload["jti"] is not None
 
 
-@pytest.mark.asyncio
 async def test_verify_token_missing_jti(jwt_manager):
     payload = {
         "sub": "1",
@@ -116,7 +109,6 @@ async def test_verify_token_missing_jti(jwt_manager):
     assert str(e.value) == "Invalid token"
 
 
-@pytest.mark.asyncio
 async def test_verify_token_expired(jwt_manager):
     payload = {
         **user_data,
@@ -136,7 +128,6 @@ async def test_verify_token_expired(jwt_manager):
     assert str(e.value) == "Token has expired"
 
 
-@pytest.mark.asyncio
 async def test_verify_token_blacklisted(jwt_manager, redis_client):
     token = await jwt_manager.create_access_token(user_data)
     payload = jwt.decode(token, options={"verify_signature": False})
@@ -154,7 +145,6 @@ async def test_verify_token_blacklisted(jwt_manager, redis_client):
     assert str(e.value) == "Invalid token"
 
 
-@pytest.mark.asyncio
 async def test_refresh_tokens_valid(db, jwt_manager, user_factory):
     user = await user_factory.create(db)
     user_data = parse_user_data(user)
@@ -176,7 +166,6 @@ async def test_refresh_tokens_valid(db, jwt_manager, user_factory):
     assert payload["iat"] <= datetime.now(timezone.utc).timestamp()
 
 
-@pytest.mark.asyncio
 async def test_refresh_tokens_invalid_token(db, jwt_manager):
     invalid_token = "not.a.valid.token"
 
@@ -185,7 +174,6 @@ async def test_refresh_tokens_invalid_token(db, jwt_manager):
     assert "Invalid refresh token" in str(e.value)
 
 
-@pytest.mark.asyncio
 async def test_refresh_tokens_expired_token(db, jwt_manager, user_factory):
     user = await user_factory.create(db)
     parse_user_data(user)
@@ -211,7 +199,6 @@ async def test_refresh_tokens_expired_token(db, jwt_manager, user_factory):
     assert "Invalid refresh token" in str(e.value)
 
 
-@pytest.mark.asyncio
 async def test_refresh_tokens_user_not_found(db, jwt_manager):
     payload = {
         "user_id": 9999,
@@ -232,8 +219,9 @@ async def test_refresh_tokens_user_not_found(db, jwt_manager):
         await jwt_manager.refresh_tokens(db, token)
 
 
-@pytest.mark.asyncio
-async def test_revoke_all_user_tokens(db, jwt_manager, user_factory, refresh_token_repo):
+async def test_revoke_all_user_tokens(
+    db, jwt_manager, user_factory, refresh_token_repo
+):
     user = await user_factory.create(db)
     user_data = parse_user_data(user)
     token1 = await jwt_manager.create_access_token(user_data)
@@ -253,7 +241,6 @@ async def test_revoke_all_user_tokens(db, jwt_manager, user_factory, refresh_tok
     assert await refresh_token_repo.get_by_user(user.id) is None
 
 
-@pytest.mark.asyncio
 async def test_revoke_all_user_tokens_db_error(
     db, jwt_manager, user_factory, mocker
 ):
