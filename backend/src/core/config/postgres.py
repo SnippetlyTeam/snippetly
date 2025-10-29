@@ -11,7 +11,7 @@ class PostgresSQLSettings(BaseAppSettings):
     POSTGRES_PORT: int = 5432
 
     @property
-    def postgres_url(self) -> str:
+    def database_url(self) -> str:
         return str(
             PostgresDsn.build(
                 scheme="postgresql+asyncpg",
@@ -24,7 +24,7 @@ class PostgresSQLSettings(BaseAppSettings):
         )
 
     @property
-    def postgres_url_sync(self) -> str:
+    def database_url_sync(self) -> str:
         return str(
             PostgresDsn.build(
                 scheme="postgresql+psycopg",

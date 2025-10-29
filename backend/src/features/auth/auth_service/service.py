@@ -86,14 +86,12 @@ class AuthService(AuthServiceInterface):
             await self._jwt_manager.add_to_blacklist(jti, exp)
 
         if refresh_token:
-            token = await self._refresh_token_repo.get_by_token(refresh_token)
-            if token:
-                try:
-                    await self._db.delete(token)
-                    await self._db.commit()
-                except SQLAlchemyError:
-                    await self._db.rollback()
-                    raise
+            try:
+                await self._refresh_token_repo.delete(refresh_token)
+                await self._db.commit()
+            except SQLAlchemyError:
+                await self._db.rollback()
+                raise
 
     # TODO: catch errors with Redis
     async def logout_from_all_sessions(self, user: UserModel) -> None:

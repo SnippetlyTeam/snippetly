@@ -1,6 +1,7 @@
 PROJECT_NAME ?= snippetly
 COMPOSE := docker compose
 COMPOSE_DEV := $(COMPOSE) -f docker-compose.yml -f docker-compose.dev.yml
+COMPOSE_TEST := $(COMPOSE) -f docker-compose.test.yml --env-file backend/.env.test
 
 .PHONY: help up up-dev down down-dev logs ps psql prune
 
@@ -8,6 +9,7 @@ help:
 	@echo "Available targets:"
 	@echo "  up         - Start core services (db, redis) in background"
 	@echo "  up-dev     - Start dev stack (db, redis, pgadmin) in background"
+	@echo "  up-test    - Start tests"
 	@echo "  down       - Stop stack"
 	@echo "  down-dev   - Stop dev stack"
 	@echo "  logs       - Tail logs"
@@ -20,6 +22,9 @@ up:
 
 up-dev:
 	$(COMPOSE_DEV) up -d
+
+up-test:
+	$(COMPOSE_TEST) up
 
 down:
 	$(COMPOSE) down
