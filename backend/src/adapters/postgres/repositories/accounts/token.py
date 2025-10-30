@@ -45,6 +45,14 @@ class TokenRepository(Generic[T]):
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
+    async def list_by_user(self, user_id: int) -> list[T]:
+        query = select(self.token_model).where(
+            self.token_model.user_id == user_id
+        )
+        result = await self._db.execute(query)
+        rows = result.scalars().all()
+        return list(rows)
+
     # --- Delete ---
     async def delete(self, token: str) -> None:
         query = delete(self.token_model).where(self.token_model.token == token)

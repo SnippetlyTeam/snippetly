@@ -1,3 +1,4 @@
+from redis import RedisError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,6 +87,19 @@ class AuthService(AuthServiceInterface):
             await self._jwt_manager.add_to_blacklist(jti, exp)
 
         if refresh_token:
+            payload = self._jwt_manager.decode_token(refresh_token)
+            if (
+                payload
+                and payload.get("jti")
+                and payload.get("exp") is not None
+            ):
+                try:
+                    await self._jwt_manager.add_to_blacklist(
+                        payload["jti"],
+                        int(payload["exp"]),  # type: ignore[arg-type]
+                    )
+                except RedisError:
+                    pass
             try:
                 await self._refresh_token_repo.delete(refresh_token)
                 await self._db.commit()
@@ -93,6 +107,5 @@ class AuthService(AuthServiceInterface):
                 await self._db.rollback()
                 raise
 
-    # TODO: catch errors with Redis
     async def logout_from_all_sessions(self, user: UserModel) -> None:
         await self._jwt_manager.revoke_all_user_tokens(self._db, user.id)

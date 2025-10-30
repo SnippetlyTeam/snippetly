@@ -78,7 +78,7 @@ async def login_user(
     except exc.UserNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
     except exc.InvalidPasswordError as e:
-        raise HTTPException(status_code=403, detail=str(e)) from e
+        raise HTTPException(status_code=401, detail=str(e)) from e
     except exc.UserNotActiveError as e:
         raise HTTPException(status_code=403, detail=str(e)) from e
     except SQLAlchemyError as e:
@@ -180,7 +180,7 @@ async def revoke_all_tokens(
 
 
 @router.post(
-    "/logout/",
+    "/logout",
     response_model=MessageResponseSchema,
     status_code=200,
     summary="User Logout",
