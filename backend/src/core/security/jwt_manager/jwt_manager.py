@@ -4,6 +4,7 @@ from typing import Optional, cast
 
 import jwt
 from pydantic import SecretStr
+from redis import RedisError
 from redis.asyncio.client import Redis
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -137,6 +138,17 @@ class JWTAuthManager(JWTAuthInterface):
         self, db: AsyncSession, user_id: int
     ) -> None:
         refresh_repo = TokenRepository(db, RefreshTokenModel)
+
+        tokens = await refresh_repo.list_by_user(user_id)
+
+        for t in tokens:
+            payload = self.decode_token(t.token)
+            if payload and payload.get("jti") and payload.get("exp") is not None:
+                try:
+                    await self.add_to_blacklist(payload["jti"], int(payload["exp"]))
+                except RedisError:
+                    pass
+
         try:
             await refresh_repo.delete_by_user_id(user_id)
             await db.commit()
