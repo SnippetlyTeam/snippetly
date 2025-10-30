@@ -10,7 +10,7 @@ class DevStorage(StorageInterface):
     def __init__(
         self, base_path: Path, base_url: str = "http://localhost:8000/static/"
     ):
-        self.base_url = base_url.rstrip("/") + "/"  # гарантируем слэш
+        self.base_url = base_url.rstrip("/") + "/"
         self.storage_dir = base_path / "static" / "avatars"
 
     @staticmethod

@@ -99,8 +99,7 @@ async def test_update_avatar_url(db, profile_repo, user_factory):
 async def test_delete_avatar_url(db, profile_repo, user_factory):
     user, profile = await user_factory.create_with_profile(db, profile_repo)
 
-    await profile_repo.update_avatar_url(user.id, profile_data["avatar_url"])
-    await db.flush()
+    assert profile.avatar_url is not None
 
     await profile_repo.delete_avatar_url(user.id)
     await db.flush()

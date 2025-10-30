@@ -35,7 +35,11 @@ async def test_create_and_get_token(db, user_factory, token_model):
 @pytest.mark.parametrize(
     "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token", "create_with_activation_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
         (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
         (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
@@ -57,7 +61,11 @@ async def test_get_with_user(
 @pytest.mark.parametrize(
     "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token", "create_with_activation_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
         (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
         (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
@@ -78,7 +86,11 @@ async def test_get_by_user(
 @pytest.mark.parametrize(
     "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token", "create_with_activation_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
         (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
         (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
