@@ -1,6 +1,6 @@
 from faker import Faker
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, UserProfileModel
 
 fake = Faker()
 
@@ -93,3 +93,12 @@ class UserFactory:
         db.add(token_model)
         await db.flush()
         return user, token
+
+    @staticmethod
+    async def create_with_profile(
+        db, profile_repo
+    ) -> tuple[UserModel, UserProfileModel]:
+        user = await UserFactory.create(db, is_active=True)
+        profile = await profile_repo.create(user.id)
+        await db.flush()
+        return user, profile

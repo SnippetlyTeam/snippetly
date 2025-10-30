@@ -6,6 +6,7 @@ from .repositories import (
     activation_token_repo,
     password_reset_token_repo,
     refresh_token_repo,
+    profile_repo,
 )
 from .services import auth_service, user_service
 from .users import logged_in_tokens, inactive_user, active_user
@@ -15,6 +16,7 @@ __all__ = [
     "activation_token_repo",
     "password_reset_token_repo",
     "refresh_token_repo",
+    "profile_repo",
     "db",
     "_session_local",
     "_engine",

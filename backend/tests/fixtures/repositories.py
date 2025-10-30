@@ -5,7 +5,11 @@ from src.adapters.postgres.models import (
     PasswordResetTokenModel,
     RefreshTokenModel,
 )
-from src.adapters.postgres.repositories import UserRepository, TokenRepository
+from src.adapters.postgres.repositories import (
+    UserRepository,
+    TokenRepository,
+    UserProfileRepository,
+)
 
 
 @pytest_asyncio.fixture
@@ -26,3 +30,8 @@ async def password_reset_token_repo(db):
 @pytest_asyncio.fixture
 async def refresh_token_repo(db):
     return TokenRepository(db, RefreshTokenModel)
+
+
+@pytest_asyncio.fixture
+async def profile_repo(db):
+    return UserProfileRepository(db)
