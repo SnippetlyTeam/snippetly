@@ -95,7 +95,8 @@ class AuthService(AuthServiceInterface):
             ):
                 try:
                     await self._jwt_manager.add_to_blacklist(
-                        payload["jti"], int(payload["exp"])  # type: ignore[arg-type]
+                        payload["jti"],
+                        int(payload["exp"]),  # type: ignore[arg-type]
                     )
                 except RedisError:
                     pass

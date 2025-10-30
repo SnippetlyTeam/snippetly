@@ -6,8 +6,8 @@ from .routes import (
 )
 
 message_request = (
-    "If an account with that email exists, we've sent password reset instructions. "
-    "Please check your inbox"
+    "If an account with that email exists, "
+    "we've sent password reset instructions. Please check your inbox"
 )
 
 
@@ -37,7 +37,7 @@ async def test_reset_password_request_nonexistent_email_noop(
     email = faker.unique.email()
 
     resp = await client.post(
-        reset_password_request_url,
+        #  reset_password_request_url,
         json={"email": email},
     )
 
@@ -48,10 +48,10 @@ async def test_reset_password_request_nonexistent_email_noop(
     assert len(sent) == 0
 
 
-async def test_reset_password_complete_success(
-    db, user_factory, client
-):
-    user, token = await user_factory.create_with_reset_token(db, "token_rst_123")
+async def test_reset_password_complete_success(db, user_factory, client):
+    user, token = await user_factory.create_with_reset_token(
+        db, "token_rst_123"
+    )
     await db.commit()
 
     new_password = "NewPass123!"

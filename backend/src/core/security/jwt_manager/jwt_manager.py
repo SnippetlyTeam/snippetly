@@ -143,9 +143,15 @@ class JWTAuthManager(JWTAuthInterface):
 
         for t in tokens:
             payload = self.decode_token(t.token)
-            if payload and payload.get("jti") and payload.get("exp") is not None:
+            if (
+                payload
+                and payload.get("jti")
+                and payload.get("exp") is not None
+            ):
                 try:
-                    await self.add_to_blacklist(payload["jti"], int(payload["exp"]))
+                    await self.add_to_blacklist(
+                        payload["jti"], int(payload["exp"])
+                    )
                 except RedisError:
                     pass
 

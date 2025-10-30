@@ -94,7 +94,7 @@ class UserFactory:
     ) -> tuple[UserModel, str]:
         from src.adapters.postgres.models import PasswordResetTokenModel
 
-        user = await UserFactory.create(db)
+        user = await UserFactory.create(db, is_active=True)
         token_model = PasswordResetTokenModel.create(user.id, token)
         db.add(token_model)
         await db.flush()
