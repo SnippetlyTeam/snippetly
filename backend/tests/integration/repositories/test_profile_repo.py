@@ -23,8 +23,8 @@ async def test_create_profile_empty(db, profile_repo, active_user):
     assert profile.user_id == active_user.id
     assert profile.first_name == ""
     assert profile.last_name == ""
-    assert profile.avatar_url is ""
-    assert profile.info is ""
+    assert profile.avatar_url == ""
+    assert profile.info == ""
     assert profile.gender is None
     assert profile.date_of_birth is None
 

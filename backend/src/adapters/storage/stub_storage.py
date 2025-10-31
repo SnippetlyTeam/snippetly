@@ -6,13 +6,12 @@ from .interface import StorageInterface
 
 
 class StubStorage(StorageInterface):
-
     def __init__(self, base_url: str = "http://fake-cdn.com/"):
         self._store = {}  # {file_name: file_data}
-        self.base_url = base_url.rstrip('/') + '/'
+        self.base_url = base_url.rstrip("/") + "/"
 
     def _extract_filename(self, file_url: str) -> str:
-        return file_url.split('/')[-1]
+        return file_url.split("/")[-1]
 
     def upload_file(
         self, file_name: str, file_data: Union[bytes, bytearray]

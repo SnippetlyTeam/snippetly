@@ -47,23 +47,31 @@ async def test_update_profile_db_error(
 
 
 async def test_set_profile_avatar_success_no_old_avatar(
-    profile_service, user_with_profile, mock_upload_file, profile_repo, storage_stub
+    profile_service,
+    user_with_profile,
+    mock_upload_file,
+    profile_repo,
+    storage_stub,
 ):
     user, profile = user_with_profile[0], user_with_profile[1]
 
-    assert profile.avatar_url is ""
+    assert profile.avatar_url == ""
 
     await profile_service.set_profile_avatar(user.id, mock_upload_file)
 
     updated_profile = await profile_repo.get_by_user_id(user.id)
-    assert updated_profile.avatar_url is not ""
+    assert updated_profile.avatar_url != ""
     assert updated_profile.avatar_url.startswith(storage_stub.base_url)
 
     assert storage_stub.file_exists(updated_profile.avatar_url)
 
 
 async def test_set_profile_avatar_success_with_old_avatar(
-    profile_service, user_with_profile, mock_upload_file, profile_repo, storage_stub
+    profile_service,
+    user_with_profile,
+    mock_upload_file,
+    profile_repo,
+    storage_stub,
 ):
     user, profile = user_with_profile[0], user_with_profile[1]
 
@@ -78,7 +86,7 @@ async def test_set_profile_avatar_success_with_old_avatar(
 
     updated_profile = await profile_repo.get_by_user_id(user.id)
     new_url = updated_profile.avatar_url
-    assert new_url is not ""
+    assert new_url != ""
     assert new_url != old_url
 
     assert storage_stub.file_exists(new_url)
@@ -95,13 +103,13 @@ async def test_set_profile_avatar_db_error_rollback_storage(
         "src.features.profile.service.UserProfileRepository.update_avatar_url",
         side_effect=SQLAlchemyError,
     )
-    assert profile.avatar_url is ""
+    assert profile.avatar_url == ""
 
     with pytest.raises(SQLAlchemyError):
         await profile_service.set_profile_avatar(user.id, mock_upload_file)
 
     mock.assert_called_once()
-    assert profile.avatar_url is ""
+    assert profile.avatar_url == ""
 
 
 async def test_delete_profile_avatar_success(
@@ -128,7 +136,7 @@ async def test_delete_profile_avatar_no_avatar(
     profile_service, user_with_profile, storage_stub, mocker
 ):
     user, profile = user_with_profile[0], user_with_profile[1]
-    assert profile.avatar_url is ""
+    assert profile.avatar_url == ""
 
     mock_storage_delete = mocker.spy(storage_stub, "delete_file")
 

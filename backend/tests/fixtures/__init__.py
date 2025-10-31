@@ -12,7 +12,7 @@ from .profile import (
     storage_stub,
     profile_repo,
     profile_service,
-    mock_upload_file
+    mock_upload_file,
 )
 from .user import (
     user_factory,

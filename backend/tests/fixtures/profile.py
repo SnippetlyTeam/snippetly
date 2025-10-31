@@ -32,7 +32,7 @@ def mock_upload_file(mocker):
 
     mocker.patch(
         "src.features.profile.service.validate_image",
-        return_value=mock_processed_io
+        return_value=mock_processed_io,
     )
 
     mock_file = MagicMock(spec=UploadFile)
