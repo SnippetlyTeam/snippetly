@@ -1,9 +1,6 @@
 import pytest_asyncio
 
-from src.adapters.postgres.repositories import (
-    UserRepository,
-    UserProfileRepository,
-)
+from src.adapters.postgres.repositories import UserRepository
 from src.features.auth import UserService
 from tests.factories import UserFactory
 
@@ -16,11 +13,6 @@ async def user_factory():
 @pytest_asyncio.fixture
 async def user_repo(db):
     return UserRepository(db)
-
-
-@pytest_asyncio.fixture
-async def profile_repo(db):
-    return UserProfileRepository(db)
 
 
 @pytest_asyncio.fixture
@@ -44,3 +36,8 @@ async def active_user(db, user_factory):
 @pytest_asyncio.fixture
 async def inactive_user(db, user_factory):
     return await user_factory.create(db, is_active=False)
+
+
+@pytest_asyncio.fixture
+async def user_with_profile(db, user_factory, profile_repo):
+    return await user_factory.create_with_profile(db, profile_repo)

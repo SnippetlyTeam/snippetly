@@ -8,13 +8,19 @@ from .auth import (
 )
 from .database import db, _session_local, _engine, reset_db
 from .email import email_sender_stub, email_sender_mock
+from .profile import (
+    storage_stub,
+    profile_repo,
+    profile_service,
+    mock_upload_file
+)
 from .user import (
     user_factory,
     user_repo,
-    profile_repo,
     user_service,
     active_user,
     inactive_user,
+    user_with_profile,
 )
 
 __all__ = [
@@ -30,10 +36,14 @@ __all__ = [
     "reset_db",
     "email_sender_stub",
     "email_sender_mock",
+    "storage_stub",
+    "profile_repo",
+    "profile_service",
+    "mock_upload_file",
     "user_factory",
     "user_repo",
-    "profile_repo",
     "user_service",
     "active_user",
     "inactive_user",
+    "user_with_profile",
 ]

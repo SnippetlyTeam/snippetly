@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from .interface import EmailSenderInterface
 
 
-class MockEmailSender(EmailSenderInterface):
+class StubEmailSender(EmailSenderInterface):
     def __init__(self):
         self.sent_emails = []
 

@@ -1,7 +1,6 @@
 import pytest_asyncio
 
-from src.core.email import EmailSenderManager
-from src.core.email.stub import MockEmailService
+from src.core.email import EmailSenderManager, StubEmailSender
 
 
 @pytest_asyncio.fixture
@@ -18,6 +17,6 @@ async def email_sender_stub():
 
 @pytest_asyncio.fixture
 async def email_sender_mock(settings, redis_client):
-    sender = MockEmailService()
+    sender = StubEmailSender()
     yield sender
     sender.clear()
