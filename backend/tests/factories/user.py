@@ -1,6 +1,6 @@
 from faker import Faker
 
-from src.adapters.postgres.models import UserModel
+from src.adapters.postgres.models import UserModel, UserProfileModel
 
 fake = Faker()
 
@@ -56,25 +56,6 @@ class UserFactory:
         )
 
     @staticmethod
-    async def create_with_tokens(db, token: str, is_active: bool = False):
-        user = await UserFactory.create(db, is_active=is_active)
-
-        from src.adapters.postgres.models import (
-            ActivationTokenModel,
-            PasswordResetTokenModel,
-            RefreshTokenModel,
-        )
-
-        tokens = [
-            ActivationTokenModel.create(user.id, token),
-            PasswordResetTokenModel.create(user.id, token),
-            RefreshTokenModel.create(user.id, token),
-        ]
-        db.add_all(tokens)
-        await db.flush()
-        return user
-
-    @staticmethod
     async def create_with_activation_token(
         db,
         token: str,
@@ -99,3 +80,25 @@ class UserFactory:
         db.add(token_model)
         await db.flush()
         return user, token
+
+    @staticmethod
+    async def create_with_refresh_token(
+        db,
+        token: str,
+    ) -> tuple[UserModel, str]:
+        from src.adapters.postgres.models import RefreshTokenModel
+
+        user = await UserFactory.create(db, is_active=True)
+        token_model = RefreshTokenModel.create(user.id, token)
+        db.add(token_model)
+        await db.flush()
+        return user, token
+
+    @staticmethod
+    async def create_with_profile(
+        db, profile_repo
+    ) -> tuple[UserModel, UserProfileModel]:
+        user = await UserFactory.create(db, is_active=True)
+        profile = await profile_repo.create(user.id)
+        await db.flush()
+        return user, profile

@@ -3,7 +3,7 @@ from pydantic import EmailStr
 from .interface import EmailSenderInterface
 
 
-class MockEmailService(EmailSenderInterface):
+class StubEmailSender(EmailSenderInterface):
     def __init__(self):
         self.sent_emails = []
 
@@ -27,7 +27,7 @@ class MockEmailService(EmailSenderInterface):
             }
         )
 
-    def get_sent_emails(self, email: str = None) -> list:
+    def get_sent_emails(self, email: str | None = None) -> list:
         if email:
             return [e for e in self.sent_emails if e["to"] == email]
         return self.sent_emails

@@ -37,7 +37,7 @@ async def test_reset_password_request_nonexistent_email_noop(
     email = faker.unique.email()
 
     resp = await client.post(
-        #  reset_password_request_url,
+        reset_password_request_url,
         json={"email": email},
     )
 

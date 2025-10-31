@@ -1,17 +1,32 @@
-from .core import jwt_manager, email_sender_stub, email_sender_mock
-from .database import db, _session_local, _engine, reset_db
-from .factories import user_factory
-from .repositories import (
-    user_repo,
+from .auth import (
+    auth_service,
+    jwt_manager,
+    logged_in_tokens,
     activation_token_repo,
     password_reset_token_repo,
     refresh_token_repo,
 )
-from .services import auth_service, user_service
-from .users import logged_in_tokens, inactive_user, active_user
+from .database import db, _session_local, _engine, reset_db
+from .email import email_sender_stub, email_sender_mock
+from .profile import (
+    storage_stub,
+    profile_repo,
+    profile_service,
+    mock_upload_file,
+)
+from .user import (
+    user_factory,
+    user_repo,
+    user_service,
+    active_user,
+    inactive_user,
+    user_with_profile,
+)
 
 __all__ = [
-    "user_repo",
+    "auth_service",
+    "jwt_manager",
+    "logged_in_tokens",
     "activation_token_repo",
     "password_reset_token_repo",
     "refresh_token_repo",
@@ -19,13 +34,16 @@ __all__ = [
     "_session_local",
     "_engine",
     "reset_db",
-    "user_factory",
-    "jwt_manager",
     "email_sender_stub",
     "email_sender_mock",
-    "auth_service",
+    "storage_stub",
+    "profile_repo",
+    "profile_service",
+    "mock_upload_file",
+    "user_factory",
+    "user_repo",
     "user_service",
-    "logged_in_tokens",
-    "inactive_user",
     "active_user",
+    "inactive_user",
+    "user_with_profile",
 ]

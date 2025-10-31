@@ -33,15 +33,23 @@ async def test_create_and_get_token(db, user_factory, token_model):
 
 
 @pytest.mark.parametrize(
-    "token_model, token_value",
+    "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token"),
-        (PasswordResetTokenModel, "reset_token"),
-        (RefreshTokenModel, "refresh_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
+        (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
+        (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
 )
-async def test_get_with_user(db, user_factory, token_model, token_value):
-    user = await user_factory.create_with_tokens(db, token_value)
+async def test_get_with_user(
+    db, user_factory, token_model, token_value, factory_method_name
+):
+    factory_method = getattr(user_factory, factory_method_name)
+    user, _ = await factory_method(db, token_value)
+
     repo = TokenRepository(db, token_model)
 
     fetched_user, token = await repo.get_with_user(token_value)
@@ -51,15 +59,23 @@ async def test_get_with_user(db, user_factory, token_model, token_value):
 
 
 @pytest.mark.parametrize(
-    "token_model, token_value",
+    "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token"),
-        (PasswordResetTokenModel, "reset_token"),
-        (RefreshTokenModel, "refresh_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
+        (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
+        (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
 )
-async def test_get_by_user(db, user_factory, token_model, token_value):
-    user = await user_factory.create_with_tokens(db, token_value)
+async def test_get_by_user(
+    db, user_factory, token_model, token_value, factory_method_name
+):
+    factory_method = getattr(user_factory, factory_method_name)
+    user, _ = await factory_method(db, token_value)
+
     repo = TokenRepository(db, token_model)
 
     token = await repo.get_by_user(user.id)
@@ -68,15 +84,23 @@ async def test_get_by_user(db, user_factory, token_model, token_value):
 
 
 @pytest.mark.parametrize(
-    "token_model, token_value",
+    "token_model, token_value, factory_method_name",
     [
-        (ActivationTokenModel, "activation_token"),
-        (PasswordResetTokenModel, "reset_token"),
-        (RefreshTokenModel, "refresh_token"),
+        (
+            ActivationTokenModel,
+            "activation_token",
+            "create_with_activation_token",
+        ),
+        (PasswordResetTokenModel, "reset_token", "create_with_reset_token"),
+        (RefreshTokenModel, "refresh_token", "create_with_refresh_token"),
     ],
 )
-async def test_delete_by_token(db, user_factory, token_model, token_value):
-    await user_factory.create_with_tokens(db, token_value)
+async def test_delete_by_token(
+    db, user_factory, token_model, token_value, factory_method_name
+):
+    factory_method = getattr(user_factory, factory_method_name)
+    await factory_method(db, token_value)
+
     repo = TokenRepository(db, token_model)
 
     await repo.delete(token_value)
@@ -86,16 +110,21 @@ async def test_delete_by_token(db, user_factory, token_model, token_value):
 
 
 @pytest.mark.parametrize(
-    "token_model",
+    "token_model, factory_method_name",
     [
-        ActivationTokenModel,
-        PasswordResetTokenModel,
-        RefreshTokenModel,
+        (ActivationTokenModel, "create_with_activation_token"),
+        (PasswordResetTokenModel, "create_with_reset_token"),
+        (RefreshTokenModel, "create_with_refresh_token"),
     ],
 )
-async def test_delete_by_user_id(db, user_factory, token_model):
+async def test_delete_by_user_id(
+    db, user_factory, token_model, factory_method_name
+):
     token_value = generate_secure_token()
-    user = await user_factory.create_with_tokens(db, token_value)
+
+    factory_method = getattr(user_factory, factory_method_name)
+    user, _ = await factory_method(db, token_value)
+
     repo = TokenRepository(db, token_model)
 
     await repo.delete_by_user_id(user.id)
