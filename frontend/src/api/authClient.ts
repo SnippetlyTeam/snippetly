@@ -67,3 +67,11 @@ export const changePassword = (
     },
   });
 }
+
+export const logout = (accessToken: AccessToken) => {
+  return authClient.post('/logout', {}, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}

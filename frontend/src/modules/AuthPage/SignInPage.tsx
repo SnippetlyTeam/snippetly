@@ -10,6 +10,7 @@ import toast, { type Toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import GoogleSignIn from './GoogleSignIn';
+import { flushSync } from 'react-dom';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -36,8 +37,9 @@ const SignInPage: React.FC = () => {
       return login(emailOrUsername, password);
     },
     onSuccess: (response) => {
-      setAccessToken(response.data.access_token);
-
+      flushSync(() => {
+        setAccessToken(response.data.access_token);
+      });
       navigate('/snippets', {
         replace: true,
         state: {

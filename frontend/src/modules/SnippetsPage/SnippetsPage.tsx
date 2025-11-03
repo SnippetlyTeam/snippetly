@@ -281,7 +281,7 @@ const SnippetsPage = () => {
       location.state &&
       (location.state.title || location.state.message || location.state.type)
     ) {
-      const { title = '', message = '', type = 'info' } = location.state || {};
+      const { title = '', message = '', type = 'success' } = location.state || {};
 
       toast.custom((t: Toast) => (
         <CustomToast

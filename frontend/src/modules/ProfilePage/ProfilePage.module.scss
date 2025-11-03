@@ -110,18 +110,39 @@
   align-items: center;
 }
 
-.editButton {
+.editButtons {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 16px;
-  padding: 16px;
-  background-color: var(--color-accent);
-  border: none;
-  border-radius: 99px;
-  height: 40px;
-  cursor: pointer;
+  gap: 16px;
+
+  &Button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 16px;
+    background-color: var(--color-accent);
+    border: none;
+    border-radius: 99px;
+    height: 40px;
+    cursor: pointer;
+  }
+  &Logout {
+    background-color: var(--color-red);
+    color: #fff;
+    box-shadow: 0 2px 12px 0 rgba(229, 57, 53, 0.18),
+      0 1.5px 4px 0 rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--color-red);
+    box-sizing: border-box;
+    transition: background-color 0.18s, color 0.18s, border-color 0.18s;
+
+    &:hover,
+    &:focus {
+      border: 1px solid #ef5350;
+      background-color: #ef5350;
+      color: #fff;
+    }
+  }
 }
 
 .profile {

@@ -7,9 +7,11 @@ import { NavLink, useNavigate, Outlet, useParams, useLocation } from 'react-rout
 import { useEffect } from 'react';
 import CustomToast from '../../components/CustomToast/CustomToast';
 import { toast, type Toast } from 'react-hot-toast';
+import { logout } from '../../api/authClient';
+import { flushSync } from 'react-dom';
 
 const ProfilePage = () => {
-  const { accessToken } = useAuthContext();
+  const { accessToken, setAccessToken } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
   const { username } = useParams();
@@ -39,7 +41,7 @@ const ProfilePage = () => {
       location.state &&
       (location.state.title || location.state.message || location.state.type)
     ) {
-      const { title = '', message = '', type = 'info' } = location.state || {};
+      const { title = '', message = '', type = 'success' } = location.state || {};
 
       toast.custom((t: Toast) => (
         <CustomToast
@@ -94,10 +96,26 @@ const ProfilePage = () => {
             </div>
 
             {(isMyProfile && !location.pathname.includes('/edit')) && (
-              <button
-                className={styles.editButton}
-                onClick={() => navigate(`/profile/${profile.username}/edit`)}
-              >Edit Profile</button>
+              <div className={styles.editButtons}>
+                <button
+                  className={`${styles.editButtonsButton} ${styles.editButtonsLogout}`}
+                  onClick={() => logout(accessToken).then(() => {
+                    flushSync(() => setAccessToken(undefined));
+                    navigate('/sign-in', {
+                      replace: true,
+                      state: {
+                        title: 'Logged Out',
+                        message: 'You have been logged out successfully.',
+                        type: 'success',
+                      }
+                    });
+                  })}
+                >Log out</button>
+                <button
+                  className={styles.editButtonsButton}
+                  onClick={() => navigate(`/profile/${profile.username}/edit`)}
+                >Edit Profile</button>
+              </div>
             )}
           </div>
           <nav className={styles.nav} aria-label="Profile sections">

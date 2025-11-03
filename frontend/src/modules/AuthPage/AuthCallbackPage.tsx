@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import MainButton from '../../components/MainButton/MainButton';
+import axios from 'axios';
+import { flushSync } from 'react-dom';
 
 const AuthCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -24,19 +26,11 @@ const AuthCallbackPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('http://localhost:8000/api/v1/auth/google/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to authenticate with Google.');
-        }
-
-        const data = await response.json();
-
-        setAccessToken(data.access_token);
+        const response = await axios.post('http://localhost:8000/api/v1/auth/google/callback',
+          { code },
+          { headers: { 'Content-Type': 'application/json' } }
+        );
+        flushSync(() => setAccessToken(response.data.access_token));
         navigate('/snippets', {
           replace: true,
           state: {
@@ -46,7 +40,11 @@ const AuthCallbackPage: React.FC = () => {
           }
         });
       } catch (err: any) {
-        setError(err.message || 'An error occurred during authentication.');
+        setError(
+          err.response?.data?.message ||
+          err.message ||
+          'An error occurred during authentication.'
+        );
       } finally {
         setIsLoading(false);
       }
