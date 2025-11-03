@@ -4,11 +4,12 @@ import { getProfile, getProfileByUsername, setAvatar } from '../../api/profileCl
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import { NavLink, useNavigate, Outlet, useParams, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import CustomToast from '../../components/CustomToast/CustomToast';
 import { toast, type Toast } from 'react-hot-toast';
-import { logout } from '../../api/authClient';
+import { logout, logoutAll } from '../../api/authClient';
 import { flushSync } from 'react-dom';
+import LogOutModal from './LogOutModal';
 
 const ProfilePage = () => {
   const { accessToken, setAccessToken } = useAuthContext();
@@ -16,6 +17,7 @@ const ProfilePage = () => {
   const location = useLocation();
   const { username } = useParams();
   const queryClient = useQueryClient();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: myProfile } = useQuery({
     queryKey: ['myProfile', accessToken],
@@ -86,8 +88,43 @@ const ProfilePage = () => {
     return <Loader />;
   }
 
+  const handleLogout = () => {
+    logout(accessToken).then(() => {
+      flushSync(() => setAccessToken(undefined));
+      navigate('/sign-in', {
+        replace: true,
+        state: {
+          title: 'Logged Out',
+          message: 'You have been logged out successfully.',
+          type: 'success',
+        }
+      });
+    });
+  };
+
+  const handleLogoutAll = () => {
+    logoutAll(accessToken).then(() => {
+      flushSync(() => setAccessToken(undefined));
+      navigate('/sign-in', {
+        replace: true,
+        state: {
+          title: 'Logged Out Everywhere',
+          message: 'You have been logged out from all devices and sessions.',
+          type: 'success',
+        }
+      });
+    });
+  };
+
   return (
     <main className={styles.main}>
+      {isModalOpen && (
+        <LogOutModal
+          onClose={() => setIsModalOpen(false)}
+          onLogout={handleLogout}
+          onLogoutAll={handleLogoutAll}
+        />
+      )}
       <div className={styles.mainContent}>
         <div className={styles.head}>
           <div className={styles.user}>
@@ -150,20 +187,7 @@ const ProfilePage = () => {
               <div className={styles.editButtons}>
                 <button
                   className={`${styles.editButtonsButton} ${styles.editButtonsLogout}`}
-                  onClick={() => logout(accessToken).then(() => {
-                    // Use flushSync to ensure the access token is undefined *before* navigating.
-                    // This avoids a wrong behaviour where navigation happens before the token is actually set,
-                    // which could cause protected routes/components to not recognize the authenticated state.
-                    flushSync(() => setAccessToken(undefined));
-                    navigate('/sign-in', {
-                      replace: true,
-                      state: {
-                        title: 'Logged Out',
-                        message: 'You have been logged out successfully.',
-                        type: 'success',
-                      }
-                    });
-                  })}
+                  onClick={() => setIsModalOpen(true)}
                 >Log out</button>
                 <button
                   className={styles.editButtonsButton}
