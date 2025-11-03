@@ -6,7 +6,8 @@ const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
 
 export const authClient = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/auth`,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
 export const register = (username: string, email: string, password: string) => {
@@ -23,7 +24,6 @@ export const activate = (activation_token: string | undefined) => {
 
 type LoginType = {
   access_token: string;
-  refresh_token: string
 }
 
 export const login = (
@@ -37,10 +37,8 @@ type RefreshResponse = {
   access_token: string;
 };
 
-export const refresh = (
-  refresh_token: string
-): Promise<AxiosResponse<RefreshResponse>> => {
-  return authClient.post<RefreshResponse>('/refresh', { refresh_token });
+export const refresh = (): Promise<AxiosResponse<RefreshResponse>> => {
+  return authClient.post<RefreshResponse>('/refresh');
 };
 
 export const resetRequest = (email: string) => {
@@ -69,3 +67,17 @@ export const changePassword = (
     },
   });
 }
+
+export const logout = (accessToken: AccessToken) => {
+  return authClient.post('/logout', {}, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+export const loginGoogleCallback = (code: string) => {
+  return authClient.post('/google/callback', { code }, {
+    headers: { 'Content-Type': 'application/json' }
+  });
+};

@@ -7,7 +7,8 @@ const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
 
 export const profileClient = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/profile`,
-  headers: { 'Content-Type': 'application/json' }
+  headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 })
 
 export const getProfile = (token: AccessToken): Promise<AxiosResponse<ProfileType>> => {

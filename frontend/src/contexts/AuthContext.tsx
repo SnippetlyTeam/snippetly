@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Loader } from "../components/Loader";
-import type { AccessToken, RefreshToken } from "../types/Tokens";
+import type { AccessToken } from "../types/Tokens";
+import { refresh } from "../api/authClient";
 
 type AuthContextType = {
   accessToken: AccessToken;
@@ -24,8 +25,6 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
 
   const setAccessToken = (token: AccessToken) => setAccessTokenState(token);
 
-  const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
-
   const [email, setEmailState] = useState<string>(() => localStorage.getItem('reset_email') || '');
 
   const setEmail = (newEmail: string) => {
@@ -38,44 +37,22 @@ export const AuthProvider: React.FC<Props> = ({ children }) => {
   };
 
   const refreshAuthToken = async (): Promise<AccessToken> => {
-    const storedRefreshToken: RefreshToken = localStorage.getItem('refresh_token') || undefined;
+    const response = await refresh();
+    const newAccessToken: AccessToken = response.data.access_token;
+    setAccessToken(newAccessToken);
 
-    if (!storedRefreshToken) {
-      setAccessToken(undefined);
-      return undefined;
-    }
-
-    try {
-      const response = await fetch(`${SERVER_BASE_URL}/api/v1/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: storedRefreshToken })
-      });
-
-      if (!response.ok) {
-        localStorage.removeItem('refresh_token');
-        throw new Error('Failed to refresh auth token');
-      }
-
-      const data = await response.json();
-      const newAccessToken: AccessToken = data.access_token;
-      setAccessToken(newAccessToken);
-
-      return newAccessToken;
-    } catch (error) {
-      setAccessToken(undefined);
-      return undefined;
-    }
+    return newAccessToken;
   };
 
   useEffect(() => {
     const attemptRestoreSession = async () => {
-      await refreshAuthToken();
-
-      setIsTokenLoading(false);
+      try {
+        await refreshAuthToken();
+      } catch (error) {
+        setAccessToken(undefined);
+      } finally {
+        setIsTokenLoading(false);
+      }
     };
 
     attemptRestoreSession();

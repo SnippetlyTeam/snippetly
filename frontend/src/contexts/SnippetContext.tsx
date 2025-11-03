@@ -23,18 +23,20 @@ export const SnippetProvider: React.FC<Props> = ({ children }) => {
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const response = await getFavorites(accessToken);
-        if (response && response.data && Array.isArray(response.data.snippets)) {
-          setFavoriteSnippetsIds(response.data.snippets.map(snip => snip.uuid));
-        } else {
+    if (accessToken) {
+      (async () => {
+        try {
+          const response = await getFavorites(accessToken);
+          if (response && response.data && Array.isArray(response.data.snippets)) {
+            setFavoriteSnippetsIds(response.data.snippets.map(snip => snip.uuid));
+          } else {
+            setFavoriteSnippetsIds([]);
+          }
+        } catch (err) {
           setFavoriteSnippetsIds([]);
         }
-      } catch (err) {
-        setFavoriteSnippetsIds([]);
-      }
-    })();
+      })();
+    }
   }, [accessToken]);
 
   return (

@@ -13,7 +13,8 @@ export const snippetsClient: AxiosInstance = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/snippets`,
   headers: {
     'Content-Type': 'application/json',
-  }
+  },
+  withCredentials: true,
 });
 
 export const getAll = (

@@ -8,8 +8,9 @@ from src.core.config import Settings
 def setup_middlewares(app: FastAPI, settings: Settings) -> None:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=[settings.FRONTEND_URL],
         allow_methods=["*"],
+        allow_credentials=True,
         allow_headers=["*"],
     )
     app.add_middleware(

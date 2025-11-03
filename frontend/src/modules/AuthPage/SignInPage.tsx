@@ -10,6 +10,7 @@ import toast, { type Toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { Loader } from '../../components/Loader';
 import GoogleSignIn from './GoogleSignIn';
+import { flushSync } from 'react-dom';
 
 const SignInPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -36,9 +37,12 @@ const SignInPage: React.FC = () => {
       return login(emailOrUsername, password);
     },
     onSuccess: (response) => {
-      setAccessToken(response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
-
+      // Use flushSync to ensure the access token is set *before* navigating.
+      // This avoids a wrong behaviour where navigation happens before the token is actually set,
+      // which could cause protected routes/components to not recognize the authenticated state.
+      flushSync(() => {
+        setAccessToken(response.data.access_token);
+      });
       navigate('/snippets', {
         replace: true,
         state: {
@@ -123,8 +127,8 @@ const SignInPage: React.FC = () => {
 
   function handleSignInWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
-
-    window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
+    const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+    window.location.href = `${SERVER_BASE_URL}/api/v1/auth/google/url`;
   }
 
   const location = useLocation();

@@ -65,5 +65,4 @@ async def google_oauth_callback(
         raise HTTPException(status_code=500, detail=str(e)) from e
 
     set_refresh_token(response, result["refresh_token"])
-
     return UserLoginResponseSchema(access_token=result["access_token"])
