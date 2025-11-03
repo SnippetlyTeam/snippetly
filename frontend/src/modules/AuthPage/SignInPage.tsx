@@ -37,6 +37,9 @@ const SignInPage: React.FC = () => {
       return login(emailOrUsername, password);
     },
     onSuccess: (response) => {
+      // Use flushSync to ensure the access token is set *before* navigating.
+      // This avoids a wrong behaviour where navigation happens before the token is actually set,
+      // which could cause protected routes/components to not recognize the authenticated state.
       flushSync(() => {
         setAccessToken(response.data.access_token);
       });
@@ -124,8 +127,8 @@ const SignInPage: React.FC = () => {
 
   function handleSignInWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
-
-    window.location.href = 'http://localhost:8000/api/v1/auth/google/url'
+    const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+    window.location.href = `${SERVER_BASE_URL}/api/v1/auth/google/url`;
   }
 
   const location = useLocation();

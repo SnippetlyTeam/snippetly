@@ -100,6 +100,9 @@ const ProfilePage = () => {
                 <button
                   className={`${styles.editButtonsButton} ${styles.editButtonsLogout}`}
                   onClick={() => logout(accessToken).then(() => {
+                    // Use flushSync to ensure the access token is undefined *before* navigating.
+                    // This avoids a wrong behaviour where navigation happens before the token is actually set,
+                    // which could cause protected routes/components to not recognize the authenticated state.
                     flushSync(() => setAccessToken(undefined));
                     navigate('/sign-in', {
                       replace: true,

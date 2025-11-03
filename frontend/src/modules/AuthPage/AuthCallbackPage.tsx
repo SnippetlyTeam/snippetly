@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import MainButton from '../../components/MainButton/MainButton';
-import axios from 'axios';
 import { flushSync } from 'react-dom';
+import { loginGoogleCallback } from '../../api/authClient';
 
 const AuthCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -26,10 +26,7 @@ const AuthCallbackPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await axios.post('http://localhost:8000/api/v1/auth/google/callback',
-          { code },
-          { headers: { 'Content-Type': 'application/json' } }
-        );
+        const response = await loginGoogleCallback(code as string);
         flushSync(() => setAccessToken(response.data.access_token));
         navigate('/snippets', {
           replace: true,

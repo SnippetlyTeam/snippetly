@@ -75,3 +75,9 @@ export const logout = (accessToken: AccessToken) => {
     },
   });
 }
+
+export const loginGoogleCallback = (code: string) => {
+  return authClient.post('/google/callback', { code }, {
+    headers: { 'Content-Type': 'application/json' }
+  });
+};
