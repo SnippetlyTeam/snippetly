@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import styles from './ProfilePage.module.scss';
-import { getProfile, getProfileByUsername } from '../../api/profileClient';
+import { getProfile, getProfileByUsername, setAvatar } from '../../api/profileClient';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
 import { NavLink, useNavigate, Outlet, useParams, useLocation } from 'react-router-dom';
@@ -15,6 +15,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { username } = useParams();
+  const queryClient = useQueryClient();
 
   const { data: myProfile } = useQuery({
     queryKey: ['myProfile', accessToken],
@@ -31,6 +32,26 @@ const ProfilePage = () => {
       return getProfile(accessToken).then(res => res.data);
     },
     enabled: !!accessToken,
+  });
+
+  const { mutate } = useMutation({
+    mutationFn: (avatarFile: File) => setAvatar(accessToken, avatarFile),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile', username, accessToken] });
+      queryClient.invalidateQueries({ queryKey: ['myProfile', accessToken] });
+    },
+    onError: () => {
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={'Image Too Large'}
+          message={'The selected image exceeds the 2MB size limit. Please choose a smaller file.'}
+          type={'error'}
+        />
+      ), {
+        duration: 2500,
+      });
+    },
   });
 
   const isMyProfile =
@@ -88,12 +109,42 @@ const ProfilePage = () => {
               </div>
               <div className={styles.userInfo}>
                 <h3 className={styles.name}>
-                  {profile.first_name + ' '}
-                  {profile.last_name}
+                  {(profile.first_name || profile.last_name)
+                    ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+                    : 'User'}
                 </h3>
                 <span className={styles.username}>@{profile.username}</span>
               </div>
             </div>
+
+            {location.pathname.includes('/edit') && (
+              <>
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  style={{ display: 'none' }}
+                  accept="image/png, image/jpeg, image/jpg, image/gif, image/webp, image/heic"
+                  onChange={e => {
+                    const file = e.target.files && e.target.files[0];
+                    if (file) {
+                      mutate(file);
+                    }
+                  }}
+                />
+                <button
+                  className={`${styles.editButtonsButton} ${styles.editButtonsAvatar}`}
+                  onClick={() => {
+                    const input = document.getElementById('avatar-upload');
+                    if (input) {
+                      input.click();
+                    }
+                  }}
+                  type="button"
+                >
+                  Update Image
+                </button>
+              </>
+            )}
 
             {(isMyProfile && !location.pathname.includes('/edit')) && (
               <div className={styles.editButtons}>
