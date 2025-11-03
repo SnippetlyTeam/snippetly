@@ -37,7 +37,6 @@ const SignInPage: React.FC = () => {
     },
     onSuccess: (response) => {
       setAccessToken(response.data.access_token);
-      localStorage.setItem('refresh_token', response.data.refresh_token);
 
       navigate('/snippets', {
         replace: true,

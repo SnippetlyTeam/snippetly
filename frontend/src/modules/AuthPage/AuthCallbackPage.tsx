@@ -37,8 +37,6 @@ const AuthCallbackPage: React.FC = () => {
         const data = await response.json();
 
         setAccessToken(data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-
         navigate('/snippets', {
           replace: true,
           state: {
