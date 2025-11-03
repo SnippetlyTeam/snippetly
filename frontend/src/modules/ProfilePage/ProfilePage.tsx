@@ -95,6 +95,14 @@ const ProfilePage = () => {
               </div>
             </div>
 
+            {location.pathname.includes('/edit') && (
+              <button
+                className={`${styles.editButtonsButton} ${ styles.editButtonsAvatar}`}
+              >
+                Change avatar
+              </button>
+            )}
+
             {(isMyProfile && !location.pathname.includes('/edit')) && (
               <div className={styles.editButtons}>
                 <button
