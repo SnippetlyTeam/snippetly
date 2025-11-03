@@ -40,8 +40,17 @@ const ProfilePage = () => {
       queryClient.invalidateQueries({ queryKey: ['profile', username, accessToken] });
       queryClient.invalidateQueries({ queryKey: ['myProfile', accessToken] });
     },
-    onError: (error) => {
-      console.log(error);
+    onError: () => {
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={'Image Too Large'}
+          message={'The selected image exceeds the 2MB size limit. Please choose a smaller file.'}
+          type={'error'}
+        />
+      ), {
+        duration: 2500,
+      });
     },
   });
 
@@ -100,8 +109,9 @@ const ProfilePage = () => {
               </div>
               <div className={styles.userInfo}>
                 <h3 className={styles.name}>
-                  {profile.first_name + ' '}
-                  {profile.last_name}
+                  {(profile.first_name || profile.last_name)
+                    ? `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim()
+                    : 'User'}
                 </h3>
                 <span className={styles.username}>@{profile.username}</span>
               </div>
