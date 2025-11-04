@@ -2,8 +2,21 @@ import secrets
 
 from pydantic import SecretStr
 
-from .api import APISettings
-from .config import BaseAppSettings
+from .base import BaseAppSettings
+
+
+class APISettings(BaseAppSettings):
+    FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_URL: str = "http://localhost:8000"
+
+
+class EmailSettings(BaseAppSettings):
+    EMAIL_APP_PASSWORD: SecretStr | None = None
+    EMAIL_HOST: str = "localhost"
+    EMAIL_PORT: int = 1111
+    EMAIL_HOST_USER: str = ""
+    FROM_EMAIL: str = "no-reply@example.com"
+    USE_TLS: bool = False
 
 
 class SecuritySettings(BaseAppSettings):
@@ -32,3 +45,14 @@ class OAuthSettings(APISettings, BaseAppSettings):
     def model_post_init(self, context: dict, /) -> None:
         if self.REDIRECT_URI == "":
             self.REDIRECT_URI = f"{self.FRONTEND_URL}/auth/google"
+
+
+class OracleStorageSettings(BaseAppSettings):
+    ORACLE_USER_OCID: str
+    ORACLE_TENANCY_OCID: str
+    ORACLE_REGION: str
+    ORACLE_NAMESPACE: str
+    ORACLE_BUCKET_NAME: str
+    ORACLE_FINGERPRINT: str
+    ORACLE_KEY_FILE_PATH: str
+    ORACLE_BASE_URL: str
