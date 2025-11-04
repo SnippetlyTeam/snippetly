@@ -128,7 +128,7 @@ class SnippetService(SnippetServiceInterface):
         snippet_record = await self._model_repo.get_by_title(
             data.title, data.user_id
         )
-        if snippet_record.title == data.title:
+        if snippet_record:
             raise exc.SnippetAlreadyExistsError
 
         try:
@@ -208,12 +208,19 @@ class SnippetService(SnippetServiceInterface):
             total_pages=self._paginator.total_pages(total, per_page),
         )
 
-    async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:
+    async def get_snippet_by_uuid(
+        self, uuid: UUID, user: UserModel
+    ) -> SnippetResponseSchema:
         snippet = await self._model_repo.get_by_uuid_with_tags(uuid)
         if not snippet:
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"
             )
+        if snippet.user_id != user.id and user.is_admin is False:
+            raise exc.NoPermissionError(
+                "User have no permission to get snippet"
+            )
+
         document = await self._doc_repo.get_by_id(snippet.mongodb_id)
 
         if document is None:

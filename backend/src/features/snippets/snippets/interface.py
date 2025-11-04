@@ -82,16 +82,21 @@ class SnippetServiceInterface(ABC):
 
     # TODO: total favorites
     @abstractmethod
-    async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:
+    async def get_snippet_by_uuid(
+        self, uuid: UUID, user: UserModel
+    ) -> SnippetResponseSchema:
         """
         Method that gets data from PostgreSQL & MongoDB and returns
         single Snippet by UUID
 
         :param uuid: identifier of Snippet
         :type: UUID
+        :param user: User requesting snippet details
+        :type: UserModel
         :return: Snippet Pydantic Model
         :rtype: SnippetResponseSchema
         :raises SnippetNotFound: If Snippet was not found in db
+                NoPermissionError: If user is not an admin or a snippet owner
         """
         pass
 

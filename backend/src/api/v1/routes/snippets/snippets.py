@@ -56,7 +56,7 @@ router = APIRouter(
             description="Conflict",
             examples={
                 "already_exists": "You already have a snippet with this "
-                "title. Please choose a different name."
+                                  "title. Please choose a different name."
             },
         ),
         422: create_error_examples(
@@ -91,7 +91,7 @@ async def create_snippet(
         raise HTTPException(
             status_code=409,
             detail="You already have a snippet with this title. "
-            "Please choose a different name.",
+                   "Please choose a different name.",
         ) from e
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
@@ -109,7 +109,7 @@ async def create_snippet(
     "/",
     summary="Get all snippets",
     description="Get all snippets except of other user's private snippets, "
-    "if access token provided",
+                "if access token provided",
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -199,7 +199,6 @@ async def get_all_snippets(
     "/{uuid}",
     summary="Get Snippet details",
     description="Get Snippet by UUID",
-    dependencies=[Depends(get_current_user)],
     responses={
         401: create_error_examples(
             description="Unauthorized",
@@ -207,7 +206,10 @@ async def get_all_snippets(
         ),
         403: create_error_examples(
             description="Forbidden",
-            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+            examples={
+                **exm.FORBIDDEN_ERROR_EXAMPLES,
+                "no_permission": "User have no permission to get snippet",
+            },
         ),
         404: create_error_examples(
             description="Not Found",
@@ -227,15 +229,18 @@ async def get_all_snippets(
 async def get_snippet(
     request: Request,
     response: Response,
+    user: Annotated[UserModel, Depends(get_current_user)],
     uuid: UUID,
     snippet_service: Annotated[
         SnippetServiceInterface, Depends(get_snippet_service)
     ],
 ) -> SnippetResponseSchema:
     try:
-        return await snippet_service.get_snippet_by_uuid(uuid)
+        return await snippet_service.get_snippet_by_uuid(uuid, user)
     except exc.SnippetNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e
+    except exc.NoPermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
 
 
 @router.patch(
