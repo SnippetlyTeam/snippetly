@@ -13,7 +13,7 @@ def _build_settings() -> Settings:
     env = os.getenv("ENVIRONMENT", "development")
 
     if env == "production":
-        return ProductionSettings()
+        return ProductionSettings()  # type: ignore[reportCallIssue]
     if env == "testing":
         return TestingSettings()
     return DevelopmentSettings()
