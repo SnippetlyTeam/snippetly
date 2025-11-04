@@ -97,3 +97,10 @@ export const removeFavorite = (token: AccessToken, uuid: string) => {
     { headers: { 'Authorization': `Bearer ${token}` } },
   )
 };
+
+export const search = (token: AccessToken, query: string) => {
+  return snippetsClient.get(
+    `/search/${query}`,
+    { headers: { 'Authorization': `Bearer ${token}` } },
+  )
+}

@@ -5,24 +5,52 @@ import Snippet from '../../components/Snippet/Snippet';
 import type { SnippetType } from '../../types/SnippetType';
 import { useAuthContext } from '../../contexts/AuthContext';
 import { Loader } from '../../components/Loader';
-import { getAll } from '../../api/snippetsClient';
+import { getAll, search } from '../../api/snippetsClient';
 import toast, { type Toast } from 'react-hot-toast';
 import CustomToast from '../../components/CustomToast/CustomToast';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { FiltersType } from '../../types/FiltersType';
 import Pagination from '../../components/Pagination/Pagination';
 import Tag from '../../components/Tag/Tag';
 import debounce from 'lodash.debounce';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+
+interface SnippetSearchResult {
+  results: {
+    title: string;
+    uuid: string;
+    language: string;
+  }[];
+}
 
 const SnippetsPage = () => {
   const [searchInputValue, setSearchInputValue] = useState('');
+  const [debouncedSearchValue, setDebouncedSearchValue] = useState('');
   const [usernameInputValue, setUsernameInputValue] = useState('');
+  const [isSearchResultsVisible, setIsSearchResultsVisible] = useState(false);
   const {
     accessToken,
     isTokenLoading,
     isAuthenticated
   } = useAuthContext();
+
+  const {
+    data: snippetsSearchResult = { results: [] },
+    isFetching: isSearchLoading,
+  } = useQuery<SnippetSearchResult>({
+    queryKey: ['snippets', accessToken, debouncedSearchValue],
+    queryFn: async () => {
+      try {
+        const response = await search(accessToken, debouncedSearchValue);
+        return response.data || { results: [] };
+      } catch (error) {
+        return { results: [] };
+      }
+    },
+    enabled: debouncedSearchValue.length > 0,
+    placeholderData: keepPreviousData,
+  });
 
   const [snippets, setSnippets] = useState<SnippetType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -32,6 +60,7 @@ const SnippetsPage = () => {
   const languageDropdownRef = useRef<HTMLDivElement>(null);
   const visibilityDropdownRef = useRef<HTMLDivElement>(null);
   const perPageDropdownRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
   const [isPerPageDropdownOpen, setIsPerPageDropdownOpen] = useState(false);
@@ -46,6 +75,10 @@ const SnippetsPage = () => {
 
   useOnClickOutside(perPageDropdownRef as React.RefObject<HTMLElement>, () => {
     setIsPerPageDropdownOpen(false);
+  });
+
+  useOnClickOutside(searchContainerRef as React.RefObject<HTMLElement>, () => {
+    setIsSearchResultsVisible(false);
   });
 
   const location = useLocation();
@@ -238,6 +271,19 @@ const SnippetsPage = () => {
     debouncedFilterFunction('username', value);
   };
 
+  const debouncedSetSearchValue = useCallback(
+    debounce((value: string) => {
+      setDebouncedSearchValue(value);
+    }, 400),
+    []
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchInputValue(value);
+    debouncedSetSearchValue(value);
+    setIsSearchResultsVisible(true);
+  };
+
   useEffect(() => {
     if (isTokenLoading) {
       setIsLoading(true);
@@ -314,15 +360,26 @@ const SnippetsPage = () => {
         <label htmlFor="snippet-search" className="visually-hidden" id="snippet-search-label">
           Search your snippets
         </label>
-        <input
-          id="snippet-search"
-          onChange={(event) => setSearchInputValue(event.target.value)}
-          type="text"
-          placeholder='Search your snippets...'
-          value={searchInputValue}
-          className={styles.input}
-          aria-labelledby="snippet-search-label"
-        />
+
+        <div className={styles.search} ref={searchContainerRef}>
+          <input
+            id="snippet-search"
+            onChange={e => handleSearchChange(e.target.value)}
+            onFocus={() => searchInputValue.length > 0 && setIsSearchResultsVisible(true)}
+            type="text"
+            placeholder='Search your snippets...'
+            value={searchInputValue}
+            aria-labelledby="snippet-search-label"
+          />
+
+          {isSearchResultsVisible && searchInputValue.length > 0 && (snippetsSearchResult.results?.length > 0 || isSearchLoading) && (
+            <ul className={styles.searchResultsList}>
+              {snippetsSearchResult.results?.map((snippet: { title: string, uuid: string, language: string }) => (
+                <Link to={`/snippets/${snippet.uuid}`} className={styles.searchResultsItem} key={snippet.uuid}>{snippet.title}</Link>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <section
           className={styles.filters}
