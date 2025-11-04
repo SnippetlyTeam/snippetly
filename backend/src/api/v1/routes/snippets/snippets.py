@@ -56,7 +56,7 @@ router = APIRouter(
             description="Conflict",
             examples={
                 "already_exists": "You already have a snippet with this "
-                                  "title. Please choose a different name."
+                "title. Please choose a different name."
             },
         ),
         422: create_error_examples(
@@ -91,7 +91,7 @@ async def create_snippet(
         raise HTTPException(
             status_code=409,
             detail="You already have a snippet with this title. "
-                   "Please choose a different name.",
+            "Please choose a different name.",
         ) from e
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
@@ -109,7 +109,7 @@ async def create_snippet(
     "/",
     summary="Get all snippets",
     description="Get all snippets except of other user's private snippets, "
-                "if access token provided",
+    "if access token provided",
     responses={
         401: create_error_examples(
             description="Unauthorized",
