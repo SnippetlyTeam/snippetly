@@ -76,6 +76,14 @@ export const logout = (accessToken: AccessToken) => {
   });
 }
 
+export const logoutAll = (accessToken: AccessToken) => {
+  return authClient.post('/revoke-all-tokens', {}, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
 export const loginGoogleCallback = (code: string) => {
   return authClient.post('/google/callback', { code }, {
     headers: { 'Content-Type': 'application/json' }
