@@ -54,7 +54,10 @@ router = APIRouter(
         ),
         409: create_error_examples(
             description="Conflict",
-            examples={"snippet_already_exists": "Snippet with this user ID and title already exists"},
+            examples={
+                "already_exists": "You already have a snippet with this "
+                "title. Please choose a different name."
+            },
         ),
         422: create_error_examples(
             description="Validation Error",
@@ -85,7 +88,11 @@ async def create_snippet(
     try:
         return await snippet_service.create_snippet(data)
     except exc.SnippetAlreadyExistsError as e:
-        raise HTTPException(status_code=409, detail="Snippet with this user ID and title already exists") from e
+        raise HTTPException(
+            status_code=409,
+            detail="You already have a snippet with this title. "
+            "Please choose a different name.",
+        ) from e
     except ValidationError as e:
         logger.error(f"Validation error: {e}")
         raise HTTPException(
@@ -102,7 +109,7 @@ async def create_snippet(
     "/",
     summary="Get all snippets",
     description="Get all snippets except of other user's private snippets, "
-                "if access token provided",
+    "if access token provided",
     responses={
         401: create_error_examples(
             description="Unauthorized",

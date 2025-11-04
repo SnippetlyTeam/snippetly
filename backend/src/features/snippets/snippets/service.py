@@ -125,7 +125,9 @@ class SnippetService(SnippetServiceInterface):
     async def create_snippet(
         self, data: SnippetCreateSchema
     ) -> SnippetResponseSchema:
-        snippet_record = await self._model_repo.get_by_title(data.title, data.user_id)
+        snippet_record = await self._model_repo.get_by_title(
+            data.title, data.user_id
+        )
         if snippet_record.title == data.title:
             raise exc.SnippetAlreadyExistsError
 

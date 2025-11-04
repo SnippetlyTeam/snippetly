@@ -167,8 +167,12 @@ class SnippetRepository:
         result = await self._db.execute(query)
         return result.scalars().all()  # type: ignore
 
-    async def get_by_title(self, title: str, user_id: int) -> Optional[SnippetModel]:
-        query = select(SnippetModel).where(SnippetModel.title == title, SnippetModel.user_id == user_id)
+    async def get_by_title(
+        self, title: str, user_id: int
+    ) -> Optional[SnippetModel]:
+        query = select(SnippetModel).where(
+            SnippetModel.title == title, SnippetModel.user_id == user_id
+        )
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 

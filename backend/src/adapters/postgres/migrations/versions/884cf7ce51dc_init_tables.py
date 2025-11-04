@@ -8,9 +8,8 @@ Create Date: 2025-10-21 14:09:17.416878
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "884cf7ce51dc"
@@ -129,7 +128,7 @@ def upgrade() -> None:
         sa.Column("last_name", sa.String(length=100), nullable=True),
         sa.Column(
             "gender",
-            sa.Enum("MALE", "FEMALE", name="genderenum"),
+            sa.Enum("MALE", "FEMALE", "OTHER", name="genderenum"),
             nullable=True,
         ),
         sa.Column("date_of_birth", sa.Date(), nullable=True),
