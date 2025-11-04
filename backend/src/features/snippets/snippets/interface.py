@@ -31,6 +31,7 @@ class SnippetServiceInterface(ABC):
                 PyMongoError: If error occurred during SnippetDocument creation
                 ValidationError: If during document creation
                 validation error occurred
+                SnippetAlreadyExistsError: If snippet with same title already exists
         """
         pass
 

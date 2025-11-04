@@ -30,6 +30,10 @@ class SnippetNotFoundError(Exception):
     pass
 
 
+class SnippetAlreadyExistsError(Exception):
+    pass
+
+
 class NoPermissionError(Exception):
     pass
 

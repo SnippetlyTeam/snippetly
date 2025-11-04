@@ -27,7 +27,7 @@ class SnippetSearchService(SnippetSearchServiceInterface):
         if cached:
             return SnippetSearchResponseSchema(**cached)
 
-        snippets = await self._repo.get_by_title(title, user_id, limit)
+        snippets = await self._repo.get_by_title_list(title, user_id, limit)
 
         snippet_list = []
         for snippet in snippets:  # type: ignore
