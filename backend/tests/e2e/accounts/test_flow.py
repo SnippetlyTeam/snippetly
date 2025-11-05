@@ -1,4 +1,5 @@
 from tests.utils.user import create_user_data
+from .helpers import extract_refresh_token_from_set_cookie
 from .routes import (
     register_url,
     activate_url,
@@ -7,16 +8,6 @@ from .routes import (
     logout_url,
     revoke_all_tokens_url,
 )
-
-
-def _extract_refresh_token_from_set_cookie(
-    set_cookie_header: str,
-) -> str | None:
-    prefix = "refresh_token="
-    if prefix not in set_cookie_header:
-        return None
-    after = set_cookie_header.split(prefix, 1)[1]
-    return after.split(";", 1)[0]
 
 
 async def test_register_activate_login(client, email_sender_mock, faker):
@@ -51,7 +42,7 @@ async def test_login_refresh_logout_flow(db, user_factory, client):
     assert login_resp.status_code == 200
     access_token = login_resp.json()["access_token"]
     set_cookie_header = login_resp.headers.get("set-cookie", "")
-    refresh_token = _extract_refresh_token_from_set_cookie(set_cookie_header)
+    refresh_token = extract_refresh_token_from_set_cookie(set_cookie_header)
     assert refresh_token
 
     refresh_ok = await client.post(
@@ -86,7 +77,7 @@ async def test_revoke_all_tokens_invalidates_all_sessions(
     )
     assert login_a.status_code == 200
     access_token_a = login_a.json()["access_token"]
-    rt_cookie_a = _extract_refresh_token_from_set_cookie(
+    rt_cookie_a = extract_refresh_token_from_set_cookie(
         login_a.headers.get("set-cookie", "")
     )
     assert rt_cookie_a
@@ -96,7 +87,7 @@ async def test_revoke_all_tokens_invalidates_all_sessions(
         json={"login": user.email, "password": "Test1234!"},
     )
     assert login_b.status_code == 200
-    rt_cookie_b = _extract_refresh_token_from_set_cookie(
+    rt_cookie_b = extract_refresh_token_from_set_cookie(
         login_b.headers.get("set-cookie", "")
     )
     assert rt_cookie_b

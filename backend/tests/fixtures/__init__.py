@@ -14,6 +14,7 @@ from .profile import (
     profile_service,
     mock_upload_file,
 )
+from .client import auth_client
 from .user import (
     user_factory,
     user_repo,
@@ -24,6 +25,7 @@ from .user import (
 )
 
 __all__ = [
+    "auth_client",
     "auth_service",
     "jwt_manager",
     "logged_in_tokens",
