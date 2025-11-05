@@ -1,19 +1,6 @@
-from io import BytesIO
-
 import pytest_asyncio
-from PIL import Image
 
 from .routes import profile_url, avatar_url
-
-
-@pytest_asyncio.fixture
-async def avatar_file():
-    image = Image.new("RGB", (100, 100), color="red")
-    file = BytesIO()
-    image.save(file, "PNG")
-    file.name = "test_avatar.png"
-    file.seek(0)
-    return file
 
 
 @pytest_asyncio.fixture

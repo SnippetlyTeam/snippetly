@@ -7,6 +7,8 @@ from .routes import (
     refresh_url,
     logout_url,
     revoke_all_tokens_url,
+    profile_url,
+    avatar_url
 )
 
 
@@ -109,3 +111,42 @@ async def test_revoke_all_tokens_invalidates_all_sessions(
 
     assert refresh_a.status_code == 401
     assert refresh_b.status_code == 401
+
+
+async def test_profile_e2e_flow(auth_client, avatar_file):
+    client, user = auth_client
+
+    profile_resp = await client.get(profile_url)
+    assert profile_resp.status_code == 200
+    profile_data = profile_resp.json()
+    assert profile_data["username"] == user.username
+    assert "email" not in profile_data
+
+    profile_specific = await client.get(f"{profile_url}{user.username}")
+    assert profile_specific.status_code == 200
+    data = profile_specific.json()
+    assert data["username"] == user.username
+
+    update_data = {"first_name": "John", "last_name": "Doe", "info": "QA engineer"}
+    patch_resp = await client.patch(profile_url, json=update_data)
+    assert patch_resp.status_code == 200
+    patched = patch_resp.json()
+    assert patched["first_name"] == "John"
+    assert patched["info"] == "QA engineer"
+
+    avatar_resp = await client.post(
+        avatar_url,
+        files={"avatar": avatar_file},
+    )
+    assert avatar_resp.status_code == 200
+    assert avatar_resp.json()["message"] == "Profile picture updated"
+
+    delete_resp = await client.delete(avatar_url)
+    assert delete_resp.status_code == 200
+    assert delete_resp.json()["message"] == "Profile avatar has been deleted successfully"
+
+
+async def test_profile_not_found_returns_404(auth_client):
+    client, _ = auth_client
+    resp = await client.get(f"{profile_url}/nonexistent_user")
+    assert resp.status_code == 404
