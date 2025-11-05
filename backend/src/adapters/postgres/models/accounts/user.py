@@ -59,7 +59,10 @@ class UserModel(Base):
     )
 
     profile: Mapped["UserProfileModel"] = relationship(
-        "UserProfileModel", back_populates="user", cascade="all, delete-orphan"
+        "UserProfileModel",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
     activation_token: Mapped["ActivationTokenModel"] = relationship(
         "ActivationTokenModel",

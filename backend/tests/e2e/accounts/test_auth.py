@@ -1,3 +1,4 @@
+from .helpers import extract_refresh_token_from_set_cookie
 from .routes import login_url, refresh_url, logout_url, revoke_all_tokens_url
 
 
@@ -64,16 +65,6 @@ async def test_login_user_not_active(db, user_factory, client):
     assert response.status_code == 403
 
 
-def _extract_refresh_token_from_set_cookie(
-    set_cookie_header: str,
-) -> str | None:
-    prefix = "refresh_token="
-    if prefix not in set_cookie_header:
-        return None
-    after = set_cookie_header.split(prefix, 1)[1]
-    return after.split(";", 1)[0]
-
-
 async def test_refresh_success_via_cookie_after_login(
     db, user_factory, client
 ):
@@ -86,7 +77,7 @@ async def test_refresh_success_via_cookie_after_login(
     )
     assert login_resp.status_code == 200
     refresh_cookie = login_resp.headers.get("set-cookie", "")
-    token = _extract_refresh_token_from_set_cookie(refresh_cookie)
+    token = extract_refresh_token_from_set_cookie(refresh_cookie)
     assert token
 
     refresh_resp = await client.post(
@@ -151,7 +142,7 @@ async def test_logout_success_clears_cookie(db, user_factory, client):
     assert login_resp.status_code == 200
 
     set_cookie_header = login_resp.headers.get("set-cookie", "")
-    refresh_token = _extract_refresh_token_from_set_cookie(set_cookie_header)
+    refresh_token = extract_refresh_token_from_set_cookie(set_cookie_header)
     assert refresh_token
 
     access_token = login_resp.json()["access_token"]
