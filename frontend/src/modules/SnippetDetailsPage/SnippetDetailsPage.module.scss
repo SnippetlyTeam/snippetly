@@ -22,6 +22,32 @@
     background-color: transparent;
   }
 
+  &Delete {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 8px;
+
+    &:hover {
+      background-color: rgba(255, 0, 0, 0.1);
+      transform: scale(1.1);
+
+      .buttonsDeleteIcon {
+        fill: var(--color-red-hover);
+      }
+    }
+  }
+
+  .buttonsDeleteIcon {
+    transition: fill 0.2s ease;
+    fill: var(--color-red);
+  }
+
   &Item {
     @include set-transition(background-color);
 
