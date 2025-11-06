@@ -16,7 +16,7 @@ from .profile import (
     mock_upload_file,
     avatar_file,
 )
-from .snippet import snippet_model_repo, snippet_doc_repo
+from .snippet import snippet_model_repo, snippet_doc_repo, snippet_factory
 from .user import (
     user_factory,
     user_repo,
@@ -52,5 +52,6 @@ __all__ = [
     "inactive_user",
     "user_with_profile",
     "snippet_model_repo",
-    "snippet_doc_repo"
+    "snippet_doc_repo",
+    "snippet_factory",
 ]

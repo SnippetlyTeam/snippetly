@@ -3,10 +3,7 @@ import pytest_asyncio
 from beanie import PydanticObjectId
 from pymongo.errors import PyMongoError
 
-doc_data = {
-    "content": "Test content",
-    "description": "Test description"
-}
+doc_data = {"content": "Test content", "description": "Test description"}
 
 
 @pytest_asyncio.fixture
@@ -92,7 +89,9 @@ async def test_update_success(snippet_doc_repo, snippet_doc):
 
 
 async def test_update_not_found(snippet_doc_repo):
-    result = await snippet_doc_repo.update(str(PydanticObjectId()), content="x")
+    result = await snippet_doc_repo.update(
+        str(PydanticObjectId()), content="x"
+    )
     assert result is None
 
 
@@ -137,7 +136,9 @@ async def test_delete_document_success(snippet_doc_repo, snippet_doc):
     assert result is None
 
 
-async def test_delete_document_pymongo_error(mocker, snippet_doc_repo, snippet_doc):
+async def test_delete_document_pymongo_error(
+    mocker, snippet_doc_repo, snippet_doc
+):
     mock = mocker.patch(
         "src.adapters.mongo.repo.SnippetDocument.delete",
         side_effect=PyMongoError,
