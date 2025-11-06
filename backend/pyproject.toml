@@ -15,7 +15,6 @@ dependencies = [
     "pyjwt>=2.10.1",
     "redis>=6.4.0",
     "sqlalchemy>=2.0.43",
-    "uvicorn>=0.36.0",
     "bcrypt>=4.3.0",
     "aiosmtplib>=4.0.2",
     "aiohttp>=3.12.15",
@@ -26,6 +25,7 @@ dependencies = [
     "celery>=5.5.3",
     "slowapi>=0.1.9",
     "oci>=2.163.0",
+    "uvicorn>=0.38.0",
 ]
 
 [dependency-groups]

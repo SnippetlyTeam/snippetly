@@ -52,7 +52,7 @@ class SnippetService(SnippetServiceInterface):
 
         return SnippetResponseSchema(
             uuid=cast(UUID, snippet.uuid),
-            user_id=snippet.user_id,
+            username=snippet.user.username,
             title=snippet.title,
             language=snippet.language,
             is_private=snippet.is_private,
@@ -156,9 +156,7 @@ class SnippetService(SnippetServiceInterface):
             await self._doc_repo.delete_document(document)
             raise
 
-        snippet_data = self._build_snippet_response(snippet_model, document)
-
-        return snippet_data
+        return self._build_snippet_response(snippet_model, document)
 
     async def get_snippets(
         self,
