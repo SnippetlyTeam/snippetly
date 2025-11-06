@@ -84,7 +84,7 @@ export const update = (
   );
 };
 
-export const remove = (uuid: string, token: string): Promise<AxiosResponse<void>> => {
+export const remove = (uuid: string, token: AccessToken): Promise<AxiosResponse<void>> => {
   return snippetsClient.delete<void>(
     `/${uuid}`,
     { headers: { 'Authorization': `Bearer ${token}` } },
