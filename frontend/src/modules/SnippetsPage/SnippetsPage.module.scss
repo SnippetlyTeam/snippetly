@@ -108,9 +108,22 @@
     color: var(--color-white);
     padding: 8px 12px;
     border-radius: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
     &:hover {
       background-color: #2a2d32;
+    }
+
+    &Title {
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    &Language {
+      font-size: 0.8em;
+      color: #a0a0a0;
     }
   }
 }

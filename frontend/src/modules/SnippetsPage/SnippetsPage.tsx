@@ -375,7 +375,10 @@ const SnippetsPage = () => {
           {isSearchResultsVisible && searchInputValue.length > 0 && (snippetsSearchResult.results?.length > 0 || isSearchLoading) && (
             <ul className={styles.searchResultsList}>
               {snippetsSearchResult.results?.map((snippet: { title: string, uuid: string, language: string }) => (
-                <Link to={`/snippets/${snippet.uuid}`} className={styles.searchResultsItem} key={snippet.uuid}>{snippet.title}</Link>
+                <Link to={`/snippets/${snippet.uuid}`} className={styles.searchResultsItem} key={snippet.uuid}>
+                  <div className={styles.searchResultsItemTitle}>{snippet.title}</div>
+                  <div className={styles.searchResultsItemLanguage}>{snippet.language}</div>
+                </Link>
               ))}
             </ul>
           )}
