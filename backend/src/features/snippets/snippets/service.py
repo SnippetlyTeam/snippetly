@@ -3,7 +3,6 @@ from typing import Optional, cast
 from uuid import UUID
 
 from fastapi.requests import Request
-from pydantic import ValidationError
 from pymongo.errors import PyMongoError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -113,8 +112,12 @@ class SnippetService(SnippetServiceInterface):
         if data.description is not None:
             update_data["description"] = data.description
 
-        if update_data:
-            await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        try:
+            if update_data:
+                await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        except (ValueError, PyMongoError):
+            raise
+
         updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
 
         if not updated_doc:
@@ -135,7 +138,7 @@ class SnippetService(SnippetServiceInterface):
             document = await self._doc_repo.create(
                 data.content, data.description
             )
-        except (ValidationError, PyMongoError):
+        except (ValueError, PyMongoError):
             raise
 
         assert document.id is not None
