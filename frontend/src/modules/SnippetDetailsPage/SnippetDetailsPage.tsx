@@ -127,7 +127,9 @@ const SnippetDetailsPage = () => {
   return (
     <main className={styles.main}>
       <div className={styles.head}>
-        <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
+        <div className={styles.titleWrapper}>
+          <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
+        </div>
 
         <div className={styles.buttons} role="group" aria-label="Snippet actions">
           <button

@@ -10,12 +10,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 32px;
+}
+
+.titleWrapper {
+  min-width: 0;
+}
+
+.title {
+  word-break: break-all;
 }
 
 .buttons {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
 
   &Heart {
     border: none;
@@ -96,6 +106,7 @@
 
   &Title {
     margin: 8px;
+    word-wrap: break-word;
   }
 
   &Item {
