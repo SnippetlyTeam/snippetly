@@ -58,7 +58,7 @@ class GetSnippetsResponseSchema(BaseListSchema):
 
 
 class SnippetResponseSchema(BaseSnippetSchema):
-    user_id: int
+    username: str
     uuid: UUID
     created_at: datetime
     updated_at: datetime
