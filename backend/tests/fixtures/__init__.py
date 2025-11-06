@@ -14,7 +14,7 @@ from .profile import (
     profile_repo,
     profile_service,
     mock_upload_file,
-    avatar_file
+    avatar_file,
 )
 from .user import (
     user_factory,

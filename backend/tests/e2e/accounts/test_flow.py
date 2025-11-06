@@ -8,7 +8,7 @@ from .routes import (
     logout_url,
     revoke_all_tokens_url,
     profile_url,
-    avatar_url
+    avatar_url,
 )
 
 
@@ -127,7 +127,11 @@ async def test_profile_e2e_flow(auth_client, avatar_file):
     data = profile_specific.json()
     assert data["username"] == user.username
 
-    update_data = {"first_name": "John", "last_name": "Doe", "info": "QA engineer"}
+    update_data = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "info": "QA engineer",
+    }
     patch_resp = await client.patch(profile_url, json=update_data)
     assert patch_resp.status_code == 200
     patched = patch_resp.json()
@@ -143,7 +147,10 @@ async def test_profile_e2e_flow(auth_client, avatar_file):
 
     delete_resp = await client.delete(avatar_url)
     assert delete_resp.status_code == 200
-    assert delete_resp.json()["message"] == "Profile avatar has been deleted successfully"
+    assert (
+        delete_resp.json()["message"]
+        == "Profile avatar has been deleted successfully"
+    )
 
 
 async def test_profile_not_found_returns_404(auth_client):
