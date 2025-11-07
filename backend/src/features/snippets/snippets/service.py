@@ -93,7 +93,7 @@ class SnippetService(SnippetServiceInterface):
                 if hasattr(snippet, field) and value is not None:
                     setattr(snippet, field, value)
 
-            await self._db.commit()
+            await self._db.flush()
             await self._db.refresh(snippet)
         except SQLAlchemyError:
             await self._db.rollback()
@@ -217,7 +217,11 @@ class SnippetService(SnippetServiceInterface):
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"
             )
-        if snippet.user_id != user.id and user.is_admin is False:
+        if (
+            snippet.is_private
+            and snippet.user_id != user.id
+            and not user.is_admin
+        ):
             raise exc.NoPermissionError(
                 "User have no permission to get snippet"
             )
