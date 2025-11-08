@@ -10,8 +10,6 @@ import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
-import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
 
@@ -46,17 +44,22 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: () => {
-      setSnippet(emptySnippet);
-      toast.custom((t: Toast) => (
-        <CustomToast
-          t={t}
-          title="Snippet created successfully"
-          message="Your snippet has been saved."
-          type={'success'}
-        />
-      ), {
-        duration: 2500,
+    onSuccess: (response) => {
+      navigate(`/snippets/${response.data.uuid}`, {
+        state: {
+          title: "Snippet created successfully",
+          message: "Your snippet has been saved.",
+          type: "success"
+        }
+      });
+    },
+    onError: () => {
+      navigate('/snippets', {
+        state: {
+          title: 'Creation Failed',
+          message: 'An error occurred while creating the snippet. Please try again.',
+          type: 'error'
+        }
       });
     },
   });
@@ -68,8 +71,8 @@ const SnippetFormPage = () => {
     mutationFn: (newSnippet: NewSnippetType) => {
       return update(snippetId as string, newSnippet, accessToken)
     },
-    onSuccess: () => {
-      navigate('/snippets', {
+    onSuccess: (response) => {
+      navigate(`/snippets/${response.data.uuid}`, {
         state: {
           title: 'Snippet updated successfully',
           message: 'Your snippet has been updated.',
