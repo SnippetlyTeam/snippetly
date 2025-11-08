@@ -265,7 +265,7 @@ const SnippetFormPage = () => {
             autoComplete="off"
           >
             <div className={styles.formItem}>
-              <label htmlFor="title">Title</label>
+              <label htmlFor="title">Title <span className={styles.required}>(required)</span></label>
               <input
                 className={styles.input}
                 type="text"
@@ -427,7 +427,7 @@ const SnippetFormPage = () => {
             </div>
 
             <div className={styles.formItem}>
-              <label htmlFor="code-editor">Code</label>
+              <label htmlFor="code-editor">Code <span className={styles.required}>(required)</span></label>
               <CodeEditor
                 value={snippet.content}
                 onChange={(value) => handleSnippetDetailsChange('content', value)}
