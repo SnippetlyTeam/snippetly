@@ -3,7 +3,6 @@ from typing import Optional, cast
 from uuid import UUID
 
 from fastapi.requests import Request
-from pydantic import ValidationError
 from pymongo.errors import PyMongoError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -94,7 +93,7 @@ class SnippetService(SnippetServiceInterface):
                 if hasattr(snippet, field) and value is not None:
                     setattr(snippet, field, value)
 
-            await self._db.commit()
+            await self._db.flush()
             await self._db.refresh(snippet)
         except SQLAlchemyError:
             await self._db.rollback()
@@ -113,8 +112,12 @@ class SnippetService(SnippetServiceInterface):
         if data.description is not None:
             update_data["description"] = data.description
 
-        if update_data:
-            await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        try:
+            if update_data:
+                await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        except (ValueError, PyMongoError):
+            raise
+
         updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
 
         if not updated_doc:
@@ -135,7 +138,7 @@ class SnippetService(SnippetServiceInterface):
             document = await self._doc_repo.create(
                 data.content, data.description
             )
-        except (ValidationError, PyMongoError):
+        except (ValueError, PyMongoError):
             raise
 
         assert document.id is not None
@@ -214,7 +217,11 @@ class SnippetService(SnippetServiceInterface):
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"
             )
-        if snippet.user_id != user.id and user.is_admin is False:
+        if (
+            snippet.is_private
+            and snippet.user_id != user.id
+            and not user.is_admin
+        ):
             raise exc.NoPermissionError(
                 "User have no permission to get snippet"
             )

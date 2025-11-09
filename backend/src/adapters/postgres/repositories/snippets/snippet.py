@@ -155,13 +155,6 @@ class SnippetRepository:
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_snippets_by_language(
-        self, language: LanguageEnum
-    ) -> Optional[Sequence]:
-        query = select(SnippetModel).where(SnippetModel.language == language)
-        result = await self._db.execute(query)
-        return result.scalars().all()  # type: ignore
-
     async def get_by_user(self, user_id: int) -> Optional[Sequence]:
         query = select(SnippetModel).where(SnippetModel.user_id == user_id)
         result = await self._db.execute(query)
