@@ -1,18 +1,29 @@
+import re
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, constr, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from src.adapters.postgres.models import LanguageEnum
 from ..common import BaseListSchema
 
-TagStr = constr(min_length=2, max_length=20)
+ALLOWED_TAG_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 
 
 def serialize_tags(tags: list[str]) -> list:
     return [item.strip().lower().replace(" ", "") for item in tags]
+
+
+def validate_tag_symbols(tags: list[str]) -> list[str]:
+    for tag in tags:
+        if not ALLOWED_TAG_PATTERN.match(tag):
+            raise ValueError(
+                "Tags can only contain letters, numbers, hyphens, "
+                "and underscores."
+            )
+    return tags
 
 
 # --- Requests ---
@@ -22,12 +33,17 @@ class BaseSnippetSchema(BaseModel):
     is_private: bool = Field(...)
     content: str = Field(..., min_length=1, max_length=1000)
     description: str = Field(default="", max_length=500)
-    tags: List[str] = Field(default_factory=list, min_length=0, max_length=10)
+    tags: List[str] = Field(default_factory=list, min_length=2, max_length=20)
 
     @field_validator("tags", mode="before")
     @classmethod
     def normalize_tags(cls, v: list[str]) -> list:
         return serialize_tags(tags=v)
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: list[str]) -> list:
+        return validate_tag_symbols(v)
 
 
 class SnippetCreateSchema(BaseSnippetSchema):
@@ -40,12 +56,17 @@ class SnippetUpdateRequestSchema(BaseModel):
     is_private: Optional[bool] = None
     content: Optional[str] = Field(None, min_length=1, max_length=1000)
     description: Optional[str] = Field(None, max_length=500)
-    tags: List[str] = Field(default_factory=list, min_length=0, max_length=10)
+    tags: List[str] = Field(default_factory=list, min_length=2, max_length=20)
 
     @field_validator("tags", mode="before")
     @classmethod
     def normalize_tags(cls, v: list[str]) -> list:
         return serialize_tags(tags=v)
+
+    @field_validator("tags")
+    @classmethod
+    def validate_tags(cls, v: list[str]) -> list:
+        return validate_tag_symbols(v)
 
 
 # --- Responses ---
