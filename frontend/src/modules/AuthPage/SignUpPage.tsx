@@ -61,7 +61,8 @@ const SignUpPage: React.FC = () => {
     email: z.email(),
     password: z.string()
       .min(8)
-      .regex(/^\S+$/),
+      .max(30)
+      .regex(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[@$!%*?&])\S+$/),
     confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match.',
