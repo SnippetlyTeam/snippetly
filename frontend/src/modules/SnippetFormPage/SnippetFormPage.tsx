@@ -15,6 +15,8 @@ import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
 
+const TAG_VALIDATION_REGEX = /^[a-zA-Z0-9_-]+$/;
+
 const SnippetFormPage = () => {
   const { snippetId } = useParams();
   const isEditMode = !!snippetId;
@@ -149,24 +151,32 @@ const SnippetFormPage = () => {
   }
 
   function handleAddTag(tagContent: string) {
+    const trimmedTag = tagContent.trim();
+
     if (snippet.tags.length === 10) {
       setTagsError('You can add up to 10 tags only');
       return;
     }
 
-    if (tagContent.length < 2) {
+    if (trimmedTag.length < 2) {
       setTagsError('Tag must be at least 2 characters');
       return;
     }
 
-    if (!snippet.tags.includes(tagContent.trim())) {
+    if (!TAG_VALIDATION_REGEX.test(trimmedTag)) {
+      setTagsError('Tags can only contain letters, numbers, hyphens, and underscores.');
+      return;
+    }
+
+    if (!snippet.tags.includes(trimmedTag)) {
       setSnippet(prev => ({
         ...prev,
-        tags: [...prev.tags, tagContent]
+        tags: [...prev.tags, trimmedTag]
       }));
     }
 
     setCurrentTag('');
+    setTagsError('');
   }
 
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
@@ -381,7 +391,7 @@ const SnippetFormPage = () => {
                     if (event.key === 'Enter') {
                       event.preventDefault();
                       if (currentTag.trim() !== '') {
-                        handleSnippetDetailsChange('tags', currentTag + ',');
+                        handleAddTag(currentTag);
                       }
                     }
                   }}
