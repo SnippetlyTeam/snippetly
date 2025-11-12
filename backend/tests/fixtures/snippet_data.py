@@ -10,8 +10,8 @@ from src.adapters.postgres.models import LanguageEnum, SnippetModel
 async def setup_snippets(
     db, snippet_factory, snippet_model_repo, snippet_doc_repo, user_factory
 ):
-    user1 = await user_factory.create_active(db, username="user1")
-    user2 = await user_factory.create_active(db, username="user2")
+    user1 = await user_factory.create_active(db)
+    user2 = await user_factory.create_active(db)
 
     await snippet_factory.create(
         db,
