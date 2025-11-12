@@ -63,3 +63,23 @@ async def setup_snippets(
         "u2_public_py": u2_pub_py,
         "u2_private_js": u2_priv_js,
     }
+
+
+@pytest_asyncio.fixture
+async def setup_favorites(db, favorites_repo, setup_snippets):
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
+
+    snippets = [
+        setup_snippets["u1_public_py"],
+        setup_snippets["u1_public_js"],
+        setup_snippets["u2_public_py"],
+    ]
+
+    favorites = []
+    for snippet in snippets:
+        await favorites_repo.add_to_favorites(user1, snippet.uuid)
+        favorites.append(snippet)
+    await db.commit()
+
+    return user1, user2, favorites

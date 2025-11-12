@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from sqlalchemy import select
 
 from src.adapters.postgres.models import (
@@ -101,26 +100,6 @@ async def test_remove_from_favorites_snippet_not_found(
 ):
     with pytest.raises(exc.SnippetNotFoundError):
         await favorites_repo.remove_from_favorites(active_user, uuid4())
-
-
-@pytest_asyncio.fixture
-async def setup_favorites(db, favorites_repo, setup_snippets):
-    user1 = setup_snippets["user1"]
-    user2 = setup_snippets["user2"]
-
-    snippets = [
-        setup_snippets["u1_public_py"],
-        setup_snippets["u1_public_js"],
-        setup_snippets["u2_public_py"],
-    ]
-
-    favorites = []
-    for snippet in snippets:
-        await favorites_repo.add_to_favorites(user1, snippet.uuid)
-        favorites.append(snippet)
-    await db.commit()
-
-    return user1, user2, favorites
 
 
 async def test_get_favorites_paginated_basic(favorites_repo, setup_favorites):
