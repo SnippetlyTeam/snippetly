@@ -39,8 +39,8 @@ async def search_service(db, redis_client, snippet_model_repo):
 
 
 @pytest_asyncio.fixture
-async def snippet_factory():
-    return SnippetFactory
+async def snippet_factory(db, snippet_model_repo, snippet_doc_repo, faker):
+    return SnippetFactory(db, snippet_model_repo, snippet_doc_repo, faker)
 
 
 @pytest_asyncio.fixture

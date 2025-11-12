@@ -21,9 +21,7 @@ async def test_add_to_favorites_success(
     snippet_doc_repo,
     active_user,
 ):
-    snippet, _ = await snippet_factory.create(
-        db, snippet_model_repo, snippet_doc_repo, active_user
-    )
+    snippet, _ = await snippet_factory.create(active_user)
     await favorites_repo.add_to_favorites(active_user, snippet.uuid)
     await db.commit()
 
@@ -47,9 +45,7 @@ async def test_add_to_favorites_already_exists(
     snippet_doc_repo,
     active_user,
 ):
-    snippet, _ = await snippet_factory.create(
-        db, snippet_model_repo, snippet_doc_repo, active_user
-    )
+    snippet, _ = await snippet_factory.create(active_user)
     await favorites_repo.add_to_favorites(active_user, snippet.uuid)
     await db.commit()
 
@@ -70,9 +66,7 @@ async def test_remove_from_favorites_success(
     snippet_doc_repo,
     active_user,
 ):
-    snippet, _ = await snippet_factory.create(
-        db, snippet_model_repo, snippet_doc_repo, active_user
-    )
+    snippet, _ = await snippet_factory.create(active_user)
     await favorites_repo.add_to_favorites(active_user, snippet.uuid)
     await db.commit()
 
@@ -97,9 +91,7 @@ async def test_remove_from_favorites_not_exists(
     snippet_doc_repo,
     active_user,
 ):
-    snippet, _ = await snippet_factory.create(
-        db, snippet_model_repo, snippet_doc_repo, active_user
-    )
+    snippet, _ = await snippet_factory.create(active_user)
     with pytest.raises(exc.FavoritesAlreadyError):
         await favorites_repo.remove_from_favorites(active_user, snippet.uuid)
 
@@ -113,16 +105,19 @@ async def test_remove_from_favorites_snippet_not_found(
 
 @pytest_asyncio.fixture
 async def setup_favorites(db, favorites_repo, setup_snippets):
-    user1, user2 = setup_snippets
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
 
-    result = await db.execute(select(SnippetModel))
-    snippets = result.scalars().all()
+    snippets = [
+        setup_snippets["u1_public_py"],
+        setup_snippets["u1_public_js"],
+        setup_snippets["u2_public_py"],
+    ]
 
     favorites = []
     for snippet in snippets:
-        if not snippet.is_private:
-            await favorites_repo.add_to_favorites(user1, snippet.uuid)
-            favorites.append(snippet)
+        await favorites_repo.add_to_favorites(user1, snippet.uuid)
+        favorites.append(snippet)
     await db.commit()
 
     return user1, user2, favorites

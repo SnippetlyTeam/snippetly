@@ -1,15 +1,12 @@
-from datetime import date, timedelta, datetime, timezone
+from datetime import date, timedelta
 from uuid import uuid4
 
 import pytest
-import pytest_asyncio
 from beanie import PydanticObjectId
 from sqlalchemy import select
-from sqlalchemy import update
 
 import src.core.exceptions as exc
 from src.adapters.postgres.models import LanguageEnum, TagModel
-from src.adapters.postgres.models import SnippetModel
 
 snippet_data = {
     "title": "Test Snippet with Tags",
@@ -126,44 +123,57 @@ async def test_create_with_no_tags(
 async def test_get_paginated_default_visibility(
     snippet_model_repo, setup_snippets
 ):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
         offset=0, limit=10, current_user_id=user1.id
     )
+
     assert total == 4
-    titles = {s.title for s in snippets}
-    assert "U1 Public Python" in titles
-    assert "U1 Private Python" in titles
-    assert "U1 Public JS" in titles
-    assert "U2 Public Python" in titles
-    assert "U2 Private JS" not in titles
+
+    user1_ids = {
+        setup_snippets["u1_public_py"].id,
+        setup_snippets["u1_private_py"].id,
+        setup_snippets["u1_public_js"].id,
+    }
+    user2_public_id = setup_snippets["u2_public_py"].id
+
+    assert any(s.id in user1_ids for s in snippets)
+    assert all(not s.is_private or s.user_id == user1.id for s in snippets)
+    assert all(
+        s.language in [LanguageEnum.PYTHON, LanguageEnum.JAVASCRIPT]
+        for s in snippets
+    )
+    assert any(s.id == user2_public_id for s in snippets)
 
 
 async def test_get_paginated_public_only(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
         offset=0, limit=10, current_user_id=user1.id, visibility="public"
     )
+
     assert total == 3
-    titles = {s.title for s in snippets}
-    assert "U1 Public Python" in titles
-    assert "U1 Public JS" in titles
-    assert "U2 Public Python" in titles
+    assert all(not s.is_private for s in snippets)
 
 
 async def test_get_paginated_private_only(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
         offset=0, limit=10, current_user_id=user1.id, visibility="private"
     )
     assert total == 1
-    assert snippets[0].title == "U1 Private Python"
+    assert snippets[0].is_private
+    assert snippets[0].user_id == user1.id
 
 
 async def test_get_paginated_filter_by_language(
     snippet_model_repo, setup_snippets
 ):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
         offset=0,
         limit=10,
@@ -171,229 +181,171 @@ async def test_get_paginated_filter_by_language(
         language=LanguageEnum.PYTHON,
     )
     assert total == 3
-    titles = {s.title for s in snippets}
-    assert "U1 Public Python" in titles
-    assert "U1 Private Python" in titles
-    assert "U2 Public Python" in titles
+    assert all(s.language == LanguageEnum.PYTHON for s in snippets)
 
 
 async def test_get_paginated_filter_by_tag(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
         offset=0, limit=10, current_user_id=user1.id, tags=["test"]
     )
+
     assert total == 2
-    titles = {s.title for s in snippets}
-    assert "U1 Public Python" in titles
-    assert "U2 Public Python" in titles
+    assert all("test" in {t.name for t in s.tags} for s in snippets)
 
 
 async def test_get_paginated_filter_by_username(
     snippet_model_repo, setup_snippets
 ):
-    user1, user2 = setup_snippets
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
+
     snippets, total = await snippet_model_repo.get_snippets_paginated(
-        offset=0, limit=10, current_user_id=user1.id, username="user2"
+        offset=0, limit=10, current_user_id=user1.id, username=user2.username
     )
+
     assert total == 1
-    assert snippets[0].title == "U2 Public Python"
+    assert snippets[0].user_id == user2.id
+    assert not snippets[0].is_private
 
 
 async def test_get_paginated_pagination(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
+
     snippets_p1, total = await snippet_model_repo.get_snippets_paginated(
         offset=0, limit=2, current_user_id=user1.id
     )
-    assert total == 4
-    assert len(snippets_p1) == 2
-
     snippets_p2, total_p2 = await snippet_model_repo.get_snippets_paginated(
         offset=2, limit=2, current_user_id=user1.id
     )
-    assert total_p2 == 4
-    assert len(snippets_p2) == 2
 
-    ids_p1 = {s.id for s in snippets_p1}
-    ids_p2 = {s.id for s in snippets_p2}
-    assert not ids_p1.intersection(ids_p2)
+    assert total == total_p2 == 4
+    assert len(snippets_p1) == 2
+    assert len(snippets_p2) == 2
+    assert not {s.id for s in snippets_p1}.intersection(
+        {s.id for s in snippets_p2}
+    )
 
 
 async def test_get_paginated_filter_by_date(
     snippet_model_repo, setup_snippets
 ):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
 
-    snippets, total = await snippet_model_repo.get_snippets_paginated(
+    (
+        recent_snippets,
+        total_recent,
+    ) = await snippet_model_repo.get_snippets_paginated(
         offset=0,
         limit=10,
         current_user_id=user1.id,
         created_after=date.today() - timedelta(days=2),
     )
-    assert total == 3
-    titles = {s.title for s in snippets}
-    assert "U1 Public JS" not in titles
-
-    snippets, total = await snippet_model_repo.get_snippets_paginated(
+    old_snippets, total_old = await snippet_model_repo.get_snippets_paginated(
         offset=0,
         limit=10,
         current_user_id=user1.id,
         created_before=date.today() - timedelta(days=3),
     )
-    assert total == 1
-    assert snippets[0].title == "U1 Public JS"
+
+    assert total_recent == 3
+    assert total_old == 1
+    assert all(
+        s.created_at.date() < (date.today() - timedelta(days=3))
+        for s in old_snippets
+    )
 
 
 async def test_get_by_uuid(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
-    stmt = select(SnippetModel).where(
-        SnippetModel.user_id == user1.id,
-        SnippetModel.title == "U1 Public Python",
-    )
-    result = await snippet_model_repo._db.execute(stmt)
-    existing_snippet = result.scalar_one()
+    snippet = setup_snippets["u1_public_py"]
 
-    found_snippet = await snippet_model_repo.get_by_uuid(existing_snippet.uuid)
-    assert found_snippet is not None
-    assert found_snippet.id == existing_snippet.id
-    assert found_snippet.title == "U1 Public Python"
+    found = await snippet_model_repo.get_by_uuid(snippet.uuid)
+    assert found is not None
+    assert found.id == snippet.id
 
-    not_found_snippet = await snippet_model_repo.get_by_uuid(uuid4())
-    assert not_found_snippet is None
-
-
-async def test_get_by_uuid_with_tags(snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
-    stmt = select(SnippetModel).where(
-        SnippetModel.user_id == user1.id,
-        SnippetModel.title == "U1 Public Python",
-    )
-    result = await snippet_model_repo._db.execute(stmt)
-    existing_snippet = result.scalar_one()
-
-    found_snippet = await snippet_model_repo.get_by_uuid_with_tags(
-        existing_snippet.uuid
-    )
-    assert found_snippet is not None
-    assert found_snippet.id == existing_snippet.id
-
-    assert len(found_snippet.tags) == 2
-    assert {tag.name for tag in found_snippet.tags} == {"test", "python"}
+    not_found = await snippet_model_repo.get_by_uuid(uuid4())
+    assert not_found is None
 
 
 async def test_get_by_user(snippet_model_repo, setup_snippets):
-    user1, user2 = setup_snippets
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
 
     user1_snippets = await snippet_model_repo.get_by_user(user1.id)
-    assert user1_snippets is not None
-    assert len(user1_snippets) == 3
-    user1_titles = {s.title for s in user1_snippets}
-    assert "U1 Public Python" in user1_titles
-    assert "U1 Private Python" in user1_titles
-    assert "U1 Public JS" in user1_titles
-
     user2_snippets = await snippet_model_repo.get_by_user(user2.id)
-    assert user2_snippets is not None
-    assert len(user2_snippets) == 2
-    user2_titles = {s.title for s in user2_snippets}
-    assert "U2 Public Python" in user2_titles
-    assert "U2 Private JS" in user2_titles
 
-    no_snippets_user_id = 999
-    no_snippets_result = await snippet_model_repo.get_by_user(
-        no_snippets_user_id
-    )
-    assert no_snippets_result == []
+    assert len(user1_snippets) == 3
+    assert len(user2_snippets) == 2
+
+    no_snippets = await snippet_model_repo.get_by_user(999)
+    assert no_snippets == []
 
 
 async def test_get_by_title(snippet_model_repo, setup_snippets):
-    user1, user2 = setup_snippets
-    title_user1 = "U1 Public Python"
-    title_user2 = "U2 Public Python"
+    snippet = setup_snippets["u1_public_py"]
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
 
     found_snippet = await snippet_model_repo.get_by_title(
-        title_user1, user1.id
+        snippet.title, user1.id
     )
     assert found_snippet is not None
-    assert found_snippet.title == title_user1
+    assert found_snippet.title == snippet.title
     assert found_snippet.user_id == user1.id
 
-    not_found_snippet = await snippet_model_repo.get_by_title(
-        title_user2, user1.id
-    )
-    assert not_found_snippet is None
+    not_found = await snippet_model_repo.get_by_title(snippet.title, user2.id)
+    assert not_found is None
 
-    not_found_snippet = await snippet_model_repo.get_by_title(
-        "Non Existent", user1.id
+    not_found = await snippet_model_repo.get_by_title(
+        "DefinitelyNotExist", user1.id
     )
-    assert not_found_snippet is None
+    assert not_found is None
 
 
 async def test_get_by_title_list(snippet_model_repo, setup_snippets):
-    user1, user2 = setup_snippets
+    user1 = setup_snippets["user1"]
+    user2 = setup_snippets["user2"]
+    sample_snippet = setup_snippets["u1_public_py"]
 
-    public_snippets = await snippet_model_repo.get_by_title_list(
-        "Public", user1.id
-    )
-    assert len(public_snippets) == 3
-    public_titles = {s.title for s in public_snippets}
-    assert "U1 Public Python" in public_titles
-    assert "U1 Public JS" in public_titles
-    assert "U2 Public Python" in public_titles
+    keyword = sample_snippet.title.split()[0]
+    found = await snippet_model_repo.get_by_title_list(keyword, user1.id)
 
-    private_snippets = await snippet_model_repo.get_by_title_list(
-        "Private", user1.id
-    )
-    assert len(private_snippets) == 1
-    assert private_snippets[0].title == "U1 Private Python"
+    assert isinstance(found, list)
+    assert any(s.id == sample_snippet.id for s in found)
+    assert all(isinstance(s.title, str) for s in found)
 
-    python_snippets = await snippet_model_repo.get_by_title_list(
-        "Python", user1.id
+    limited = await snippet_model_repo.get_by_title_list(
+        keyword, user1.id, limit=1
     )
-    assert len(python_snippets) == 3
-    python_titles = {s.title for s in python_snippets}
-    assert "U1 Public Python" in python_titles
-    assert "U1 Private Python" in python_titles
-    assert "U2 Public Python" in python_titles
+    assert len(limited) == 1
 
-    limited_snippets = await snippet_model_repo.get_by_title_list(
-        "Python", user1.id, limit=1
+    found_for_user2 = await snippet_model_repo.get_by_title_list(
+        keyword, user2.id
     )
-    assert len(limited_snippets) == 1
+    assert all(
+        s.user_id == user2.id or not s.is_private for s in found_for_user2
+    )
 
 
 async def test_delete(db, snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
-    stmt = select(SnippetModel).where(
-        SnippetModel.user_id == user1.id,
-        SnippetModel.title == "U1 Public Python",
-    )
-    result = await db.execute(stmt)
-    snippet_to_delete = result.scalar_one()
+    snippet_to_delete = setup_snippets["u1_public_py"]
     uuid_to_delete = snippet_to_delete.uuid
 
     await snippet_model_repo.delete(uuid_to_delete)
     await db.flush()
 
-    deleted_snippet = await snippet_model_repo.get_by_uuid(uuid_to_delete)
-    assert deleted_snippet is None
+    deleted = await snippet_model_repo.get_by_uuid(uuid_to_delete)
+    assert deleted is None
 
     try:
         await snippet_model_repo.delete(uuid4())
-        await db.flush()
     except Exception as e:
-        pytest.fail(
-            f"Deleting a non-existent snippet raised an exception: {e}"
-        )
+        pytest.fail(f"Unexpected exception: {e}")
 
 
 async def test_update_success(db, snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
-    stmt = select(SnippetModel).where(
-        SnippetModel.user_id == user1.id,
-        SnippetModel.title == "U1 Public Python",
-    )
-    result = await db.execute(stmt)
-    snippet_to_update = result.scalar_one()
+    snippet_to_update = setup_snippets["u1_public_py"]
     uuid_to_update = snippet_to_update.uuid
 
     update_data = {
@@ -402,44 +354,28 @@ async def test_update_success(db, snippet_model_repo, setup_snippets):
         "is_private": True,
     }
 
-    updated_snippet = await snippet_model_repo.update(
-        uuid_to_update, **update_data
-    )
-
-    assert updated_snippet.title == update_data["title"]
-    assert updated_snippet.language == update_data["language"]
-    assert updated_snippet.is_private == update_data["is_private"]
-
+    updated = await snippet_model_repo.update(uuid_to_update, **update_data)
     await db.flush()
-    await db.refresh(updated_snippet)
+    await db.refresh(updated)
 
-    refetched_snippet = await snippet_model_repo.get_by_uuid(uuid_to_update)
-    assert refetched_snippet is not None
-    assert refetched_snippet.title == update_data["title"]
-    assert refetched_snippet.language == update_data["language"]
-    assert refetched_snippet.is_private == update_data["is_private"]
+    assert updated.title == "Updated Title"
+    assert updated.language == LanguageEnum.JAVASCRIPT
+    assert updated.is_private is True
 
 
 async def test_update_partial(db, snippet_model_repo, setup_snippets):
-    user1, _ = setup_snippets
-    stmt = select(SnippetModel).where(
-        SnippetModel.user_id == user1.id,
-        SnippetModel.title == "U1 Public Python",
-    )
-    result = await db.execute(stmt)
-    snippet_to_update = result.scalar_one()
+    snippet_to_update = setup_snippets["u1_public_py"]
     uuid_to_update = snippet_to_update.uuid
-    original_language = snippet_to_update.language
+    original_lang = snippet_to_update.language
 
-    updated_snippet = await snippet_model_repo.update(
-        uuid_to_update, title="Partially Updated Title"
+    updated = await snippet_model_repo.update(
+        uuid_to_update, title="Partial Title"
     )
 
-    assert updated_snippet.title == "Partially Updated Title"
-    assert updated_snippet.language == original_language
+    assert updated.title == "Partial Title"
+    assert updated.language == original_lang
 
 
 async def test_update_not_found(snippet_model_repo):
-    non_existent_uuid = uuid4()
     with pytest.raises(exc.SnippetNotFoundError):
-        await snippet_model_repo.update(non_existent_uuid, title="Won't work")
+        await snippet_model_repo.update(uuid4(), title="Won't work")

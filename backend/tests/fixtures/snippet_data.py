@@ -1,78 +1,65 @@
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest_asyncio
-from sqlalchemy import update
+from sqlalchemy import update, delete
 
-from src.adapters.postgres.models import LanguageEnum, SnippetModel
+from src.adapters.postgres.models import SnippetModel, LanguageEnum
 
 
 @pytest_asyncio.fixture
 async def setup_snippets(
     db, snippet_factory, snippet_model_repo, snippet_doc_repo, user_factory
 ):
+    await db.execute(delete(SnippetModel))
+    await db.flush()
     user1 = await user_factory.create_active(db)
     user2 = await user_factory.create_active(db)
 
-    await snippet_factory.create(
-        db,
-        snippet_model_repo,
-        snippet_doc_repo,
+    u1_pub_py, _ = await snippet_factory.create(
         user1,
-        title="U1 Public Python",
         language=LanguageEnum.PYTHON,
         is_private=False,
         tags=["test", "python"],
     )
-    await snippet_factory.create(
-        db,
-        snippet_model_repo,
-        snippet_doc_repo,
+    u1_priv_py, _ = await snippet_factory.create(
         user1,
-        title="U1 Private Python",
         language=LanguageEnum.PYTHON,
         is_private=True,
         tags=["private"],
     )
-    await snippet_factory.create(
-        db,
-        snippet_model_repo,
-        snippet_doc_repo,
+    u1_pub_js, _ = await snippet_factory.create(
         user1,
-        title="U1 Public JS",
         language=LanguageEnum.JAVASCRIPT,
         is_private=False,
     )
 
-    await snippet_factory.create(
-        db,
-        snippet_model_repo,
-        snippet_doc_repo,
+    u2_pub_py, _ = await snippet_factory.create(
         user2,
-        title="U2 Public Python",
         language=LanguageEnum.PYTHON,
         is_private=False,
         tags=["test"],
     )
-    await snippet_factory.create(
-        db,
-        snippet_model_repo,
-        snippet_doc_repo,
+    u2_priv_js, _ = await snippet_factory.create(
         user2,
-        title="U2 Private JS",
         language=LanguageEnum.JAVASCRIPT,
         is_private=True,
         tags=["private"],
     )
 
-    await db.flush()
-
     old_snippet_stmt = (
         update(SnippetModel)
-        .where(SnippetModel.title == "U1 Public JS")
+        .where(SnippetModel.id == u1_pub_js.id)
         .values(created_at=datetime.now(timezone.utc) - timedelta(days=5))
     )
     await db.execute(old_snippet_stmt)
-
     await db.flush()
 
-    return user1, user2
+    return {
+        "user1": user1,
+        "user2": user2,
+        "u1_public_py": u1_pub_py,
+        "u1_private_py": u1_priv_py,
+        "u1_public_js": u1_pub_js,
+        "u2_public_py": u2_pub_py,
+        "u2_private_js": u2_priv_js,
+    }
