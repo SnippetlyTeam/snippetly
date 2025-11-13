@@ -94,6 +94,7 @@ class SnippetService(SnippetServiceInterface):
                     setattr(snippet, field, value)
 
             await self._db.flush()
+            await self._db.commit()
             await self._db.refresh(snippet)
         except SQLAlchemyError:
             await self._db.rollback()
