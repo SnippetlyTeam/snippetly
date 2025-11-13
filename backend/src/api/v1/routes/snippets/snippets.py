@@ -34,7 +34,7 @@ router = APIRouter(
 
 
 @router.post(
-    "/create",
+    "/",
     summary="Create new Snippet",
     description="Create new Snippet",
     status_code=201,
