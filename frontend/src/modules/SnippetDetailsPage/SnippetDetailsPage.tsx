@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './SnippetDetailsPage.module.scss';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { addFavorite, getById, remove, removeFavorite } from '../../api/snippetsClient';
 import { useAuthContext } from '../../contexts/AuthContext';
@@ -32,6 +32,7 @@ const SnippetDetailsPage = () => {
   const { accessToken } = useAuthContext();
   const { favoriteSnippetsIds, setFavoriteSnippetsIds } = useSnippetContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { mutate: getSnippet, isPending, isError } = useMutation({
     mutationFn: () => getById(snippetId ?? '', accessToken),
@@ -94,6 +95,29 @@ const SnippetDetailsPage = () => {
       });
     }
   });
+
+  useEffect(() => {
+    if (location.state && (
+      location.state.title ||
+      location.state.message ||
+      location.state.type
+    )) {
+      const { title = '', message = '', type = 'info' } = location.state || {};
+
+      toast.custom((t: Toast) => (
+        <CustomToast
+          t={t}
+          title={title}
+          message={message}
+          type={type}
+        />
+      ), {
+        duration: 2500,
+      });
+
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location, navigate]);
 
   if (isPending) {
     return (

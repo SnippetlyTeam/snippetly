@@ -15,7 +15,7 @@ const PublicOnlyRoute = () => {
   }
   if (isAuthenticated) {
     return <Navigate
-      to="/snippets"
+      to="/profile"
       replace
       state={{
         title: 'Already Signed In',
