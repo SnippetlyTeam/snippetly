@@ -3,21 +3,26 @@ from uuid import uuid4
 import pytest
 
 from src.adapters.postgres.models import LanguageEnum
+from src.core.exceptions import FavoritesAlreadyError
 from .routes import favorites_url
 
 
-async def test_add_favorite_success(auth_client, setup_snippets, favorites_repo, db):
+async def test_add_favorite_success(
+    auth_client, setup_snippets, favorites_repo, db
+):
     client, user = auth_client
 
     target_snippet = setup_snippets["u1_public_py"]
 
-    resp = await client.post(favorites_url, json={"uuid": str(target_snippet.uuid)})
+    resp = await client.post(
+        favorites_url, json={"uuid": str(target_snippet.uuid)}
+    )
     assert resp.status_code == 201
 
     body = resp.json()
     assert body["message"] == "Snippet added to favorites"
 
-    with pytest.raises(Exception):
+    with pytest.raises(FavoritesAlreadyError):
         await favorites_repo.add_to_favorites(user, target_snippet.uuid)
     await db.rollback()
 
@@ -25,7 +30,9 @@ async def test_add_favorite_success(auth_client, setup_snippets, favorites_repo,
 async def test_add_favorite_unauthorized(client, setup_snippets):
     target_snippet = setup_snippets["u1_public_py"]
 
-    resp = await client.post(favorites_url, json={"uuid": str(target_snippet.uuid)})
+    resp = await client.post(
+        favorites_url, json={"uuid": str(target_snippet.uuid)}
+    )
     assert resp.status_code == 401
     assert "detail" in resp.json()
 
@@ -42,10 +49,14 @@ async def test_add_favorite_conflict(auth_client, setup_snippets):
     client, _ = auth_client
     target_snippet = setup_snippets["u1_public_py"]
 
-    resp1 = await client.post(favorites_url, json={"uuid": str(target_snippet.uuid)})
+    resp1 = await client.post(
+        favorites_url, json={"uuid": str(target_snippet.uuid)}
+    )
     assert resp1.status_code == 201
 
-    resp2 = await client.post(favorites_url, json={"uuid": str(target_snippet.uuid)})
+    resp2 = await client.post(
+        favorites_url, json={"uuid": str(target_snippet.uuid)}
+    )
     assert resp2.status_code == 409
     assert (
         resp2.json().get("detail")
@@ -117,9 +128,10 @@ async def test_get_favorites_filter_tag(auth_client, setup_snippets):
     assert resp.status_code == 200
     data = resp.json()
 
-    assert all("test" in it.get("tags", []) for it in data["snippets"]) or data[
-        "total_items"
-    ] == 0
+    assert (
+        all("test" in it.get("tags", []) for it in data["snippets"])
+        or data["total_items"] == 0
+    )
 
 
 async def test_get_favorites_filter_username(auth_client, setup_snippets):
@@ -130,9 +142,10 @@ async def test_get_favorites_filter_username(auth_client, setup_snippets):
     resp = await client.get(favorites_url, params={"username": owner_username})
     assert resp.status_code == 200
     data = resp.json()
-    assert all(it["username"] == owner_username for it in data["snippets"]) or data[
-        "total_items"
-    ] == 0
+    assert (
+        all(it["username"] == owner_username for it in data["snippets"])
+        or data["total_items"] == 0
+    )
 
 
 async def test_get_favorites_sorting_title(auth_client, setup_snippets):
@@ -173,18 +186,22 @@ async def test_get_favorites_empty(auth_client):
     assert data["snippets"] == []
 
 
-async def test_delete_favorite_success(auth_client, setup_snippets, favorites_repo, db):
+async def test_delete_favorite_success(
+    auth_client, setup_snippets, favorites_repo, db
+):
     client, user = auth_client
     target = setup_snippets["u1_public_py"]
 
-    resp_add = await client.post(favorites_url, json={"uuid": str(target.uuid)})
+    resp_add = await client.post(
+        favorites_url, json={"uuid": str(target.uuid)}
+    )
     assert resp_add.status_code in (201, 409)
 
     resp_del = await client.delete(f"{favorites_url}{target.uuid}")
     assert resp_del.status_code == 200
     assert resp_del.json().get("message") == "Snippet removed from favorites"
 
-    with pytest.raises(Exception):
+    with pytest.raises(FavoritesAlreadyError):
         await favorites_repo.remove_from_favorites(user, target.uuid)
     await db.rollback()
 

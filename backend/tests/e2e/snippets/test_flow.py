@@ -1,5 +1,5 @@
 from src.adapters.postgres.models import LanguageEnum
-from .routes import snippet_url
+from .routes import snippet_url, favorites_url, search_url
 
 
 async def test_full_crud_flow(auth_client):
@@ -154,3 +154,200 @@ async def test_visibility_and_pagination_flow(auth_client, setup_snippets):
     uuids_p1 = {it["uuid"] for it in d1["snippets"]}
     uuids_p2 = {it["uuid"] for it in d2["snippets"]}
     assert not uuids_p1.intersection(uuids_p2)
+
+
+async def test_favorites_full_flow(auth_client, setup_snippets):
+    client, user = auth_client
+
+    targets = [
+        setup_snippets["u1_public_py"],
+        setup_snippets["u1_public_js"],
+        setup_snippets["u2_public_py"],
+    ]
+
+    added_uuids = []
+    for snippet in targets:
+        resp = await client.post(
+            favorites_url, json={"uuid": str(snippet.uuid)}
+        )
+        assert resp.status_code in (201, 409)
+        if resp.status_code == 201:
+            added_uuids.append(str(snippet.uuid))
+
+    resp = await client.get(favorites_url)
+    assert resp.status_code == 200
+    favorites_data = resp.json()
+
+    favorite_uuids = {item["uuid"] for item in favorites_data["snippets"]}
+    assert all(uuid in favorite_uuids for uuid in added_uuids)
+
+    python_favorites = await client.get(
+        favorites_url, params={"language": LanguageEnum.PYTHON.value}
+    )
+    assert python_favorites.status_code == 200
+    python_data = python_favorites.json()
+
+    assert all(
+        item["language"] in (LanguageEnum.PYTHON, LanguageEnum.PYTHON.value)
+        for item in python_data["snippets"]
+    )
+
+    tagged_favorites = await client.get(favorites_url, params={"tags": "test"})
+    assert tagged_favorites.status_code == 200
+
+    paginated_favorites = await client.get(
+        favorites_url, params={"per_page": 2, "page": 1}
+    )
+    assert paginated_favorites.status_code == 200
+    paginated_data = paginated_favorites.json()
+
+    assert paginated_data["per_page"] == 2
+    assert len(paginated_data["snippets"]) <= 2
+
+    target_to_remove = targets[0]
+    delete_resp = await client.delete(
+        f"{favorites_url}{target_to_remove.uuid}"
+    )
+    assert delete_resp.status_code == 200
+
+    after_delete_resp = await client.get(favorites_url)
+    assert after_delete_resp.status_code == 200
+    after_delete_data = after_delete_resp.json()
+
+    remaining_uuids = {item["uuid"] for item in after_delete_data["snippets"]}
+    assert str(target_to_remove.uuid) not in remaining_uuids
+
+
+async def test_favorites_and_search_integration_flow(
+    auth_client, setup_snippets
+):
+    client, user = auth_client
+
+    test_snippets = [
+        {
+            "title": "Integration Test Python",
+            "language": LanguageEnum.PYTHON.value,
+            "content": "print('integration')",
+            "is_private": False,
+            "tags": ["integration", "test"],
+        },
+        {
+            "title": "Integration Test JS",
+            "language": LanguageEnum.JAVASCRIPT.value,
+            "content": "console.log('integration')",
+            "is_private": False,
+            "tags": ["integration", "javascript"],
+        },
+    ]
+
+    created_uuids = []
+    for snippet_data in test_snippets:
+        resp = await client.post(snippet_url, json=snippet_data)
+        assert resp.status_code == 201
+        created_uuids.append(resp.json()["uuid"])
+
+    search_resp = await client.get(f"{search_url}Integration")
+    assert search_resp.status_code == 200
+    search_results = search_resp.json()["results"]
+
+    integration_uuids = {
+        item["uuid"]
+        for item in search_results
+        if "Integration" in item["title"]
+    }
+
+    for uuid in integration_uuids:
+        fav_resp = await client.post(favorites_url, json={"uuid": uuid})
+        assert fav_resp.status_code in (201, 409)
+
+    favorites_resp = await client.get(favorites_url)
+    assert favorites_resp.status_code == 200
+    favorites_data = favorites_resp.json()
+
+    favorite_uuids = {item["uuid"] for item in favorites_data["snippets"]}
+    assert integration_uuids.issubset(favorite_uuids)
+
+    python_favs = await client.get(
+        favorites_url,
+        params={"language": LanguageEnum.PYTHON.value, "tags": "integration"},
+    )
+    assert python_favs.status_code == 200
+    python_favs_data = python_favs.json()
+
+    python_integration_found = any(
+        item["language"] in (LanguageEnum.PYTHON, LanguageEnum.PYTHON.value)
+        and "integration" in [tag.lower() for tag in item.get("tags", [])]
+        for item in python_favs_data["snippets"]
+    )
+    assert python_integration_found
+
+    for uuid in created_uuids:
+        await client.delete(f"{snippet_url}{uuid}")
+    for uuid in integration_uuids:
+        await client.delete(f"{favorites_url}{uuid}")
+
+
+async def test_favorites_pagination_search_flow(auth_client):
+    client, user = auth_client
+
+    base_title = "Pagination Test"
+    snippets_to_create = 15
+
+    created_uuids = []
+    for i in range(snippets_to_create):
+        snippet_data = {
+            "title": f"{base_title} {i:02d}",
+            "language": LanguageEnum.PYTHON.value,
+            "content": f"print('pagination {i}')",
+            "is_private": False,
+            "tags": ["pagination", f"test{i}"],
+        }
+        resp = await client.post(snippet_url, json=snippet_data)
+        assert resp.status_code == 201
+        created_uuids.append(resp.json()["uuid"])
+
+    for uuid in created_uuids:
+        fav_resp = await client.post(favorites_url, json={"uuid": uuid})
+        assert fav_resp.status_code in (201, 409)
+
+    page1_resp = await client.get(
+        favorites_url, params={"per_page": 5, "page": 1, "tags": "pagination"}
+    )
+    assert page1_resp.status_code == 200
+    page1_data = page1_resp.json()
+
+    assert page1_data["page"] == 1
+    assert page1_data["per_page"] == 5
+    assert len(page1_data["snippets"]) == 5
+
+    page2_resp = await client.get(
+        favorites_url, params={"per_page": 5, "page": 2, "tags": "pagination"}
+    )
+    assert page2_resp.status_code == 200
+    page2_data = page2_resp.json()
+
+    assert page2_data["page"] == 2
+    assert len(page2_data["snippets"]) == 5
+
+    page1_uuids = {item["uuid"] for item in page1_data["snippets"]}
+    page2_uuids = {item["uuid"] for item in page2_data["snippets"]}
+    assert not page1_uuids.intersection(page2_uuids)
+
+    search_resp = await client.get(f"{search_url}Pagination Test 07")
+    assert search_resp.status_code == 200
+    search_data = search_resp.json()
+
+    assert len(search_data["results"]) == 1
+    searched_uuid = search_data["results"][0]["uuid"]
+
+    all_favorites = await client.get(favorites_url)
+    all_favorites_data = all_favorites.json()
+
+    all_favorite_uuids = {
+        item["uuid"] for item in all_favorites_data["snippets"]
+    }
+    assert searched_uuid in all_favorite_uuids
+
+    for uuid in created_uuids:
+        await client.delete(f"{snippet_url}{uuid}")
+        await client.delete(f"{favorites_url}{uuid}")
