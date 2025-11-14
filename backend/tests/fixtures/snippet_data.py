@@ -52,7 +52,7 @@ async def setup_snippets(
         .values(created_at=datetime.now(timezone.utc) - timedelta(days=5))
     )
     await db.execute(old_snippet_stmt)
-    await db.flush()
+    await db.commit()
 
     return {
         "user1": user1,
