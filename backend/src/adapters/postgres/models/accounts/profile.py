@@ -24,11 +24,11 @@ class UserProfileModel(Base):
     id: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True
     )
-    first_name: Mapped[str | None] = mapped_column(String(100))
-    last_name: Mapped[str | None] = mapped_column(String(100))
+    first_name: Mapped[str | None] = mapped_column(String(50))
+    last_name: Mapped[str | None] = mapped_column(String(50))
     gender: Mapped[GenderEnum | None] = mapped_column(Enum(GenderEnum))
     date_of_birth: Mapped[date | None] = mapped_column(Date)
-    info: Mapped[str | None] = mapped_column(Text)
+    info: Mapped[str | None] = mapped_column(String(250))
     avatar_url: Mapped[str | None] = mapped_column(Text)
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True

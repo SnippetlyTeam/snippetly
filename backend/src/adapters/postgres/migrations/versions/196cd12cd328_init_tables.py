@@ -8,9 +8,8 @@ Create Date: 2025-11-06 14:37:18.371463
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "196cd12cd328"
@@ -125,15 +124,15 @@ def upgrade() -> None:
     op.create_table(
         "user_profiles",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column("first_name", sa.String(length=100), nullable=True),
-        sa.Column("last_name", sa.String(length=100), nullable=True),
+        sa.Column("first_name", sa.String(length=50), nullable=True),
+        sa.Column("last_name", sa.String(length=50), nullable=True),
         sa.Column(
             "gender",
             sa.Enum("MALE", "FEMALE", "OTHER", name="genderenum"),
             nullable=True,
         ),
         sa.Column("date_of_birth", sa.Date(), nullable=True),
-        sa.Column("info", sa.Text(), nullable=True),
+        sa.Column("info", sa.String(length=250), nullable=True),
         sa.Column("avatar_url", sa.Text(), nullable=True),
         sa.Column("user_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),

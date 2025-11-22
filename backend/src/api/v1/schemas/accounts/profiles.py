@@ -8,11 +8,11 @@ from src.adapters.postgres.models import GenderEnum
 
 # --- Base ---
 class BaseProfileSchema(BaseModel):
-    first_name: Optional[str] = Field(None, max_length=100)
-    last_name: Optional[str] = Field(None, max_length=100)
+    first_name: Optional[str] = Field(None, max_length=50)
+    last_name: Optional[str] = Field(None, max_length=50)
     gender: Optional[GenderEnum] = Field(None)
     date_of_birth: Optional[date] = Field(None)
-    info: Optional[str] = Field(None)
+    info: Optional[str] = Field(None, max_length=250)
 
     model_config = ConfigDict(from_attributes=True)
 
