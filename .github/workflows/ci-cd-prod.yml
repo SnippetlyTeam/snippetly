@@ -11,23 +11,37 @@ env:
 
 jobs:
   backend-tests:
-    name: Backend Tests (Prod)
+    name: backend tests + ruff + pyright (Prod)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install dependencies (with test group)
+
+      - name: Install dependencies (tests + tooling)
         working-directory: ./backend
         run: |
-          uv sync --all-extras --group test
+          uv sync --all-extras --group test --group tooling
+
+      - name: Ruff lint
+        working-directory: ./backend
+        run: |
+          uv run ruff check .
+
+      - name: Pyright type-check
+        working-directory: ./backend
+        run: |
+          uv run pyright
+
       - name: Run pytest
         working-directory: ./backend
         run: |
@@ -39,15 +53,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ./frontend/package-lock.json
+
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci
+
       - name: Build
         working-directory: ./frontend
         run: npm run build
@@ -62,19 +79,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Docker login to ACR (Prod, Service Principal)
         run: |
           docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
             -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
             -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
+
       - name: Build & push backend
         run: |
-          docker build -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}" -f backend/Dockerfile backend
-          docker push "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
+          docker build \
+            -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}" \
+            -f backend/Dockerfile backend
+
+          docker push \
+            "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
+
       - name: Build & push frontend (Nginx)
         run: |
-          docker build -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}" -f frontend/Dockerfile frontend
-          docker push "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
+          docker build \
+            -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}" \
+            -f frontend/Dockerfile frontend
+
+          docker push \
+            "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
+
       - name: Set outputs
         id: meta
         run: |
@@ -100,7 +129,6 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
-            # Update images in .deploy.env
             sed -i.bak \
               -e 's|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${{ needs.build-push-prod.outputs.backend }}|' \
               -e 's|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${{ needs.build-push-prod.outputs.frontend }}|' \
@@ -110,8 +138,11 @@ jobs:
             source .deploy.env
             set +a
 
-            docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
+            docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
+              -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
+              -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
 
+            # Prod без dev-override (pgadmin і debug-порти тільки на dev)
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml up -d
 

@@ -9,25 +9,25 @@ resource "azurerm_storage_account" "sa" {
 
 resource "azurerm_storage_container" "media_dev" {
   name                  = var.media_container_dev
-  storage_account_name  = azurerm_storage_account.sa.name
+  storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
 }
 
 resource "azurerm_storage_container" "media_prod" {
   name                  = var.media_container_prod
-  storage_account_name  = azurerm_storage_account.sa.name
+  storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
 }
 
 resource "azurerm_storage_container" "backup_dev" {
   name                  = var.backup_container_dev
-  storage_account_name  = azurerm_storage_account.sa.name
+  storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
 }
 
 resource "azurerm_storage_container" "backup_prod" {
   name                  = var.backup_container_prod
-  storage_account_name  = azurerm_storage_account.sa.name
+  storage_account_id    = azurerm_storage_account.sa.id
   container_access_type = "private"
 }
 
