@@ -1,7 +1,9 @@
 import pytest
+import pytest_asyncio
 from faker import Faker
 from httpx import AsyncClient, ASGITransport
 
+from src.adapters.mongo.client import init_mongo_client
 from src.adapters.redis import get_redis_client
 from src.core.config import get_settings
 from src.core.dependencies.infrastructure import get_email_sender
@@ -19,6 +21,11 @@ def settings():
 @pytest.fixture(scope="session")
 def redis_client(settings):
     return get_redis_client(settings)
+
+
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def mongo_client():
+    return await init_mongo_client()
 
 
 @pytest.fixture(scope="session")

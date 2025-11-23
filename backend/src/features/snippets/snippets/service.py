@@ -3,7 +3,6 @@ from typing import Optional, cast
 from uuid import UUID
 
 from fastapi.requests import Request
-from pydantic import ValidationError
 from pymongo.errors import PyMongoError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -52,7 +51,7 @@ class SnippetService(SnippetServiceInterface):
 
         return SnippetResponseSchema(
             uuid=cast(UUID, snippet.uuid),
-            user_id=snippet.user_id,
+            username=snippet.user.username,
             title=snippet.title,
             language=snippet.language,
             is_private=snippet.is_private,
@@ -94,6 +93,7 @@ class SnippetService(SnippetServiceInterface):
                 if hasattr(snippet, field) and value is not None:
                     setattr(snippet, field, value)
 
+            await self._db.flush()
             await self._db.commit()
             await self._db.refresh(snippet)
         except SQLAlchemyError:
@@ -113,8 +113,12 @@ class SnippetService(SnippetServiceInterface):
         if data.description is not None:
             update_data["description"] = data.description
 
-        if update_data:
-            await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        try:
+            if update_data:
+                await self._doc_repo.update(snippet.mongodb_id, **update_data)
+        except (ValueError, PyMongoError):
+            raise
+
         updated_doc = await self._doc_repo.get_by_id(snippet.mongodb_id)
 
         if not updated_doc:
@@ -125,11 +129,17 @@ class SnippetService(SnippetServiceInterface):
     async def create_snippet(
         self, data: SnippetCreateSchema
     ) -> SnippetResponseSchema:
+        snippet_record = await self._model_repo.get_by_title(
+            data.title, data.user_id
+        )
+        if snippet_record:
+            raise exc.SnippetAlreadyExistsError
+
         try:
             document = await self._doc_repo.create(
                 data.content, data.description
             )
-        except (ValidationError, PyMongoError):
+        except (ValueError, PyMongoError):
             raise
 
         assert document.id is not None
@@ -150,9 +160,7 @@ class SnippetService(SnippetServiceInterface):
             await self._doc_repo.delete_document(document)
             raise
 
-        snippet_data = self._build_snippet_response(snippet_model, document)
-
-        return snippet_data
+        return self._build_snippet_response(snippet_model, document)
 
     async def get_snippets(
         self,
@@ -202,12 +210,23 @@ class SnippetService(SnippetServiceInterface):
             total_pages=self._paginator.total_pages(total, per_page),
         )
 
-    async def get_snippet_by_uuid(self, uuid: UUID) -> SnippetResponseSchema:
+    async def get_snippet_by_uuid(
+        self, uuid: UUID, user: UserModel
+    ) -> SnippetResponseSchema:
         snippet = await self._model_repo.get_by_uuid_with_tags(uuid)
         if not snippet:
             raise exc.SnippetNotFoundError(
                 "Snippet with this UUID was not found"
             )
+        if (
+            snippet.is_private
+            and snippet.user_id != user.id
+            and not user.is_admin
+        ):
+            raise exc.NoPermissionError(
+                "User have no permission to get snippet"
+            )
+
         document = await self._doc_repo.get_by_id(snippet.mongodb_id)
 
         if document is None:

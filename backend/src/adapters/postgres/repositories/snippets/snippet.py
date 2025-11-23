@@ -155,20 +155,22 @@ class SnippetRepository:
         result = await self._db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_snippets_by_language(
-        self, language: LanguageEnum
-    ) -> Optional[Sequence]:
-        query = select(SnippetModel).where(SnippetModel.language == language)
-        result = await self._db.execute(query)
-        return result.scalars().all()  # type: ignore
-
     async def get_by_user(self, user_id: int) -> Optional[Sequence]:
         query = select(SnippetModel).where(SnippetModel.user_id == user_id)
         result = await self._db.execute(query)
         return result.scalars().all()  # type: ignore
 
     async def get_by_title(
-        self, title: str, user_id: int, limit: int
+        self, title: str, user_id: int
+    ) -> Optional[SnippetModel]:
+        query = select(SnippetModel).where(
+            SnippetModel.title == title, SnippetModel.user_id == user_id
+        )
+        result = await self._db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_by_title_list(
+        self, title: str, user_id: int, limit: int = 20
     ) -> Optional[Sequence]:
         search_access = and_(
             SnippetModel.title.icontains(title),

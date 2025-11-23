@@ -2,7 +2,7 @@ from typing import Optional
 
 from redis.asyncio import Redis
 
-from src.core.config.redis import RedisSettings
+from src.core.config.dbs import RedisSettings
 
 _redis_client: Optional[Redis] = None
 

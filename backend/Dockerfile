@@ -25,4 +25,4 @@ USER appuser
 EXPOSE 8000
 
 # Dev сервер (uvicorn з авто-рендами)
-CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

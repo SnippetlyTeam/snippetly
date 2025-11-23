@@ -10,10 +10,10 @@ import { useOnClickOutside } from '../shared/hooks/useOnClickOutside';
 import type { NewSnippetType } from '../../types/NewSnippetType';
 import type { SnippetType } from '../../types/SnippetType';
 import { useMutation } from '@tanstack/react-query';
-import toast, { type Toast } from 'react-hot-toast';
-import CustomToast from '../../components/CustomToast/CustomToast';
 import CharacterCountIndicator from './CharacterCountIndicator';
 import Tag from '../../components/Tag/Tag';
+
+const TAG_VALIDATION_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 const SnippetFormPage = () => {
   const { snippetId } = useParams();
@@ -46,17 +46,22 @@ const SnippetFormPage = () => {
     isPending: isCreating,
   } = useMutation({
     mutationFn: (newSnippet: NewSnippetType) => create(newSnippet, accessToken),
-    onSuccess: () => {
-      setSnippet(emptySnippet);
-      toast.custom((t: Toast) => (
-        <CustomToast
-          t={t}
-          title="Snippet created successfully"
-          message="Your snippet has been saved."
-          type={'success'}
-        />
-      ), {
-        duration: 2500,
+    onSuccess: (response) => {
+      navigate(`/snippets/${response.data.uuid}`, {
+        state: {
+          title: "Snippet created successfully",
+          message: "Your snippet has been saved.",
+          type: "success"
+        }
+      });
+    },
+    onError: () => {
+      navigate('/snippets', {
+        state: {
+          title: 'Creation Failed',
+          message: 'An error occurred while creating the snippet. Please try again.',
+          type: 'error'
+        }
       });
     },
   });
@@ -68,8 +73,8 @@ const SnippetFormPage = () => {
     mutationFn: (newSnippet: NewSnippetType) => {
       return update(snippetId as string, newSnippet, accessToken)
     },
-    onSuccess: () => {
-      navigate('/snippets', {
+    onSuccess: (response) => {
+      navigate(`/snippets/${response.data.uuid}`, {
         state: {
           title: 'Snippet updated successfully',
           message: 'Your snippet has been updated.',
@@ -149,24 +154,32 @@ const SnippetFormPage = () => {
   }
 
   function handleAddTag(tagContent: string) {
+    const trimmedTag = tagContent.trim();
+
     if (snippet.tags.length === 10) {
       setTagsError('You can add up to 10 tags only');
       return;
     }
 
-    if (tagContent.length < 2) {
+    if (trimmedTag.length < 2) {
       setTagsError('Tag must be at least 2 characters');
       return;
     }
 
-    if (!snippet.tags.includes(tagContent.trim())) {
+    if (!TAG_VALIDATION_REGEX.test(trimmedTag)) {
+      setTagsError('Tags can only contain letters, numbers, hyphens, and underscores.');
+      return;
+    }
+
+    if (!snippet.tags.includes(trimmedTag)) {
       setSnippet(prev => ({
         ...prev,
-        tags: [...prev.tags, tagContent]
+        tags: [...prev.tags, trimmedTag]
       }));
     }
 
     setCurrentTag('');
+    setTagsError('');
   }
 
   function handleSnippetDetailsChange(key: keyof NewSnippetType, value: any) {
@@ -265,7 +278,7 @@ const SnippetFormPage = () => {
             autoComplete="off"
           >
             <div className={styles.formItem}>
-              <label htmlFor="title">Title</label>
+              <label htmlFor="title">Title <span className={styles.required}>(required)</span></label>
               <input
                 className={styles.input}
                 type="text"
@@ -381,7 +394,7 @@ const SnippetFormPage = () => {
                     if (event.key === 'Enter') {
                       event.preventDefault();
                       if (currentTag.trim() !== '') {
-                        handleSnippetDetailsChange('tags', currentTag + ',');
+                        handleAddTag(currentTag);
                       }
                     }
                   }}
@@ -427,7 +440,7 @@ const SnippetFormPage = () => {
             </div>
 
             <div className={styles.formItem}>
-              <label htmlFor="code-editor">Code</label>
+              <label htmlFor="code-editor">Code <span className={styles.required}>(required)</span></label>
               <CodeEditor
                 value={snippet.content}
                 onChange={(value) => handleSnippetDetailsChange('content', value)}

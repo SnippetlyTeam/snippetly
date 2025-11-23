@@ -17,5 +17,5 @@ RUN uv sync --locked --group test
 COPY src /app/src
 COPY tests /app/tests
 
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
-USER appuser
+#RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+#USER appuser

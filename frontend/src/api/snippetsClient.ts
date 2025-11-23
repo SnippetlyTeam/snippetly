@@ -58,7 +58,7 @@ export const getById = (uuid: string, token: string | undefined): Promise<AxiosR
 
 export const create = (snippet: NewSnippetType, token: string | undefined): Promise<AxiosResponse<SnippetType>> => {
   return snippetsClient.post(
-    '/create',
+    '/',
     snippet,
     { headers: { 'Authorization': `Bearer ${token}` } },
   );

@@ -3,7 +3,6 @@ from typing import Optional, cast
 from beanie import PydanticObjectId
 from pydantic import ValidationError
 from pymongo.errors import (
-    DuplicateKeyError,
     ConnectionFailure,
     ServerSelectionTimeoutError,
     PyMongoError,
@@ -31,9 +30,7 @@ class SnippetDocumentRepository:
             snippet = SnippetDocument(content=content, description=description)
             return cast(SnippetDocument, await snippet.insert())
         except ValidationError as e:
-            raise ValidationError(messages["invalid"]) from e
-        except DuplicateKeyError as e:
-            raise DuplicateKeyError("Document already exists") from e
+            raise ValueError(messages["invalid"]) from e
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:
@@ -77,7 +74,7 @@ class SnippetDocumentRepository:
                 await snippet.save()
             return snippet
         except ValidationError as e:
-            raise ValidationError(messages["invalid"]) from e
+            raise ValueError(messages["invalid"]) from e
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             raise ConnectionFailure(messages["conn"]) from e
         except PyMongoError as e:

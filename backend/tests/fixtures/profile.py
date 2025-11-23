@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import pytest_asyncio
+from PIL import Image
 from fastapi import UploadFile
 
 from src.adapters.postgres.repositories import UserProfileRepository
@@ -39,3 +40,13 @@ def mock_upload_file(mocker):
     mock_file.filename = "test_avatar.jpg"
 
     return mock_file
+
+
+@pytest_asyncio.fixture
+async def avatar_file():
+    image = Image.new("RGB", (100, 100), color="red")
+    file = BytesIO()
+    image.save(file, "PNG")
+    file.name = "test_avatar.png"
+    file.seek(0)
+    return file

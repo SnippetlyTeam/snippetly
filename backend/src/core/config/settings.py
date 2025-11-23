@@ -1,11 +1,13 @@
 from pydantic_settings import SettingsConfigDict
 
-from .api import APISettings
-from .email import EmailSettings
-from .mongo import MongoDBSettings
-from .postgres import PostgresSQLSettings
-from .redis import RedisSettings
-from .security import SecuritySettings, OAuthSettings
+from .components import (
+    APISettings,
+    EmailSettings,
+    SecuritySettings,
+    OAuthSettings,
+    OracleStorageSettings,
+)
+from .dbs import MongoDBSettings, PostgresSQLSettings, RedisSettings
 
 
 class Settings(
@@ -30,7 +32,7 @@ class DevelopmentSettings(Settings):
     DEBUG: bool = True
 
 
-class ProductionSettings(Settings):
+class ProductionSettings(Settings, OracleStorageSettings):
     model_config = SettingsConfigDict(
         env_file=".env.prod",
         env_file_encoding="utf-8",

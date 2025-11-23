@@ -7,6 +7,7 @@ from .exceptions import (
     TokenExpiredError,
     InvalidPasswordError,
     SnippetNotFoundError,
+    SnippetAlreadyExistsError,
     NoPermissionError,
     ProfileNotFoundError,
     FavoritesAlreadyError,

@@ -79,7 +79,7 @@ class SnippetModel(Base):
     )
 
     user: Mapped["UserModel"] = relationship(
-        "UserModel", back_populates="snippets"
+        "UserModel", back_populates="snippets", lazy="selectin"
     )
     tags: Mapped[list["TagModel"]] = relationship(
         "TagModel",

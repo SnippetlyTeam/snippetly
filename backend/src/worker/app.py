@@ -6,10 +6,12 @@ from src.core.config import get_settings
 settings = get_settings()
 
 app = Celery("snippetly")
-app.conf.broker_url = settings.redis_url
-app.conf.result_backend = settings.redis_url
-app.conf.timezone = "UTC"
-app.conf.result_expires = 3600
+app.conf.update(
+    broker_url=settings.redis_url,
+    result_backend=settings.redis_url,
+    timezone="UTC",
+    result_expires=3600,
+)
 
 app.conf.beat_schedule = {
     "cleanup_expired_activation_password_tokens": {

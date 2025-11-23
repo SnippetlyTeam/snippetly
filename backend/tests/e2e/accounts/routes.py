@@ -16,3 +16,6 @@ revoke_all_tokens_url = f"{route_prefix}revoke-all-tokens"
 reset_password_request_url = f"{route_prefix}reset-password/request"
 reset_password_complete_url = f"{route_prefix}reset-password/complete"
 change_password_url = f"{route_prefix}change-password"
+
+profile_url = "/api/v1/profile/"
+avatar_url = f"{profile_url}avatar"
