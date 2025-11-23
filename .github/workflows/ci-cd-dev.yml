@@ -66,6 +66,7 @@ jobs:
           MONGO_PASSWORD: mongodb
           MONGODB_HOST: localhost
           MONGODB_PORT: "27017"
+          TEST_DATABASE_URL: sqlite+aiosqlite:///:memory:
         run: |
           uv run pytest -q
 

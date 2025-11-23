@@ -1,17 +1,27 @@
 import pytest
 import pytest_asyncio
+import os
 from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
     AsyncSession,
 )
+from sqlalchemy.pool import StaticPool
 
 from src.adapters.postgres.models import Base
 
 
 @pytest_asyncio.fixture(scope="session")
 async def _engine(settings):
-    engine = create_async_engine(settings.database_url)
+    url = os.environ.get("TEST_DATABASE_URL", settings.database_url)
+    if url.startswith("sqlite+aiosqlite"):
+        engine = create_async_engine(
+            url,
+            poolclass=StaticPool,
+            connect_args={"check_same_thread": False},
+        )
+    else:
+        engine = create_async_engine(url)
     yield engine
     await engine.dispose()
 
