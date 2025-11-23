@@ -48,7 +48,10 @@ jobs:
         run: |
           uv run pyright
 
-
+      - name: Run pytest
+        working-directory: ./backend
+        run: |
+          uv run pytest -q
 
   frontend-build:
     name: Frontend Build
@@ -78,18 +81,15 @@ jobs:
     # Only on push to non-main branches (not on PRs)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
     needs: [ backend-tests, frontend-build ]
-    outputs:
-      backend: ${{ steps.meta.outputs.backend }}
-      frontend: ${{ steps.meta.outputs.frontend }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Docker login to ACR (Dev, Service Principal)
         run: |
-          docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
+          echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
             -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
-            -p "${{ secrets.DEV_AZURE_SP_PASSWORD }}"
+            --password-stdin
 
       - name: Build & push backend
         run: |
@@ -108,12 +108,6 @@ jobs:
 
           docker push \
             "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
-
-      - name: Set outputs
-        id: meta
-        run: |
-          echo "backend=${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "frontend=${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}" >> $GITHUB_OUTPUT
 
   deploy-dev:
     name: Deploy to Azure VM (Dev)
@@ -136,31 +130,47 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
+            # Ensure .deploy.env exists
+            if [ ! -f .deploy.env ]; then
+              cat > .deploy.env << 'EOF'
+              BACKEND_IMAGE=
+              FRONTEND_IMAGE=
+            EOF
+            fi
+
+            # Compute image tags for this run (same as in build-push-dev)
+            BACKEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
+            FRONTEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
+            
             # Update images in .deploy.env
             sed -i.bak \
-              -e 's|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${{ needs.build-push-dev.outputs.backend }}|' \
-              -e 's|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${{ needs.build-push-dev.outputs.frontend }}|' \
-              .deploy.env
-
+            -e "s|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${BACKEND_IMAGE}|" \
+            -e "s|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${FRONTEND_IMAGE}|" \
+            .deploy.env
+            
             set -a
-            source .deploy.env
+            # shellcheck source=/dev/null
+            . ./.deploy.env
             set +a
-
-            docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
+            
+            echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
+            echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
+            
+            echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
               -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
-              -p "${{ secrets.DEV_AZURE_SP_PASSWORD }}"
-
+              --password-stdin
+            
             # Dev: use base compose + override (pgadmin + exposed ports)
             docker compose -f docker-compose.yml -f docker-compose.override.yml pull
             docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
-      - name: Smoke test (Dev)
-        env:
-          DEV_PUBLIC_URL: ${{ secrets.DEV_PUBLIC_URL }}
-          DEV_SSH_HOST: ${{ secrets.DEV_SSH_HOST }}
-        run: |
-          set -euo pipefail
-          URL="${DEV_PUBLIC_URL:-http://$DEV_SSH_HOST}"
-          echo "Testing $URL"
-          curl -fsS "$URL/api/health"
-          curl -fsS "$URL/" | head -n 1
+            # Smoke test
+            echo "Running smoke tests..."
+            URL="${{ secrets.DEV_PUBLIC_URL }}"
+            if [ -z "$URL" ]; then
+              URL="http://${{ secrets.DEV_SSH_HOST }}"
+            fi
+            
+            echo "Testing $URL"
+            curl -fsS "$URL/api/health"
+            curl -fsS "$URL/" | head -n 1

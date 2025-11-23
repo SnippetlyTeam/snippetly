@@ -42,7 +42,10 @@ jobs:
         run: |
           uv run pyright
 
-
+      - name: Run pytest
+        working-directory: ./backend
+        run: |
+          uv run pytest -q
 
   frontend-build:
     name: Frontend Build (Prod)
@@ -70,18 +73,15 @@ jobs:
     name: Build & Push Images (Prod)
     runs-on: ubuntu-latest
     needs: [ backend-tests, frontend-build ]
-    outputs:
-      backend: ${{ steps.meta.outputs.backend }}
-      frontend: ${{ steps.meta.outputs.frontend }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Docker login to ACR (Prod, Service Principal)
         run: |
-          docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
+          echo "${{ secrets.PROD_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
             -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
-            -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
+            --password-stdin
 
       - name: Build & push backend
         run: |
@@ -100,12 +100,6 @@ jobs:
 
           docker push \
             "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
-
-      - name: Set outputs
-        id: meta
-        run: |
-          echo "backend=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          echo "frontend=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
   deploy-prod:
     name: Deploy to Azure VM (Prod)
@@ -126,30 +120,47 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
+            # Ensure .deploy.env exists
+            if [ ! -f .deploy.env ]; then
+              cat > .deploy.env << 'EOF'
+              BACKEND_IMAGE=
+              FRONTEND_IMAGE=
+            EOF
+            fi
+
+            # Compute image tags based on tag name (vX.Y.Z)
+            BACKEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
+            FRONTEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
+            
+            # Update images in .deploy.env
             sed -i.bak \
-              -e 's|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${{ needs.build-push-prod.outputs.backend }}|' \
-              -e 's|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${{ needs.build-push-prod.outputs.frontend }}|' \
-              .deploy.env
-
+            -e "s|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${BACKEND_IMAGE}|" \
+            -e "s|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${FRONTEND_IMAGE}|" \
+            .deploy.env
+            
             set -a
-            source .deploy.env
+            # shellcheck source=/dev/null
+            . ./.deploy.env
             set +a
-
-            docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
+            
+            echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
+            echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
+            
+            echo "${{ secrets.PROD_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
               -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
-              -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
-
+              --password-stdin
+            
             # Prod: only base compose (no dev override/pgadmin)
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml up -d
 
-      - name: Smoke test (Prod)
-        env:
-          PROD_PUBLIC_URL: ${{ secrets.PROD_PUBLIC_URL }}
-          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
-        run: |
-          set -euo pipefail
-          URL="${PROD_PUBLIC_URL:-http://$PROD_SSH_HOST}"
-          echo "Testing $URL"
-          curl -fsS "$URL/api/health"
-          curl -fsS "$URL/" | head -n 1
+            # Smoke test
+            echo "Running smoke tests..."
+            URL="${{ secrets.PROD_PUBLIC_URL }}"
+            if [ -z "$URL" ]; then
+              URL="http://${{ secrets.PROD_SSH_HOST }}"
+            fi
+            
+            echo "Testing $URL"
+            curl -fsS "$URL/api/health"
+            curl -fsS "$URL/" | head -n 1
