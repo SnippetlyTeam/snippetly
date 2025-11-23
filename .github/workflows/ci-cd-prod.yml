@@ -27,10 +27,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies (tests + tooling)
+      - name: Install dependencies (tests + dev tooling)
         working-directory: ./backend
         run: |
-          uv sync --all-extras --group test --group tooling
+          uv sync --group test --group dev
 
       - name: Ruff lint
         working-directory: ./backend
@@ -142,7 +142,7 @@ jobs:
               -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
               -p "${{ secrets.PROD_AZURE_SP_PASSWORD }}"
 
-            # Prod без dev-override (pgadmin і debug-порти тільки на dev)
+            # Prod: only base compose (no dev override/pgadmin)
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml up -d
 

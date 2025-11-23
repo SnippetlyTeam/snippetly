@@ -1,11 +1,11 @@
 name: CI/CD Dev
 
 on:
-  # Будь-який PR → тільки тести + лінт + тайпчек (без деплою)
+  # Any PR → tests + lint + type-check only (no deploy)
   pull_request:
     branches:
       - '**'
-  # Будь-який пуш у НЕ main → CI + збірка + деплой на dev VM
+  # Any push to non-main branch → CI + build + deploy to dev VM
   push:
     branches-ignore:
       - main
@@ -32,11 +32,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies (tests + tooling)
+      - name: Install dependencies (tests + dev tooling)
         working-directory: ./backend
         run: |
-          # передбачається, що ruff/pyright підключені в pyproject.toml
-          uv sync --all-extras --group test --group tooling
+          # dev group contains ruff + pyright, test group contains pytest etc.
+          uv sync --group test --group dev
 
       - name: Ruff lint
         working-directory: ./backend
@@ -78,6 +78,7 @@ jobs:
   build-push-dev:
     name: Build & Push Images (Dev)
     runs-on: ubuntu-latest
+    # Only on push to non-main branches (not on PRs)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
     needs: [ backend-tests, frontend-build ]
     outputs:
@@ -120,6 +121,7 @@ jobs:
   deploy-dev:
     name: Deploy to Azure VM (Dev)
     runs-on: ubuntu-latest
+    # Only on push to non-main branches (not on PRs)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
     needs: [ build-push-dev ]
     environment: dev
@@ -137,7 +139,7 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
-            # Оновлюємо образи в .deploy.env
+            # Update images in .deploy.env
             sed -i.bak \
               -e 's|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${{ needs.build-push-dev.outputs.backend }}|' \
               -e 's|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${{ needs.build-push-dev.outputs.frontend }}|' \
@@ -151,7 +153,7 @@ jobs:
               -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
               -p "${{ secrets.DEV_AZURE_SP_PASSWORD }}"
 
-            # dev: використовуємо і базовий compose, і override (pgadmin + порти)
+            # Dev: use base compose + override (pgadmin + exposed ports)
             docker compose -f docker-compose.yml -f docker-compose.override.yml pull
             docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
