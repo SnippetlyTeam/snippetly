@@ -3,12 +3,11 @@ name: CI/CD Dev
 on:
   # Any PR → tests + lint + type-check only (no deploy)
   pull_request:
-    branches:
-      - '**'
+    branches: ['**']
+  
   # Any push to non-main branch → CI + build + deploy to dev VM
   push:
-    branches-ignore:
-      - main
+    branches-ignore: [main]
 
 env:
   BACKEND_IMAGE_NAME: snippetly-backend
@@ -16,146 +15,170 @@ env:
 
 jobs:
   backend-tests:
-    name: backend tests + ruff + pyright
+    name: Backend Tests + Linting
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          version: "latest"
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: 'latest'
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Install dependencies (tests + dev tooling)
-        working-directory: ./backend
-        run: |
-          # dev group contains ruff + pyright, test group contains pytest etc.
-          uv sync --group test --group dev
+    - name: Install dependencies (tests + dev tooling)
+      working-directory: ./backend
+      run: |
+        # dev group contains ruff + pyright, test group contains pytest etc.
+        uv sync --group test --group dev
 
-      - name: Ruff lint
-        working-directory: ./backend
-        run: |
-          uv run ruff check .
+    - name: Run Ruff linter
+      working-directory: ./backend
+      run: uv run ruff check .
 
-      - name: Pyright type-check
-        working-directory: ./backend
-        run: |
-          uv run pyright
-
+    - name: Run Pyright type-checking
+      working-directory: ./backend
+      run: uv run pyright
 
   frontend-build:
     name: Frontend Build
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: ./frontend/package-lock.json
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: ./frontend/package-lock.json
 
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
+    - name: Prepare frontend environment
+      working-directory: ./frontend
+      run: printf "VITE_SERVER_BASE_URL=\n" > .env.production
 
-      - name: Build
-        working-directory: ./frontend
-        run: npm run build
+    - name: Install dependencies
+      working-directory: ./frontend
+      run: npm ci
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
 
   build-push-dev:
     name: Build & Push Images (Dev)
     runs-on: ubuntu-latest
-    # Only on push to non-main branches (not on PRs)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
-    needs: [ backend-tests, frontend-build ]
+    needs: [backend-tests, frontend-build]
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Docker login to ACR (Dev, Service Principal)
-        run: |
-          echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
-            -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
-            --password-stdin
+    - name: Login to Azure Container Registry
+      run: |
+        echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
+          -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
+          --password-stdin
 
-      - name: Build & push backend
-        run: |
-          docker build \
-            -t "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}" \
-            -f backend/Dockerfile backend
+    - name: Build and push backend image
+      run: |
+        docker build \
+          -t "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}" \
+          -f backend/Dockerfile \
+          backend
+        docker push "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
 
-          docker push \
-            "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
-
-      - name: Build & push frontend (Nginx)
-        run: |
-          docker build \
-            -t "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}" \
-            -f frontend/Dockerfile frontend
-
-          docker push \
-            "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
+    - name: Build and push frontend image
+      run: |
+        docker build \
+          -t "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}" \
+          -f frontend/Dockerfile \
+          frontend
+        docker push "${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
 
   deploy-dev:
     name: Deploy to Azure VM (Dev)
     runs-on: ubuntu-latest
-    # Only on push to non-main branches (not on PRs)
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
-    needs: [ build-push-dev ]
+    needs: [build-push-dev]
     environment: dev
+    
     concurrency:
       group: cd-dev
       cancel-in-progress: true
+    
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_SSH_HOST }}
-          username: ${{ secrets.DEV_SSH_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
-            set -euo pipefail
-            cd /opt/snippetly
+    - name: Deploy over SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.DEV_SSH_HOST }}
+        username: ${{ secrets.DEV_SSH_USER }}
+        key: ${{ secrets.DEV_SSH_KEY }}
+        script: |
+          set -euo pipefail
+          cd /opt/snippetly
 
-            # Ensure .deploy.env exists
-            if [ ! -f .deploy.env ]; then
-              cat > .deploy.env << 'EOF'
-              BACKEND_IMAGE=
-              FRONTEND_IMAGE=
+          # Ensure .deploy.env exists
+          if [ ! -f .deploy.env ]; then
+            cat > .deploy.env << 'EOF'
+            BACKEND_IMAGE=
+            FRONTEND_IMAGE=
             EOF
-            fi
+          fi
 
-            # Compute image tags for this run (same as in build-push-dev)
-            BACKEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
-            FRONTEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
-            
-            # Update images in .deploy.env
-            sed -i.bak \
+          # Compute image tags for this run
+          BACKEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
+          FRONTEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
+          
+          # Update images in .deploy.env
+          sed -i.bak \
             -e "s|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${BACKEND_IMAGE}|" \
             -e "s|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${FRONTEND_IMAGE}|" \
             .deploy.env
-            
-            set -a
-            # shellcheck source=/dev/null
-            . ./.deploy.env
-            set +a
-            
-            echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
-            echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
-            
-            echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
-              -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
-              --password-stdin
-            
-            # Dev: use base compose + override (pgadmin + exposed ports)
-            docker compose -f docker-compose.yml -f docker-compose.override.yml pull
-            docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+          
+          # Source the updated .deploy.env
+          set -a
+          # shellcheck source=/dev/null
+          . ./.deploy.env
+          set +a
+          
+          echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
+          echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
+          
+          # Ensure backend/.env with environment and OAuth settings
+          mkdir -p backend
+          touch backend/.env
+          
+          # Set URL from secret or fallback to SSH host
+          URL="${{ secrets.DEV_PUBLIC_URL }}"
+          if [ -z "$URL" ]; then
+            URL="http://${{ secrets.DEV_SSH_HOST }}"
+          fi
+          
+          # Update environment variables in backend/.env
+          for K in ENVIRONMENT FRONTEND_URL; do
+            sed -i.bak "/^$K=/d" backend/.env || true
+          done
+          
+          {
+            echo "ENVIRONMENT=development"
+            echo "FRONTEND_URL=$URL"
+          } >> backend/.env
+
+          # Login to container registry
+          echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
+            -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
+            --password-stdin
+          
+          # Pull and start containers
+          docker compose -f docker-compose.yml -f docker-compose.override.yml pull
+          docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
