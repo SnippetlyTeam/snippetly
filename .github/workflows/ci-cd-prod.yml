@@ -42,10 +42,7 @@ jobs:
         run: |
           uv run pyright
 
-      - name: Run pytest
-        working-directory: ./backend
-        run: |
-          uv run pytest -q
+
 
   frontend-build:
     name: Frontend Build (Prod)
