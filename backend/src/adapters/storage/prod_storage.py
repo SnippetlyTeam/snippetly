@@ -26,7 +26,9 @@ class ProdStorage(StorageInterface):
 
         self._container = settings.AZURE_MEDIA_CONTAINER
 
-    def upload_file(self, file_name: str, file_data: Union[bytes, bytearray]) -> str:
+    def upload_file(
+        self, file_name: str, file_data: Union[bytes, bytearray]
+    ) -> str:
         blob_client = self._blob_service.get_blob_client(
             container=self._container, blob=file_name
         )
