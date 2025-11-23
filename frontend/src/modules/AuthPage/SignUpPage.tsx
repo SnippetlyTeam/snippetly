@@ -24,6 +24,7 @@ const SignUpPage: React.FC = () => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [serverEmailError, setServerEmailError] = useState('');
   const [serverUsernameError, setServerUsernameError] = useState('');
+  const [serverPasswordError, setServerPasswordError] = useState('');
 
   const serverErrors = {
     emailTaken: 'This email is taken. Want to log in?',
@@ -49,6 +50,9 @@ const SignUpPage: React.FC = () => {
         if (detail.includes('email')) {
           setServerEmailError(serverErrors.emailTaken);
         }
+        if (detail.includes('Password') || detail.includes('password')) {
+          setServerPasswordError(detail);
+        }
       }
     },
   });
@@ -62,7 +66,7 @@ const SignUpPage: React.FC = () => {
     password: z.string()
       .min(8)
       .max(30)
-      .regex(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+-=?&])\S+$/),
+      .regex(/^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\-=?&])\S+$/),
     confirmPassword: z.string(),
   }).refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match.',
@@ -91,6 +95,12 @@ const SignUpPage: React.FC = () => {
       setServerUsernameError('');
     }
   }, [watchedFields.username]);
+
+  useEffect(() => {
+    if (serverPasswordError) {
+      setServerPasswordError('');
+    }
+  }, [watchedFields.password]);
 
   useEffect(() => {
     if (location.state && (
@@ -229,6 +239,9 @@ const SignUpPage: React.FC = () => {
                 }
                 aria-invalid={errors.password ? "true" : undefined}
               />
+              {serverPasswordError && (
+                <p className={styles.error}>{serverPasswordError}</p>
+              )}
               <button
                 className={styles.eye}
                 type="button"
