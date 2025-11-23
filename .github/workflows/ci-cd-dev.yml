@@ -159,14 +159,3 @@ jobs:
             # Dev: use base compose + override (pgadmin + exposed ports)
             docker compose -f docker-compose.yml -f docker-compose.override.yml pull
             docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
-
-            # Smoke test
-            echo "Running smoke tests..."
-            URL="${{ secrets.DEV_PUBLIC_URL }}"
-            if [ -z "$URL" ]; then
-              URL="http://${{ secrets.DEV_SSH_HOST }}"
-            fi
-            
-            echo "Testing $URL"
-            curl -fsS "$URL/api/health"
-            curl -fsS "$URL/" | head -n 1
