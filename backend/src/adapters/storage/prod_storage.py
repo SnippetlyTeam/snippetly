@@ -32,7 +32,12 @@ class ProdStorage(StorageInterface):
         blob_client = self._blob_service.get_blob_client(
             container=self._container, blob=file_name
         )
-        blob_client.upload_blob(file_data, overwrite=True)
+        if isinstance(file_data, bytes):
+            data: bytes = file_data
+        else:
+            data = bytes(file_data)
+
+        blob_client.upload_blob(data, overwrite=True)
         return self.get_file_url(file_name)
 
     def get_file_url(self, file_name: str) -> str:
