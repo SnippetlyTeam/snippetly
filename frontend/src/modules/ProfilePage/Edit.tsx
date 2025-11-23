@@ -66,6 +66,7 @@ const Edit = () => {
   });
 
   const [formData, setFormData] = useState<EditableProfileFields>(initialData.current);
+  const [errors, setErrors] = useState<Partial<Record<keyof EditableProfileFields, string>>>({});
   const [isChanged, setIsChanged] = useState(false);
 
   function handleFormDataChange(key: keyof typeof formData, value: string) {
@@ -74,13 +75,13 @@ const Edit = () => {
     const isAllEqual = Object.entries(initialData.current).every(
       ([k, v]) => {
         const currentValue = updatedFormData[k as keyof typeof updatedFormData];
-        
+
         if (k === 'gender') {
           const isCurrentNotSpecified = !currentValue || currentValue === 'other' || currentValue === 'prefer_not_to_say';
           const isInitialNotSpecified = !v || v === 'other' || v === 'prefer_not_to_say';
           return isCurrentNotSpecified === isInitialNotSpecified;
         }
-        
+
         if (k === 'first_name' || k === 'last_name' || k === 'info') {
           return (currentValue?.toString().trim() || '') === (v?.toString().trim() || '');
         }
@@ -94,7 +95,34 @@ const Edit = () => {
       ...prev,
       [key]: value,
     }));
+
+    if (errors[key]) {
+      setErrors(prev => ({ ...prev, [key]: undefined }));
+    }
   }
+
+  const validate = (): boolean => {
+    const newErrors: Partial<Record<keyof EditableProfileFields, string>> = {};
+    let isValid = true;
+
+    if (formData.first_name.length > 50) {
+      newErrors.first_name = 'First Name must not exceed 50 characters.';
+      isValid = false;
+    }
+
+    if (formData.last_name.length > 50) {
+      newErrors.last_name = 'Last Name must not exceed 50 characters.';
+      isValid = false;
+    }
+
+    if (formData.info.length > 250) {
+      newErrors.info = 'Bio must not exceed 250 characters.';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   function handleGenderChange(value: string) {
     handleFormDataChange('gender', value);
@@ -152,7 +180,9 @@ const Edit = () => {
 
   function handleFormSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    mutate();
+    if (validate()) {
+      mutate();
+    }
   }
 
   useOnClickOutside(genderDropdownRef as React.RefObject<HTMLElement>, () => setIsGenderDropdownOpen(false));
@@ -169,6 +199,7 @@ const Edit = () => {
             value={formData.first_name}
             onChange={event => handleFormDataChange('first_name', event.target.value)}
           />
+          {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
         </div>
 
         <div className={styles.formItem}>
@@ -178,6 +209,7 @@ const Edit = () => {
             value={formData.last_name}
             onChange={event => handleFormDataChange('last_name', event.target.value)}
           />
+          {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
         </div>
 
         <div className={styles.formItem}>
@@ -224,6 +256,7 @@ const Edit = () => {
             value={formData.info}
             onChange={event => handleFormDataChange('info', event.target.value)}
           />
+          {errors.info && <span className={styles.error}>{errors.info}</span>}
         </div>
 
         <div className={styles.buttons}>
