@@ -52,7 +52,7 @@ services:
       - db
       - redis
       - mongodb
-    expose:
+    ports:
       - "8000"
     volumes:
       - ./backend/static/avatars:/app/static/avatars
