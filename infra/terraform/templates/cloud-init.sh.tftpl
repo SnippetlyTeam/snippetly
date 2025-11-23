@@ -1,0 +1,63 @@
+#cloud-config
+package_update: true
+package_upgrade: false
+runcmd:
+  - |
+    curl -fsSL https://get.docker.com | sh
+    # Install git and docker compose plugin depending on OS
+    if command -v dnf >/dev/null 2>&1; then
+      dnf install -y git docker-compose-plugin cronie || true
+    elif command -v apt-get >/dev/null 2>&1; then
+      apt-get update -y && apt-get install -y git docker-compose-plugin cron || true
+    fi
+    usermod -aG docker ${username}
+    systemctl enable docker --now
+    # Enable cron service
+    if systemctl list-unit-files | grep -q crond.service; then
+      systemctl enable crond --now || true
+    else
+      systemctl enable cron --now || true
+    fi
+  - |
+    mkdir -p /opt/snippetly
+    chown -R ${username}:${username} /opt/snippetly
+  - |
+    # Create persistent data directories for containers
+    mkdir -p /opt/app-data/postgres /opt/app-data/redis /opt/app-data/mongo
+    chown -R ${username}:${username} /opt/app-data
+  - |
+    su - ${username} -c "cd /opt/snippetly && git clone ${repo_url} ."
+  - |
+    # No cloud-specific key directories required for Azure
+  - |
+    echo "BACKEND_IMAGE=" > /opt/snippetly/.deploy.env
+    echo "FRONTEND_IMAGE=" >> /opt/snippetly/.deploy.env
+    chown ${username}:${username} /opt/snippetly/.deploy.env
+  - |
+    if [ -f /opt/snippetly/backend/config_envs/.env.prod.sample ]; then
+      cp /opt/snippetly/backend/config_envs/.env.prod.sample /opt/snippetly/backend/.env
+    fi
+  - |
+    # If backend_env_content provided via Terraform, overwrite backend/.env
+    if [ "${backend_env_flag}" = "1" ]; then
+      cat > /opt/snippetly/backend/.env <<'EOFENV'
+${backend_env_content}
+EOFENV
+      chown ${username}:${username} /opt/snippetly/backend/.env
+      chmod 600 /opt/snippetly/backend/.env
+    fi
+  - |
+    # No separate production compose overlay is needed anymore
+  - |
+    # Ensure backup scripts (if present) are executable
+    if [ -f /opt/snippetly/scripts/backup_pg.sh ]; then chmod +x /opt/snippetly/scripts/backup_pg.sh; fi
+    if [ -f /opt/snippetly/scripts/backup_mongo.sh ]; then chmod +x /opt/snippetly/scripts/backup_mongo.sh; fi
+  - |
+    # Install cron jobs: migrations at boot and periodically; optional nightly backups
+    cat >/etc/cron.d/snippetly <<'EOFCRON'
+@reboot root sleep 30 && cd /opt/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate || true
+*/10 * * * * root cd /opt/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate >/var/log/snippetly_migrate.log 2>&1
+0 2 * * * root [ -x /opt/snippetly/scripts/backup_pg.sh ] && /bin/bash /opt/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
+15 2 * * * root [ -x /opt/snippetly/scripts/backup_mongo.sh ] && /bin/bash /opt/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
+EOFCRON
+    chmod 644 /etc/cron.d/snippetly

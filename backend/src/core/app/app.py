@@ -32,4 +32,8 @@ def create_app() -> FastAPI:
 
     app.include_router(v1_router, prefix="/api")
 
+    @app.get("/api/health")
+    def health() -> dict:
+        return {"status": "ok"}
+
     return app
