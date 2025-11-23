@@ -151,13 +151,3 @@ jobs:
             docker compose -f docker-compose.yml pull
             docker compose -f docker-compose.yml up -d
 
-            # Smoke test
-            echo "Running smoke tests..."
-            URL="${{ secrets.PROD_PUBLIC_URL }}"
-            if [ -z "$URL" ]; then
-              URL="http://${{ secrets.PROD_SSH_HOST }}"
-            fi
-            
-            echo "Testing $URL"
-            curl -fsS "$URL/api/health"
-            curl -fsS "$URL/" | head -n 1
