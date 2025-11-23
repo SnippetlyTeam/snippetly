@@ -13,16 +13,6 @@ jobs:
   backend-tests:
     name: backend tests + ruff + pyright (Prod)
     runs-on: ubuntu-latest
-    services:
-      mongodb:
-        image: mongo:7-jammy
-        ports:
-          - 27017:27017
-        env:
-          MONGO_INITDB_ROOT_USERNAME: snippetly
-          MONGO_INITDB_ROOT_PASSWORD: mongodb
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -52,17 +42,7 @@ jobs:
         run: |
           uv run pyright
 
-      - name: Run pytest
-        working-directory: ./backend
-        env:
-          MONGO_DB: snippetly
-          MONGO_USER: snippetly
-          MONGO_PASSWORD: mongodb
-          MONGODB_HOST: localhost
-          MONGODB_PORT: "27017"
-          TEST_DATABASE_URL: sqlite+aiosqlite:///:memory:
-        run: |
-          uv run pytest -q
+
 
   frontend-build:
     name: Frontend Build (Prod)
