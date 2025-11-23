@@ -22,8 +22,7 @@ jobs:
           MONGO_INITDB_ROOT_USERNAME: snippetly
           MONGO_INITDB_ROOT_PASSWORD: mongodb
         options: >-
-          --health-cmd "mongosh --eval \"db.adminCommand('ping')\"" \
-          --health-interval 10s --health-timeout 5s --health-retries 5
+          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'" --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
