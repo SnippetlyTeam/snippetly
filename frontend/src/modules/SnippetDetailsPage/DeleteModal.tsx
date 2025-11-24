@@ -1,12 +1,12 @@
 import React from 'react';
 import './DeleteModal.scss';
 
-type LogOutModalProps = {
+type DeleteModalProps = {
   onClose: () => void;
   onDelete: () => void;
 }
 
-const DeleteModal: React.FC<LogOutModalProps> = ({ onClose, onDelete }) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({ onClose, onDelete }) => {
   return (
     <div className="modalOverlay">
       <div className="modal">
