@@ -11,7 +11,7 @@ env:
 
 jobs:
   backend-tests:
-    name: backend tests + ruff + pyright (Prod)
+    name: Backend Tests + Ruff + Pyright (Prod)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -42,7 +42,10 @@ jobs:
         run: |
           uv run pyright
 
-
+      - name: Run tests
+        working-directory: ./backend
+        run: |
+          uv run pytest -v
 
   frontend-build:
     name: Frontend Build (Prod)
@@ -74,6 +77,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Docker login to ACR (Prod, Service Principal)
         run: |
           echo "${{ secrets.PROD_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
@@ -81,22 +87,24 @@ jobs:
             --password-stdin
 
       - name: Build & push backend
-        run: |
-          docker build \
-            -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}" \
-            -f backend/Dockerfile backend
-
-          docker push \
-            "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}
+          cache-from: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:cache,mode=max
 
       - name: Build & push frontend (Nginx)
-        run: |
-          docker build \
-            -t "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}" \
-            -f frontend/Dockerfile frontend
-
-          docker push \
-            "${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}
+          cache-from: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache,mode=max
 
   deploy-prod:
     name: Deploy to Azure VM (Prod)
@@ -113,15 +121,22 @@ jobs:
           host: ${{ secrets.PROD_SSH_HOST }}
           username: ${{ secrets.PROD_SSH_USER }}
           key: ${{ secrets.PROD_SSH_KEY }}
+          script_stop: true
           script: |
             set -euo pipefail
             cd /opt/snippetly
 
+            # Pull latest code from repository
+            echo "Pulling latest code from main..."
+            git fetch origin
+            git checkout main
+            git pull origin main
+
             # Ensure .deploy.env exists
             if [ ! -f .deploy.env ]; then
               cat > .deploy.env << 'EOF'
-              BACKEND_IMAGE=
-              FRONTEND_IMAGE=
+            BACKEND_IMAGE=
+            FRONTEND_IMAGE=
             EOF
             fi
 
@@ -129,12 +144,14 @@ jobs:
             BACKEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
             FRONTEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
             
+            echo "Updating deployment configuration..."
             # Update images in .deploy.env
             sed -i.bak \
             -e "s|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${BACKEND_IMAGE}|" \
             -e "s|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${FRONTEND_IMAGE}|" \
             .deploy.env
             
+            # Load deployment environment
             set -a
             # shellcheck source=/dev/null
             . ./.deploy.env
@@ -143,11 +160,29 @@ jobs:
             echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
             echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
             
+            # Login to ACR
+            echo "Logging into Azure Container Registry..."
             echo "${{ secrets.PROD_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.PROD_ACR_LOGIN_SERVER }}" \
               -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
               --password-stdin
             
-            # Prod: only base compose (no dev override/pgadmin)
+            # Pull and deploy (Prod: only base compose, no dev override/pgadmin)
+            echo "Pulling Docker images..."
             docker compose -f docker-compose.yml pull
+            
+            echo "Starting services..."
             docker compose -f docker-compose.yml up -d
-
+            
+            # Wait for services to be healthy
+            echo "Waiting for services to be healthy..."
+            sleep 10
+            
+            # Verify deployment
+            echo "Verifying deployment..."
+            docker compose -f docker-compose.yml ps
+            
+            # Cleanup old images (keep images from last 72 hours)
+            echo "Cleaning up old Docker images..."
+            docker image prune -af --filter "until=72h" || true
+            
+            echo "Deployment completed successfully!"
