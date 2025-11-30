@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { AxiosResponse } from 'axios';
 import type { AccessToken } from '../types/Tokens';
 
-const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || '';
 
 export const authClient = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/auth`,

@@ -7,7 +7,7 @@ import type { AccessToken } from '../types/Tokens';
 import type { FiltersType } from '../types/FiltersType';
 import type { SnippetListResponse } from '../types/SnippetListResponse';
 
-const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
+const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL || '';
 
 export const snippetsClient: AxiosInstance = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/snippets`,

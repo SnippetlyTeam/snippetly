@@ -124,7 +124,7 @@ const SignUpPage: React.FC = () => {
 
   function handleSignUpWithGoogle(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
-    const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL;
+    const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || window.location.origin;
     window.location.href = `${SERVER_BASE_URL}/api/v1/auth/google/url`;
   }
 
