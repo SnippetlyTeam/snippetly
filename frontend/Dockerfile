@@ -14,6 +14,8 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # --- build stage ---
 FROM base AS build
+ARG VITE_SERVER_BASE_URL=""
+ENV VITE_SERVER_BASE_URL=${VITE_SERVER_BASE_URL}
 RUN npm run build
 
 # --- production runtime (Nginx) ---

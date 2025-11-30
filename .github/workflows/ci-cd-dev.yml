@@ -105,6 +105,8 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: ${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            VITE_SERVER_BASE_URL=${{ secrets.DEV_PUBLIC_URL || format('http://{0}', secrets.DEV_SSH_HOST) }}
           cache-from: type=registry,ref=${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache
           cache-to: type=registry,ref=${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache,mode=max
 

@@ -12,7 +12,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -26,7 +25,6 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-      start_period: 5s
 
   mongodb:
     image: mongo:7-jammy
@@ -48,7 +46,6 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
-      start_period: 20s
 
   migrate:
     image: ${BACKEND_IMAGE}
@@ -56,10 +53,8 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     command: uv run alembic upgrade head
-    restart: "no"
 
   backend:
     image: ${BACKEND_IMAGE}
@@ -67,14 +62,9 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      mongodb:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+      - db
+      - redis
+      - mongodb
     expose:
       - "8000"
     volumes:
@@ -94,16 +84,8 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "celery -A src.worker.app.app inspect ping -d celery@$$HOSTNAME"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      - db
+      - redis
     restart: unless-stopped
 
   celery-beat:
@@ -113,18 +95,15 @@ services:
     env_file:
       - ./backend/.env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     restart: unless-stopped
 
   frontend:
     image: ${FRONTEND_IMAGE}
     container_name: snippetly-frontend
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     command: ["nginx", "-g", "daemon off;"]
     ports:
       - "80:80"
