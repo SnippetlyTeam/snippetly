@@ -9,6 +9,10 @@ class APISettings(BaseAppSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_URL: str = "http://localhost:8000"
 
+    DOCS_URL: str = "/docs"
+    REDOC_URL: str = "/redoc"
+    OPENAPI_URL: str = "/openapi.json"
+
 
 class EmailSettings(BaseAppSettings):
     EMAIL_APP_PASSWORD: SecretStr | None = None
@@ -25,7 +29,7 @@ class SecuritySettings(BaseAppSettings):
     ALGORITHM: str = "HS256"
 
     REFRESH_TOKEN_LIFE: int = 7
-    ACCESS_TOKEN_LIFE_MINUTES: int = 30
+    ACCESS_TOKEN_LIFE_MINUTES: int = 15
     ACTIVATION_TOKEN_LIFE: int = 1
     PASSWORD_RESET_TOKEN_LIFE: int = 1
 

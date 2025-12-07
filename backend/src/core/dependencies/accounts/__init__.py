@@ -1,6 +1,7 @@
 from .auth import (
     get_token,
     get_current_user,
+    is_admin,
     get_auth_service,
     get_user_service,
 )

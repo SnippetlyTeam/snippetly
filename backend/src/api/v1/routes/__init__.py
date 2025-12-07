@@ -7,6 +7,7 @@ from .accounts import (
     password_router,
     profile_router,
 )
+from .docs import router as docs_router
 from .snippets import snippets_router
 
 v1_router = APIRouter(prefix="/v1")
