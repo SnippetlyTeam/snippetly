@@ -21,8 +21,11 @@ from .snippet import (
     snippet_doc_repo,
     snippet_factory,
     snippet_service,
+    favorites_repo,
+    favorites_service,
+    search_service,
 )
-from .snippet_data import setup_snippets
+from .snippet_data import setup_snippets, setup_favorites
 from .user import (
     user_factory,
     user_repo,
@@ -62,4 +65,8 @@ __all__ = [
     "snippet_factory",
     "snippet_service",
     "setup_snippets",
+    "setup_favorites",
+    "favorites_repo",
+    "favorites_service",
+    "search_service",
 ]

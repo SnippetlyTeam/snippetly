@@ -10,9 +10,6 @@ from src.api.v1.schemas.snippets import (
     SnippetCreateSchema,
     SnippetUpdateRequestSchema,
 )
-from src.core.exceptions import (
-    SnippetAlreadyExistsError,
-)
 
 
 @pytest.fixture
@@ -77,7 +74,7 @@ async def test_create_snippet_duplicate_title(
 ):
     await snippet_service.create_snippet(snippet_create_data)
 
-    with pytest.raises(SnippetAlreadyExistsError):
+    with pytest.raises(exc.SnippetAlreadyExistsError):
         await snippet_service.create_snippet(snippet_create_data)
 
 
@@ -98,8 +95,8 @@ async def test_create_snippet_rollback_on_db_error(
 
 
 async def test_get_own_private_snippet(db, snippet_service, setup_snippets):
-    user1, _ = setup_snippets
-    private_snippet = await get_snippet_by_title(db, "U1 Private Python")
+    user1 = setup_snippets["user1"]
+    private_snippet = setup_snippets["u1_private_py"]
 
     response = await snippet_service.get_snippet_by_uuid(
         private_snippet.uuid, user1
@@ -107,15 +104,15 @@ async def test_get_own_private_snippet(db, snippet_service, setup_snippets):
 
     assert response is not None
     assert response.uuid == private_snippet.uuid
-    assert response.title == "U1 Private Python"
+    assert response.title == private_snippet.title
     assert response.content is not None
 
 
 async def test_get_other_user_public_snippet(
     db, snippet_service, setup_snippets
 ):
-    user1, _ = setup_snippets
-    other_public_snippet = await get_snippet_by_title(db, "U2 Public Python")
+    user1 = setup_snippets["user1"]
+    other_public_snippet = setup_snippets["u2_public_py"]
 
     response = await snippet_service.get_snippet_by_uuid(
         other_public_snippet.uuid, user1
@@ -123,14 +120,14 @@ async def test_get_other_user_public_snippet(
 
     assert response is not None
     assert response.uuid == other_public_snippet.uuid
-    assert response.title == "U2 Public Python"
+    assert response.title == other_public_snippet.title
 
 
 async def test_get_other_user_private_snippet_no_permission(
     db, snippet_service, setup_snippets
 ):
-    user1, _ = setup_snippets
-    other_private_snippet = await get_snippet_by_title(db, "U2 Private JS")
+    user1 = setup_snippets["user1"]
+    other_private_snippet = setup_snippets["u2_private_js"]
 
     with pytest.raises(exc.NoPermissionError):
         await snippet_service.get_snippet_by_uuid(
@@ -144,19 +141,20 @@ async def test_get_other_user_private_snippet_as_admin(
     admin_user = await user_factory.create_active(db)
     admin_user.is_admin = True
     await db.flush()
-    other_private_snippet = await get_snippet_by_title(db, "U2 Private JS")
+
+    private_snippet = setup_snippets["u2_private_js"]
 
     response = await snippet_service.get_snippet_by_uuid(
-        other_private_snippet.uuid, admin_user
+        private_snippet.uuid, admin_user
     )
 
     assert response is not None
-    assert response.uuid == other_private_snippet.uuid
-    assert response.title == "U2 Private JS"
+    assert response.uuid == private_snippet.uuid
+    assert response.title == private_snippet.title
 
 
 async def test_get_snippet_not_found_in_db(snippet_service, setup_snippets):
-    user1, _ = setup_snippets
+    user1 = setup_snippets["user1"]
     non_existent_uuid = uuid4()
 
     with pytest.raises(exc.SnippetNotFoundError):
@@ -166,20 +164,20 @@ async def test_get_snippet_not_found_in_db(snippet_service, setup_snippets):
 async def test_get_snippet_document_not_found(
     db, snippet_service, snippet_doc_repo, setup_snippets
 ):
-    user1, _ = setup_snippets
-    snippet_model = await get_snippet_by_title(db, "U1 Public Python")
+    user1 = setup_snippets["user1"]
+    snippet = setup_snippets["u1_public_py"]
 
-    await snippet_doc_repo.delete(snippet_model.mongodb_id)
+    await snippet_doc_repo.delete(snippet.mongodb_id)
 
     with pytest.raises(exc.SnippetNotFoundError):
-        await snippet_service.get_snippet_by_uuid(snippet_model.uuid, user1)
+        await snippet_service.get_snippet_by_uuid(snippet.uuid, user1)
 
 
 async def test_update_own_snippet_success(
     db, snippet_service, setup_snippets, snippet_update_data, snippet_doc_repo
 ):
-    user1, _ = setup_snippets
-    snippet_to_update = await get_snippet_by_title(db, "U1 Public Python")
+    user1 = setup_snippets["user1"]
+    snippet_to_update = setup_snippets["u1_public_py"]
 
     response = await snippet_service.update_snippet(
         snippet_to_update.uuid, snippet_update_data, user1
@@ -208,12 +206,12 @@ async def test_update_own_snippet_success(
 async def test_update_other_user_snippet_no_permission(
     db, snippet_service, setup_snippets, snippet_update_data
 ):
-    user1, _ = setup_snippets
-    snippet_to_update = await get_snippet_by_title(db, "U2 Public Python")
+    user1 = setup_snippets["user1"]
+    other_snippet = setup_snippets["u2_public_py"]
 
     with pytest.raises(exc.NoPermissionError):
         await snippet_service.update_snippet(
-            snippet_to_update.uuid, snippet_update_data, user1
+            other_snippet.uuid, snippet_update_data, user1
         )
 
 
@@ -223,10 +221,11 @@ async def test_update_other_user_snippet_as_admin(
     admin_user = await user_factory.create_active(db)
     admin_user.is_admin = True
     await db.flush()
-    snippet_to_update = await get_snippet_by_title(db, "U1 Private Python")
+
+    private_snippet = setup_snippets["u1_private_py"]
 
     response = await snippet_service.update_snippet(
-        snippet_to_update.uuid, snippet_update_data, admin_user
+        private_snippet.uuid, snippet_update_data, admin_user
     )
 
     assert response is not None
