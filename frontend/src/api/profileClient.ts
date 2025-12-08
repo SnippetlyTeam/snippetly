@@ -3,7 +3,7 @@ import type { AxiosResponse } from 'axios';
 import type { ProfileType } from '../types/ProfileType';
 import type { AccessToken } from '../types/Tokens';
 
-const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL as string;
+const SERVER_BASE_URL: string = import.meta.env.VITE_SERVER_BASE_URL || '';
 
 export const profileClient = axios.create({
   baseURL: `${SERVER_BASE_URL}/api/v1/profile`,

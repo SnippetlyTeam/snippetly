@@ -51,12 +51,10 @@ class OAuthSettings(APISettings, BaseAppSettings):
             self.REDIRECT_URI = f"{self.FRONTEND_URL}/auth/google"
 
 
-class OracleStorageSettings(BaseAppSettings):
-    ORACLE_USER_OCID: str
-    ORACLE_TENANCY_OCID: str
-    ORACLE_REGION: str
-    ORACLE_NAMESPACE: str
-    ORACLE_BUCKET_NAME: str
-    ORACLE_FINGERPRINT: str
-    ORACLE_KEY_FILE_PATH: str
-    ORACLE_BASE_URL: str
+class AzureStorageSettings(BaseAppSettings):
+    AZURE_STORAGE_ACCOUNT_NAME: str
+    AZURE_STORAGE_ACCOUNT_KEY: str | None = None
+    AZURE_STORAGE_CONNECTION_STRING: str | None = None
+    AZURE_MEDIA_CONTAINER: str = "media"
+    AZURE_BACKUP_CONTAINER: str = "backups"
+    AZURE_BLOB_ENDPOINT: str | None = None

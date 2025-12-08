@@ -1,0 +1,4 @@
+# Development dependencies
+-r requirements.txt
+mypy>=1.18.2
+ruff>=0.13.1

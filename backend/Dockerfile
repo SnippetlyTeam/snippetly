@@ -9,12 +9,12 @@ WORKDIR /app
 ENV PYTHONPATH=/app/src:$PYTHONPATH
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc libpq-dev build-essential \
+    gcc libpq-dev build-essential curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Install dependencies
 COPY ./pyproject.toml ./uv.lock ./
-RUN uv sync --locked
+RUN uv sync
 
 # Copy project code
 COPY src /app/src
@@ -24,5 +24,5 @@ USER appuser
 
 EXPOSE 8000
 
-# Dev сервер (uvicorn з авто-рендами)
+# Default command runs the API server
 CMD ["uv", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
