@@ -2,7 +2,9 @@
 
 This guide walks you from zero to a running Snippetly environment on Microsoft Azure using a single Linux VM per environment with Docker Compose. It covers Terraform provisioning, VM setup, application configuration, CI/CD, verification, backups, restore, and troubleshooting.
 
-Important: HTTP only on port 80. No TLS/HTTPS in this setup.
+**Environment Overview:**
+- **DEV**: HTTP-only (port 80), accessible via IP address, deploys from `develop` branch
+- **PROD**: HTTPS-only (port 443) with Let's Encrypt, accessible via domain (snippetly.codes), deploys from `main` branch
 
 ---
 
@@ -62,7 +64,7 @@ cd snippetly
 
 ## 4. Provision Infrastructure with Terraform
 
-The Terraform code is under `infra/terraform` and defines: Resource Group, VNet, Subnet, NSG (22/80), two Linux VMs (dev/prod), Storage Account (with media + backups containers), and ACR. It also installs Docker on the VMs via cloud-init and renders the production docker-compose overlay.
+The Terraform code is under `infra/terraform` and defines: Resource Group, VNet, Subnet, NSG (ports 22/80/443 + optional dev ports 8000/5173), two Linux VMs (dev/prod), Storage Account (with media + backups containers), and ACR. It also installs Docker on the VMs via cloud-init and prepares directories for Let's Encrypt certificates.
 
 Create your variables file and apply:
 
@@ -120,10 +122,13 @@ ssh azureuser@<vm_public_ip>
 
 On first boot, cloud-init will have created persistent data directories:
 - `/opt/app-data/postgres`, `/opt/app-data/redis`, `/opt/app-data/mongo`
+- `/opt/app-data/certbot/conf`, `/opt/app-data/certbot/www` (for Let's Encrypt certificates on prod)
 
 Project layout on the VM:
 - `/opt/snippetly` (git clone of this repo)
-- `/opt/snippetly/docker-compose.yml` (single compose used for server)
+- `/opt/snippetly/docker-compose.yml` (base compose file)
+- `/opt/snippetly/docker-compose.override.yml` (dev environment overlay - exposes ports, adds PGAdmin)
+- `/opt/snippetly/docker-compose.prod.yml` (prod environment overlay - adds nginx-proxy + certbot for HTTPS)
 - `/opt/snippetly/.deploy.env` will store image tags for deploys
 
 ### 5.1 Verify cloud-init completed successfully
@@ -190,7 +195,7 @@ MONGO_INITDB_DATABASE=snippetly
 SECRET_KEY_REFRESH=<32+ char random>
 SECRET_KEY_ACCESS=<32+ char random>
 ENVIRONMENT=production
-FRONTEND_URL=http://<vm_public_ip>
+FRONTEND_URL=http://<vm_public_ip>  # For dev. For prod: https://snippetly.codes
 
 # Email (optional)
 EMAIL_APP_PASSWORD=
@@ -238,10 +243,18 @@ Tips:
 
 ### 6.1 Start services the first time
 
+**For DEV environment:**
 ```sh
 cd /opt/snippetly
-docker compose up -d
-docker compose ps
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+```
+
+**For PROD environment (after HTTPS setup - see Section 10.1):**
+```sh
+cd /opt/snippetly
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
 
 ---
@@ -287,32 +300,43 @@ How to add repository secrets:
 
 ## 8. CI/CD Workflows
 
+**Branching Model:**
+- `develop` branch → DEV environment deployment
+- `main` branch → PROD environment deployment
+
+**Workflow Details:**
+
 - `.github/workflows/ci-cd-dev.yml`:
-  - CI: PRs to `main`/`develop` run backend tests (pytest) and frontend build
-  - CD Dev: push to any non-main branch builds and pushes images, deploys to dev VM, runs smoke tests
+  - CI: PRs to `develop` run backend tests (pytest, ruff, pyright) and frontend build
+  - CD Dev: push to `develop` branch builds and pushes SHA-tagged images, deploys to dev VM using `docker-compose.yml + docker-compose.override.yml`
   - Concurrency ensures only one dev deployment at a time (in-progress runs canceled)
+
 - `.github/workflows/ci-cd-prod.yml`:
-  - CD Prod: tags `v*` build and push version-tagged images, deploys to prod VM, runs smoke tests
-  - Concurrency ensures only one prod deployment at a time (in-progress runs not canceled)
+  - CD Prod: push to `main` branch builds and pushes SHA-tagged images (+ latest tag), deploys to prod VM using `docker-compose.yml + docker-compose.prod.yml`
+  - Concurrency ensures only one prod deployment at a time (in-progress runs NOT canceled for safety)
+
 - Migrations are handled on the VMs by cron (not in the workflows)
 
-Image naming conventions (examples):
-- Dev: `<acr_login_server>/snippetly/backend:dev-<SHORT_SHA>`, `<acr_login_server>/snippetly/frontend:dev-<SHORT_SHA>`
-- Prod: `<acr_login_server>/snippetly/backend:vX.Y.Z`, `<acr_login_server>/snippetly/frontend:vX.Y.Z`
+**Image Tagging Strategy:**
+- Dev: `<acr_login_server>/snippetly-backend:<commit_sha>`, `<acr_login_server>/snippetly-frontend:<commit_sha>`
+- Prod: `<acr_login_server>/snippetly-backend:<commit_sha>` and `latest`, `<acr_login_server>/snippetly-frontend:<commit_sha>` and `latest`
 
 ---
 
 ## 9. First Deployment – Dev Environment
 
-1) Push code to any non-`main` branch.
-2) Open the GitHub Actions tab → CD Dev workflow → watch the run.
+1) Push code to the `develop` branch (or create a PR and merge to `develop`).
+2) Open the GitHub Actions tab → CI/CD Dev workflow → watch the run.
 3) Steps performed by the pipeline:
-- Build and push images to ACR.
-- SSH to the VM, update `/opt/snippetly/.deploy.env` with image tags.
-- `docker compose pull && docker compose up -d` on the VM.
-- Run smoke tests (`/api/health` and SPA root).
+   - Build and push SHA-tagged images to ACR.
+   - SSH to the VM, checkout `develop` branch, update `/opt/snippetly/.deploy.env` with image tags.
+   - Run `docker compose -f docker-compose.yml -f docker-compose.override.yml pull && up -d` on the VM.
 
-Troubleshooting: SSH into the VM and run `docker compose ps` and `docker compose logs -f backend`.
+Troubleshooting: SSH into the VM and run:
+```sh
+docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f backend
+```
 
 Manual fallback (if pipeline is unavailable):
 ```sh
@@ -334,29 +358,90 @@ curl -I http://$DEV_IP/ | head -n1
 
 ## 10. Production Deployment
 
-Release by creating a version tag:
+### 10.1 Initial HTTPS Setup (One-Time)
 
+Before the first production deployment, you must obtain Let's Encrypt certificates:
+
+**Prerequisites:**
+- DNS A record for `snippetly.codes` and `www.snippetly.codes` must point to the production VM IP (172.201.26.148)
+- Production VM is provisioned and accessible via SSH
+- Wait 5-10 minutes for DNS propagation after setting up the A record
+
+**Steps:**
+
+1. SSH into the production VM:
 ```sh
-git tag v0.1.0
-git push origin v0.1.0
+ssh azureuser@<PROD_VM_IP>
+cd /opt/snippetly
 ```
 
-The prod workflow (`.github/workflows/ci-cd-prod.yml`) builds and pushes version-tagged images to ACR, deploys to the prod VM, and executes smoke tests. If using GitHub Environments, an approval may be required. Migrations are handled by cron on the VM.
+2. Run the HTTPS setup script:
+```sh
+sudo bash scripts/setup-https-prod.sh your-email@example.com
+```
+
+This script will:
+- Start the application stack without nginx-proxy
+- Temporarily start nginx for ACME HTTP-01 challenge
+- Obtain certificates from Let's Encrypt for `snippetly.codes` and `www.snippetly.codes`
+- Start the full production stack with HTTPS enabled
+
+3. Verify HTTPS is working:
+```sh
+curl -I https://snippetly.codes
+```
+
+**Certificate Renewal:**
+- The `certbot` container automatically checks for renewal twice daily
+- Certificates renew automatically 30 days before expiration
+- Nginx reloads automatically upon successful renewal
+
+### 10.2 Regular Production Deployments
+
+After initial HTTPS setup, deploy to production by merging to `main`:
+
+```sh
+# Merge develop into main (or create PR and merge)
+git checkout main
+git merge develop
+git push origin main
+```
+
+The prod workflow (`.github/workflows/ci-cd-prod.yml`) builds and pushes SHA-tagged images to ACR, deploys to the prod VM using `docker-compose.yml + docker-compose.prod.yml`, maintaining HTTPS. If using GitHub Environments, an approval may be required. Migrations are handled by cron on the VM.
 
 ---
 
 ## 11. Verifying the Deployment
 
-- Frontend: http://<vm_public_ip>
-- Backend docs: http://<vm_public_ip>/api/docs (proxied by Nginx)
-- Health: http://<vm_public_ip>/api/health
-- Check containers:
+**DEV Environment:**
+- Frontend: http://<DEV_VM_IP>
+- Backend docs: http://<DEV_VM_IP>/api/docs
+- Health: http://<DEV_VM_IP>/api/health
+- Direct backend access (if dev ports enabled): http://<DEV_VM_IP>:8000/api/docs
 
+**PROD Environment:**
+- Frontend: https://snippetly.codes
+- Backend docs: https://snippetly.codes/api/docs
+- Health: https://snippetly.codes/api/health
+- HTTP redirect test: curl -I http://snippetly.codes (should return 301 to HTTPS)
+
+**Check containers on VM:**
+
+DEV:
 ```sh
-ssh azureuser@<vm_public_ip>
+ssh azureuser@<DEV_VM_IP>
 cd /opt/snippetly
-docker compose ps
-docker compose logs -f backend
+docker compose -f docker-compose.yml -f docker-compose.override.yml ps
+docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f backend
+```
+
+PROD:
+```sh
+ssh azureuser@<PROD_VM_IP>
+cd /opt/snippetly
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f nginx-proxy
 ```
 
 ---
@@ -474,10 +559,12 @@ docker compose up -d --scale celery-worker=2
 
 ## 17. Notes & Future Improvements
 
-- Add TLS via Azure Load Balancer/Application Gateway or Nginx + certbot container
+- ✅ HTTPS implemented via Nginx reverse proxy + Let's Encrypt certbot (Production)
 - Export Docker logs to Azure Monitor/Log Analytics
 - Consider managed DB services, or separate VMs for DB/Redis/Mongo
 - Consider AKS migration if more services or higher scale are needed
+- Implement rate limiting and WAF rules in nginx-proxy
+- Add monitoring and alerting for certificate expiration (though auto-renewal is configured)
 
 ---
 
@@ -505,17 +592,25 @@ cd /opt/snippetly && cp backend/config_envs/.env.prod.sample backend/.env && nan
 
 # Configure GitHub Secrets (DEV_*) with ACR SP + SSH + optional DEV_PUBLIC_URL
 
-# Trigger deployment to dev by pushing to any non-main branch
-git checkout -b test-deploy && git commit --allow-empty -m "test deploy" && git push origin HEAD
+# Trigger deployment to dev by pushing to develop branch
+git checkout develop
+git commit --allow-empty -m "test deploy"
+git push origin develop
 ```
 
 ## Appendix B. Prod release checklist
 
 - All DEV checks passed; backups configured and verified.
-- Set PROD_* secrets (ACR SP, SSH, optional PROD_PUBLIC_URL).
-- Create a version tag and push:
+- Set PROD_* secrets (ACR SP, SSH, PROD_PUBLIC_URL should be https://snippetly.codes).
+- **One-time:** Run HTTPS setup script on prod VM (see Section 10.1).
+- DNS A record for snippetly.codes points to prod VM IP.
+- Merge develop into main and push:
   ```sh
-  git tag v0.1.0 && git push origin v0.1.0
+  git checkout main
+  git merge develop
+  git push origin main
   ```
-- Monitor the prod workflow run; verify health and SPA.
-- Document the deployed tag in release notes.
+- Monitor the prod workflow run; verify HTTPS is working.
+- Test: curl -I https://snippetly.codes
+- Verify HTTP→HTTPS redirect: curl -I http://snippetly.codes
+- Document the deployed commit SHA in release notes.

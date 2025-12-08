@@ -105,8 +105,8 @@ services:
     depends_on:
       - backend
     command: ["nginx", "-g", "daemon off;"]
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     restart: unless-stopped
 
 networks:

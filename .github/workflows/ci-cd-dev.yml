@@ -1,14 +1,14 @@
 name: CI/CD Dev
 
 on:
-  # Any PR → tests + lint + type-check only (no deploy)
+  # Any PR to develop → tests + lint + type-check only (no deploy)
   pull_request:
     branches:
-      - '**'
-  # Any push to non-main branch → CI + build + deploy to dev VM
+      - develop
+  # Push to develop branch → CI + build + deploy to dev VM
   push:
-    branches-ignore:
-      - main
+    branches:
+      - develop
 
 env:
   BACKEND_IMAGE_NAME: snippetly-backend
@@ -72,8 +72,8 @@ jobs:
   build-push-dev:
     name: Build & Push Images (Dev)
     runs-on: ubuntu-latest
-    # Only on push to non-main branches (not on PRs)
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
+    # Only on push to develop branch (not on PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [ backend-tests, frontend-build ]
     steps:
       - name: Checkout
@@ -113,8 +113,8 @@ jobs:
   deploy-dev:
     name: Deploy to Azure VM (Dev)
     runs-on: ubuntu-latest
-    # Only on push to non-main branches (not on PRs)
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.ref != 'refs/heads/main'
+    # Only on push to develop branch (not on PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     needs: [ build-push-dev ]
     environment: dev
     concurrency:
@@ -132,11 +132,11 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
-            # Pull latest code from repository
-            echo "Pulling latest code from branch: ${{ github.ref_name }}..."
+            # Pull latest code from develop branch
+            echo "Pulling latest code from develop branch..."
             git fetch origin
-            git checkout ${{ github.ref_name }}
-            git pull origin ${{ github.ref_name }}
+            git checkout develop
+            git pull origin develop
 
             # Ensure .deploy.env exists
             if [ ! -f .deploy.env ]; then

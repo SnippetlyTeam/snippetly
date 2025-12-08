@@ -1,9 +1,15 @@
 name: CI/CD Prod
 
 on:
+  # Deploy production on push to main branch
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  # Also support tagged releases (must be on main)
+  # Tags should only be created from main branch
+  # push:
+  #   tags:
+  #     - 'v*'
 
 env:
   BACKEND_IMAGE_NAME: snippetly-backend
@@ -92,7 +98,9 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}
+          tags: |
+            ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:latest
           cache-from: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:cache
           cache-to: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:cache,mode=max
 
@@ -102,9 +110,11 @@ jobs:
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
-          tags: ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}
+          tags: |
+            ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
           build-args: |
-            VITE_SERVER_BASE_URL=${{ secrets.PROD_PUBLIC_URL || format('http://{0}', secrets.PROD_SSH_HOST) }}
+            VITE_SERVER_BASE_URL=${{ secrets.PROD_PUBLIC_URL || 'https://snippetly.codes' }}
           cache-from: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache
           cache-to: type=registry,ref=${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:cache,mode=max
 
@@ -142,9 +152,9 @@ jobs:
             EOF
             fi
 
-            # Compute image tags based on tag name (vX.Y.Z)
-            BACKEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.ref_name }}"
-            FRONTEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.ref_name }}"
+            # Compute image tags based on commit SHA
+            BACKEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
+            FRONTEND_IMAGE="${{ secrets.PROD_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
             
             echo "Updating deployment configuration..."
             # Update images in .deploy.env
@@ -168,20 +178,20 @@ jobs:
               -u "${{ secrets.PROD_AZURE_SP_APP_ID }}" \
               --password-stdin
             
-            # Pull and deploy (Prod: only base compose, no dev override/pgadmin)
+            # Pull and deploy (Prod: base compose + prod overlay for HTTPS)
             echo "Pulling Docker images..."
-            docker compose -f docker-compose.yml pull
-            
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+
             echo "Starting services..."
-            docker compose -f docker-compose.yml up -d
-            
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
             # Wait for services to be healthy
             echo "Waiting for services to be healthy..."
             sleep 10
-            
+
             # Verify deployment
             echo "Verifying deployment..."
-            docker compose -f docker-compose.yml ps
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
             
             # Cleanup old images (keep images from last 72 hours)
             echo "Cleaning up old Docker images..."

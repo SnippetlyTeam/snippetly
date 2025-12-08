@@ -23,7 +23,9 @@ variable "ssh_public_key" {
 variable "vm_size" {
   description = "Azure VM size"
   type        = string
-  default     = "Standard_B2s"
+  default     = "Standard_B2ms"
+  # Note: If Standard_B2ms is unavailable in your region, try:
+  # Standard_B2als_v2, Standard_D2s_v3, Standard_DS2_v2, or Standard_B1ms (cheaper but less powerful)
 }
 
 variable "admin_username" {

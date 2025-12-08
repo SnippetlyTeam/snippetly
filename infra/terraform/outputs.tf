@@ -79,8 +79,9 @@ output "github_prod_secrets" {
     PROD_SSH_HOST = azurerm_public_ip.prod.ip_address
     PROD_SSH_USER = azurerm_linux_virtual_machine.prod.admin_username
 
-    # Можна використовувати як PROD_PUBLIC_URL, поки немає домену
-    PROD_PUBLIC_URL = "http://${azurerm_public_ip.prod.ip_address}"
+    # For production, use HTTPS domain instead of IP
+    # Set this manually in GitHub Secrets as: https://snippetly.codes
+    PROD_PUBLIC_URL = "https://snippetly.codes"
 
     PROD_STORAGE_ACCOUNT_NAME = azurerm_storage_account.sa.name
     PROD_MEDIA_CONTAINER      = azurerm_storage_container.media_prod.name

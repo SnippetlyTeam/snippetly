@@ -24,6 +24,8 @@ runcmd:
   - |
     # Create persistent data directories for containers
     mkdir -p /opt/app-data/postgres /opt/app-data/redis /opt/app-data/mongo
+    # Create directories for Let's Encrypt certificates (production)
+    mkdir -p /opt/app-data/certbot/conf /opt/app-data/certbot/www
     chown -R ${username}:${username} /opt/app-data
   - |
     su - ${username} -c "cd /opt/snippetly && git clone ${repo_url} ."
@@ -47,7 +49,8 @@ EOFENV
       chmod 600 /opt/snippetly/backend/.env
     fi
   - |
-    # No separate production compose overlay is needed anymore
+    # Note: Production uses docker-compose.yml + docker-compose.prod.yml for HTTPS
+    # Development uses docker-compose.yml + docker-compose.override.yml for debugging
   - |
     # Ensure backup scripts (if present) are executable
     if [ -f /opt/snippetly/scripts/backup_pg.sh ]; then chmod +x /opt/snippetly/scripts/backup_pg.sh; fi

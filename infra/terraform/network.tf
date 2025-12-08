@@ -94,3 +94,17 @@ resource "azurerm_network_security_rule" "dev_frontend_5173" {
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg.name
 }
+
+resource "azurerm_network_security_rule" "ingress_https_443" {
+  name                        = "ingress-https-443"
+  priority                    = 211
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "443"
+  source_address_prefix       = "*"
+  destination_address_prefix  = "*"
+  resource_group_name         = azurerm_resource_group.rg.name
+  network_security_group_name = azurerm_network_security_group.nsg.name
+}

@@ -16,6 +16,10 @@ services:
     ports:
       - "${BACKEND_PORT:-8000}:8000"
 
+  frontend:
+    ports:
+      - "80:80"
+
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: snippetly-pgadmin
