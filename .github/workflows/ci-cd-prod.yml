@@ -136,7 +136,7 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            cd snippetly
+            cd /opt/snippetly
 
             # Pull latest code from repository
             echo "Pulling latest code from main..."

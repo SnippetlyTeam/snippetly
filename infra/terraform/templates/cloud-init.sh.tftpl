@@ -19,8 +19,10 @@ runcmd:
       systemctl enable cron --now || true
     fi
   - |
-    # Clone repo to user's home directory
-    su - ${username} -c "cd ~ && git clone ${repo_url} snippetly"
+    # Create and clone repo to /opt/snippetly
+    mkdir -p /opt/snippetly
+    chown -R ${username}:${username} /opt/snippetly
+    su - ${username} -c "cd /opt/snippetly && git clone ${repo_url} ."
   - |
     # Create persistent data directories for containers
     mkdir -p /opt/app-data/postgres /opt/app-data/redis /opt/app-data/mongo
@@ -28,35 +30,38 @@ runcmd:
     mkdir -p /opt/app-data/certbot/conf /opt/app-data/certbot/www
     chown -R ${username}:${username} /opt/app-data
   - |
-    # Create .deploy.env in user's home directory
-    su - ${username} -c "echo 'BACKEND_IMAGE=' > ~/snippetly/.deploy.env && echo 'FRONTEND_IMAGE=' >> ~/snippetly/.deploy.env"
+    # Create .deploy.env
+    echo "BACKEND_IMAGE=" > /opt/snippetly/.deploy.env
+    echo "FRONTEND_IMAGE=" >> /opt/snippetly/.deploy.env
+    chown ${username}:${username} /opt/snippetly/.deploy.env
   - |
     # Create backend/.env from sample if exists
-    su - ${username} -c "if [ -f ~/snippetly/backend/config_envs/.env.prod.sample ]; then cp ~/snippetly/backend/config_envs/.env.prod.sample ~/snippetly/backend/.env; fi"
+    if [ -f /opt/snippetly/backend/config_envs/.env.prod.sample ]; then
+      cp /opt/snippetly/backend/config_envs/.env.prod.sample /opt/snippetly/backend/.env
+    fi
   - |
     # If backend_env_content provided via Terraform, overwrite backend/.env
     if [ "${backend_env_flag}" = "1" ]; then
-      su - ${username} -c "cat > ~/snippetly/backend/.env <<'EOFENV'
+      cat > /opt/snippetly/backend/.env <<'EOFENV'
 ${backend_env_content}
 EOFENV
-"
-      su - ${username} -c "chmod 600 ~/snippetly/backend/.env"
+      chown ${username}:${username} /opt/snippetly/backend/.env
+      chmod 600 /opt/snippetly/backend/.env
     fi
   - |
     # Note: Production uses docker-compose.yml + docker-compose.prod.yml for HTTPS
     # Development uses docker-compose.yml + docker-compose.override.yml for debugging
   - |
     # Ensure backup scripts (if present) are executable
-    su - ${username} -c "if [ -f ~/snippetly/scripts/backup_pg.sh ]; then chmod +x ~/snippetly/scripts/backup_pg.sh; fi"
-    su - ${username} -c "if [ -f ~/snippetly/scripts/backup_mongo.sh ]; then chmod +x ~/snippetly/scripts/backup_mongo.sh; fi"
+    if [ -f /opt/snippetly/scripts/backup_pg.sh ]; then chmod +x /opt/snippetly/scripts/backup_pg.sh; fi
+    if [ -f /opt/snippetly/scripts/backup_mongo.sh ]; then chmod +x /opt/snippetly/scripts/backup_mongo.sh; fi
   - |
     # Install cron jobs: migrations at boot and periodically; optional nightly backups
-    # Get the home directory of the user
-    USER_HOME=$(eval echo ~${username})
-    cat >/etc/cron.d/snippetly <<EOFCRON
-@reboot ${username} sleep 30 && cd \$HOME/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate || true
-*/10 * * * * ${username} cd \$HOME/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate >/var/log/snippetly_migrate.log 2>&1
-0 2 * * * ${username} [ -x \$HOME/snippetly/scripts/backup_pg.sh ] && /bin/bash \$HOME/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
-15 2 * * * ${username} [ -x \$HOME/snippetly/scripts/backup_mongo.sh ] && /bin/bash \$HOME/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
+    cat >/etc/cron.d/snippetly
+    <<EOFCRON
+@reboot root sleep 30 && cd /opt/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate || true
+*/10 * * * * root cd /opt/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate >/var/log/snippetly_migrate.log 2>&1
+0 2 * * * root [ -x /opt/snippetly/scripts/backup_pg.sh ] && /bin/bash /opt/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
+15 2 * * * root [ -x /opt/snippetly/scripts/backup_mongo.sh ] && /bin/bash /opt/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
 EOFCRON
     chmod 644 /etc/cron.d/snippetly
