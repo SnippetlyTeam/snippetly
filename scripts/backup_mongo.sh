@@ -10,7 +10,9 @@
 
 set -euo pipefail
 
-ROOT_DIR="/opt/snippetly"
+# Determine project root directory dynamically
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BACKUPS_DIR="$ROOT_DIR/backups"
 mkdir -p "$BACKUPS_DIR"
 

@@ -56,9 +56,9 @@ Terraform provisions in one apply:
   - Each runs Docker + Compose
   - cloud‑init initializes each host:
     - Installs Docker + Compose plugin
-    - Clones repo to `/opt/snippetly`
+    - Clones repo to `~/snippetly`
     - Creates data dirs: `/opt/app-data/{postgres,redis,mongo,certbot/conf,certbot/www}`
-    - Prepares `/opt/snippetly/.deploy.env`
+    - Prepares `~/snippetly/.deploy.env`
     - Installs cron jobs for automatic DB migrations (@reboot and periodic) and optional nightly backups
 - Azure Storage Account
   - Media containers: dev and prod
@@ -228,7 +228,7 @@ These directories survive container restarts and most VM reboots, providing basi
 
 **Common:**
 - Images are pushed to Azure Container Registry (ACR)
-- Deployment updates `/opt/snippetly/.deploy.env` on the VM with image tags
+- Deployment updates `~/snippetly/.deploy.env` on the VM with image tags
 - Migrations are handled by cron on the VMs (not run from CI/CD)
 - Each workflow uses environment-specific secrets for ACR and SSH access
 

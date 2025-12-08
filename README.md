@@ -60,8 +60,8 @@ Health endpoint: `http://<vm_ip>/api/health` returns `{ "status": "ok" }`.
 
 - Migrations run automatically on each VM via cron (@reboot and every 10 minutes) using `docker compose run --rm migrate`.
 - Backups: two scripts on the VM upload Postgres and MongoDB archives to the configured Object Storage backup bucket.
-  - `/opt/snippetly/scripts/backup_pg.sh`
-  - `/opt/snippetly/scripts/backup_mongo.sh`
+  - `~/snippetly/scripts/backup_pg.sh`
+  - `~/snippetly/scripts/backup_mongo.sh`
 
 Nightly cron entries are installed by cloud-init (can be disabled by removing entries on the VM).
 

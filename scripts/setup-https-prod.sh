@@ -9,12 +9,12 @@
 # Prerequisites:
 # - Production VM is deployed and accessible at snippetly.codes
 # - DNS A record for snippetly.codes points to the production VM IP (172.201.26.148)
-# - docker-compose.yml and docker-compose.prod.yml are present in /opt/snippetly
+# - docker-compose.yml and docker-compose.prod.yml are present in ~/snippetly
 # - Certbot data directories exist at /opt/app-data/certbot/{conf,www}
 #
 # Usage:
 #   ssh into production VM, then run:
-#   cd /opt/snippetly
+#   cd ~/snippetly
 #   sudo bash scripts/setup-https-prod.sh your-email@example.com
 #
 
@@ -37,7 +37,7 @@ echo "Email: $EMAIL"
 echo "=========================================="
 
 # Ensure we're in the right directory
-cd /opt/snippetly
+cd ~/snippetly
 
 # Step 1: Start the stack WITHOUT nginx-proxy first (to avoid cert errors)
 echo ""

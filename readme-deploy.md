@@ -106,8 +106,8 @@ Key outputs:
 
 Cloud-init will:
 - Install Docker + Compose plugin
-- Clone this repo into `/opt/snippetly`
-- Create `/opt/snippetly/.deploy.env` for image tags
+- Clone this repo into `~/snippetly`
+- Create `~/snippetly/.deploy.env` for image tags
 - Install cron jobs for DB migrations (@reboot + every 10 minutes) and optional nightly backups
 
 ---
@@ -125,11 +125,11 @@ On first boot, cloud-init will have created persistent data directories:
 - `/opt/app-data/certbot/conf`, `/opt/app-data/certbot/www` (for Let's Encrypt certificates on prod)
 
 Project layout on the VM:
-- `/opt/snippetly` (git clone of this repo)
-- `/opt/snippetly/docker-compose.yml` (base compose file)
-- `/opt/snippetly/docker-compose.override.yml` (dev environment overlay - exposes ports, adds PGAdmin)
-- `/opt/snippetly/docker-compose.prod.yml` (prod environment overlay - adds nginx-proxy + certbot for HTTPS)
-- `/opt/snippetly/.deploy.env` will store image tags for deploys
+- `~/snippetly` (git clone of this repo)
+- `~/snippetly/docker-compose.yml` (base compose file)
+- `~/snippetly/docker-compose.override.yml` (dev environment overlay - exposes ports, adds PGAdmin)
+- `~/snippetly/docker-compose.prod.yml` (prod environment overlay - adds nginx-proxy + certbot for HTTPS)
+- `~/snippetly/.deploy.env` will store image tags for deploys
 
 ### 5.1 Verify cloud-init completed successfully
 
@@ -159,7 +159,7 @@ sudo systemctl status cron --no-pager || sudo systemctl status crond --no-pager 
 Create the backend `.env`:
 
 ```sh
-cd /opt/snippetly
+cd ~/snippetly
 cp backend/config_envs/.env.prod.sample backend/.env
 
 # Edit backend/.env and set required values
@@ -245,14 +245,14 @@ Tips:
 
 **For DEV environment:**
 ```sh
-cd /opt/snippetly
+cd ~/snippetly
 docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 ```
 
 **For PROD environment (after HTTPS setup - see Section 10.1):**
 ```sh
-cd /opt/snippetly
+cd ~/snippetly
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
@@ -329,7 +329,7 @@ How to add repository secrets:
 2) Open the GitHub Actions tab → CI/CD Dev workflow → watch the run.
 3) Steps performed by the pipeline:
    - Build and push SHA-tagged images to ACR.
-   - SSH to the VM, checkout `develop` branch, update `/opt/snippetly/.deploy.env` with image tags.
+   - SSH to the VM, checkout `develop` branch, update `~/snippetly/.deploy.env` with image tags.
    - Run `docker compose -f docker-compose.yml -f docker-compose.override.yml pull && up -d` on the VM.
 
 Troubleshooting: SSH into the VM and run:
@@ -341,9 +341,9 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f back
 Manual fallback (if pipeline is unavailable):
 ```sh
 ssh azureuser@<DEV_VM_IP>
-cd /opt/snippetly
-echo "BACKEND_IMAGE=<acr_login_server>/snippetly/backend:<tag>" | sudo tee /opt/snippetly/.deploy.env
-echo "FRONTEND_IMAGE=<acr_login_server>/snippetly/frontend:<tag>" | sudo tee -a /opt/snippetly/.deploy.env
+cd ~/snippetly
+echo "BACKEND_IMAGE=<acr_login_server>/snippetly/backend:<tag>" | sudo tee ~/snippetly/.deploy.env
+echo "FRONTEND_IMAGE=<acr_login_server>/snippetly/frontend:<tag>" | sudo tee -a ~/snippetly/.deploy.env
 docker compose pull
 docker compose up -d
 ```
@@ -372,7 +372,7 @@ Before the first production deployment, you must obtain Let's Encrypt certificat
 1. SSH into the production VM:
 ```sh
 ssh azureuser@<PROD_VM_IP>
-cd /opt/snippetly
+cd ~/snippetly
 ```
 
 2. Run the HTTPS setup script:
@@ -430,7 +430,7 @@ The prod workflow (`.github/workflows/ci-cd-prod.yml`) builds and pushes SHA-tag
 DEV:
 ```sh
 ssh azureuser@<DEV_VM_IP>
-cd /opt/snippetly
+cd ~/snippetly
 docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f backend
 ```
@@ -438,7 +438,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f back
 PROD:
 ```sh
 ssh azureuser@<PROD_VM_IP>
-cd /opt/snippetly
+cd ~/snippetly
 docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f backend
 docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f nginx-proxy
@@ -448,7 +448,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f nginx-pr
 
 ## 12. Rollback
 
-- On VM, edit `/opt/snippetly/.deploy.env` to set previous image tags for `BACKEND_IMAGE` and `FRONTEND_IMAGE`, then:
+- On VM, edit `~/snippetly/.deploy.env` to set previous image tags for `BACKEND_IMAGE` and `FRONTEND_IMAGE`, then:
 
 ```sh
 set -e
@@ -464,14 +464,14 @@ docker compose up -d
 Two backup helper scripts are provided (run on the VM):
 
 ```sh
-chmod +x /opt/snippetly/scripts/backup_pg.sh
-chmod +x /opt/snippetly/scripts/backup_mongo.sh
+chmod +x ~/snippetly/scripts/backup_pg.sh
+chmod +x ~/snippetly/scripts/backup_mongo.sh
 
 # PostgreSQL backup
-/opt/snippetly/scripts/backup_pg.sh
+~/snippetly/scripts/backup_pg.sh
 
 # MongoDB backup
-/opt/snippetly/scripts/backup_mongo.sh
+~/snippetly/scripts/backup_mongo.sh
 
 What the scripts do:
 - Exec into the DB containers to run `pg_dump` (Postgres) or `mongodump` (MongoDB).
@@ -484,8 +484,8 @@ Backups are uploaded to the configured Azure Blob Storage container (set `AZURE_
 
 Cron suggestion on the VM (edit with `crontab -e`):
 ```
-0 2 * * * /bin/bash /opt/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
-15 2 * * * /bin/bash /opt/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
+0 2 * * * /bin/bash ~/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
+15 2 * * * /bin/bash ~/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
 ```
 
 Validate backups landed in Blob:
@@ -588,7 +588,7 @@ cd infra/terraform && terraform init && terraform apply -auto-approve
 
 # Copy backend env and edit secrets on the dev VM
 ssh azureuser@$(terraform output -raw dev_vm_public_ip)
-cd /opt/snippetly && cp backend/config_envs/.env.prod.sample backend/.env && nano backend/.env
+cd ~/snippetly && cp backend/config_envs/.env.prod.sample backend/.env && nano backend/.env
 
 # Configure GitHub Secrets (DEV_*) with ACR SP + SSH + optional DEV_PUBLIC_URL
 
