@@ -130,7 +130,7 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            cd /opt/snippetly
+            cd snippetly
 
             # Pull latest code from develop branch
             echo "Pulling latest code from develop branch..."
