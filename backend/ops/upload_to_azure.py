@@ -40,9 +40,8 @@ def main() -> None:
     local_path = sys.argv[1]
     blob_path = sys.argv[2]
 
-    container = (
-        os.environ.get("AZURE_BACKUP_CONTAINER")
-        or os.environ.get("AZURE_MEDIA_CONTAINER", "media")
+    container = os.environ.get("AZURE_BACKUP_CONTAINER") or os.environ.get(
+        "AZURE_MEDIA_CONTAINER", "media"
     )
 
     service = _build_blob_service()
