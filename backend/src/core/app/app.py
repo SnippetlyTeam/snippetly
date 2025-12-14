@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from src.admin import admin
-from src.api.v1.routes import v1_router
+from src.api.v1.routes import v1_router, docs_router
 from src.core.config import get_settings
 from .lifespan import lifespan
 from .limiter import setup_limiter
@@ -17,6 +17,9 @@ def create_app() -> FastAPI:
         version="1.0.0",
         debug=settings.DEBUG,
         lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
 
     setup_middlewares(app, settings)
@@ -30,6 +33,11 @@ def create_app() -> FastAPI:
         name="static",
     )
 
+    app.include_router(docs_router, prefix="/api")
     app.include_router(v1_router, prefix="/api")
+
+    @app.get("/api/health")
+    def health() -> dict:
+        return {"status": "ok"}
 
     return app

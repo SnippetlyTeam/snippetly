@@ -66,6 +66,22 @@ async def get_current_user(
     return user
 
 
+async def is_admin(
+    token: Annotated[str, Depends(get_token)],
+    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+) -> None:
+    try:
+        payload = await jwt_manager.verify_token(token, is_refresh=False)
+    except PyJWTError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+
+    if payload["is_admin"] is False:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied. Admin privileges required.",
+        )
+
+
 def get_auth_service(
     db: Annotated[AsyncSession, Depends(get_db)],
     jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],

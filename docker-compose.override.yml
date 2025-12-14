@@ -1,0 +1,42 @@
+# Development-only overrides: adds port mappings and PGAdmin UI
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  mongodb:
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+
+  backend:
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    ports:
+      - "80:80"
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: snippetly-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.test}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Bind to localhost only for security (access via SSH tunnel)
+      - "127.0.0.1:${PGADMIN_PORT:-9090}:80"
+    volumes:
+      - pgadmin:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  pgadmin:

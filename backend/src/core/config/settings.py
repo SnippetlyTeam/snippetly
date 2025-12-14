@@ -5,7 +5,7 @@ from .components import (
     EmailSettings,
     SecuritySettings,
     OAuthSettings,
-    OracleStorageSettings,
+    AzureStorageSettings,
 )
 from .dbs import MongoDBSettings, PostgresSQLSettings, RedisSettings
 
@@ -32,7 +32,7 @@ class DevelopmentSettings(Settings):
     DEBUG: bool = True
 
 
-class ProductionSettings(Settings, OracleStorageSettings):
+class ProductionSettings(Settings, AzureStorageSettings):
     model_config = SettingsConfigDict(
         env_file=".env.prod",
         env_file_encoding="utf-8",

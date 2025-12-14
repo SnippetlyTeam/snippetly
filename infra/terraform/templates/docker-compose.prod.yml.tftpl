@@ -1,0 +1,97 @@
+services:
+  backend:
+    image: ${BACKEND_IMAGE}
+    # Run uvicorn in production mode (no auto-reload) with multiple workers
+    command: >-
+      uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*" --workers 2
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - db
+      - redis
+      - mongodb
+    # Expose for internal access only; no public port publishing
+    expose:
+      - "8000"
+    volumes:
+      - ./backend/static/avatars:/app/static/avatars
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8000/api/health || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  celery-worker:
+    image: ${BACKEND_IMAGE}
+    command: uv run celery -A src.worker.app.app worker --loglevel=info
+    env_file: [ ./backend/.env ]
+    depends_on: [ db, redis ]
+    restart: unless-stopped
+
+  celery-beat:
+    image: ${BACKEND_IMAGE}
+    command: uv run celery -A src.worker.app.app beat --loglevel=info
+    env_file: [ ./backend/.env ]
+    depends_on: [ db, redis ]
+    restart: unless-stopped
+
+  frontend:
+    image: ${FRONTEND_IMAGE}
+    depends_on: [ backend ]
+    # Ensure we override dev command from base compose and run Nginx default
+    command: ["nginx", "-g", "daemon off;"]
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+  db:
+    env_file:
+      - ./backend/.env
+    ports: []
+    # Persist PostgreSQL data on host
+    volumes:
+      - /opt/app-data/postgres:/var/lib/postgresql/data
+    # Basic healthcheck using pg_isready
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -h 127.0.0.1 -p $$POSTGRES_PORT" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    ports: []
+    volumes:
+      - /opt/app-data/redis:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  mongodb:
+    env_file:
+      - ./backend/.env
+    ports: []
+    volumes:
+      - /opt/app-data/mongo:/data/db
+    healthcheck:
+      test: [ "CMD-SHELL", "mongosh --eval 'db.adminCommand(\"ping\")' --quiet | grep ok" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  migrate:
+    image: ${BACKEND_IMAGE}
+    # Override command to run Alembic migrations using the backend image
+    command: uv run alembic upgrade head
+    env_file: [ ./backend/.env ]
+    depends_on: [ db ]
+    restart: "no"

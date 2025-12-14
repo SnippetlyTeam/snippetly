@@ -1,9 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Annotated
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, constr
+from pydantic import BaseModel, Field, field_validator, StringConstraints
 
 from src.adapters.postgres.models import LanguageEnum
 from ..common import BaseListSchema
@@ -13,7 +13,12 @@ def serialize_tags(tags: list[str]) -> list:
     return [item.strip().lower().replace(" ", "") for item in tags]
 
 
-TagStr = constr(min_length=2, max_length=20, pattern=r"^[A-Za-z0-9_-]+$")
+TagStr = Annotated[
+    str,
+    StringConstraints(
+        min_length=2, max_length=20, pattern=r"^[A-Za-z0-9_-]+$"
+    ),
+]
 
 
 # --- Requests ---

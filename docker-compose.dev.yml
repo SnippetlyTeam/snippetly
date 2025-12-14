@@ -20,7 +20,8 @@ services:
       db:
         condition: service_healthy
     ports:
-      - "9090:80"
+      # Bind to localhost only for security (access via SSH tunnel)
+      - "127.0.0.1:9090:80"
     volumes:
       - pgadmin:/var/lib/pgadmin
     restart: unless-stopped

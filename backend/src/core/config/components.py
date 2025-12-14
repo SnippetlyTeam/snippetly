@@ -9,6 +9,10 @@ class APISettings(BaseAppSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_URL: str = "http://localhost:8000"
 
+    DOCS_URL: str = "/docs"
+    REDOC_URL: str = "/redoc"
+    OPENAPI_URL: str = "/openapi.json"
+
 
 class EmailSettings(BaseAppSettings):
     EMAIL_APP_PASSWORD: SecretStr | None = None
@@ -25,7 +29,7 @@ class SecuritySettings(BaseAppSettings):
     ALGORITHM: str = "HS256"
 
     REFRESH_TOKEN_LIFE: int = 7
-    ACCESS_TOKEN_LIFE_MINUTES: int = 30
+    ACCESS_TOKEN_LIFE_MINUTES: int = 15
     ACTIVATION_TOKEN_LIFE: int = 1
     PASSWORD_RESET_TOKEN_LIFE: int = 1
 
@@ -47,12 +51,10 @@ class OAuthSettings(APISettings, BaseAppSettings):
             self.REDIRECT_URI = f"{self.FRONTEND_URL}/auth/google"
 
 
-class OracleStorageSettings(BaseAppSettings):
-    ORACLE_USER_OCID: str
-    ORACLE_TENANCY_OCID: str
-    ORACLE_REGION: str
-    ORACLE_NAMESPACE: str
-    ORACLE_BUCKET_NAME: str
-    ORACLE_FINGERPRINT: str
-    ORACLE_KEY_FILE_PATH: str
-    ORACLE_BASE_URL: str
+class AzureStorageSettings(BaseAppSettings):
+    AZURE_STORAGE_ACCOUNT_NAME: str
+    AZURE_STORAGE_ACCOUNT_KEY: str | None = None
+    AZURE_STORAGE_CONNECTION_STRING: str | None = None
+    AZURE_MEDIA_CONTAINER: str = "media"
+    AZURE_BACKUP_CONTAINER: str = "backups"
+    AZURE_BLOB_ENDPOINT: str | None = None

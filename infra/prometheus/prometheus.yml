@@ -1,0 +1,47 @@
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  evaluation_interval: 15s
+
+# Alerting configuration (optional - can add alertmanager later)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: []
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alerts/*.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          environment: 'production'
+
+  # FastAPI backend metrics
+  - job_name: 'backend'
+    metrics_path: '/api/metrics'
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: 'backend'
+          environment: 'production'
+
+  # PostgreSQL exporter (optional - requires postgres_exporter sidecar)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+
+  # Redis exporter (optional - requires redis_exporter sidecar)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['redis-exporter:9121']
+
+  # Docker containers metrics (optional - requires cadvisor)
+  # - job_name: 'cadvisor'
+  #   static_configs:
+  #     - targets: ['cadvisor:8080']

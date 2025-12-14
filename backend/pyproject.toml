@@ -24,8 +24,9 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "celery>=5.5.3",
     "slowapi>=0.1.9",
-    "oci>=2.163.0",
+    "azure-storage-blob>=12.24.0",
     "uvicorn>=0.38.0",
+    "prometheus-client>=0.21.1",
 ]
 
 [dependency-groups]

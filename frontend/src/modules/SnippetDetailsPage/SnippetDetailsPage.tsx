@@ -12,7 +12,6 @@ import toast, { type Toast } from 'react-hot-toast';
 import CustomToast from '../../components/CustomToast/CustomToast';
 import Heart from '../../components/Heart/Heart';
 import { useSnippetContext } from '../../contexts/SnippetContext';
-import DeleteModal from './DeleteModal';
 
 const initialSnippet: SnippetDetailsType = {
   title: "",
@@ -32,22 +31,8 @@ const SnippetDetailsPage = () => {
   const { snippetId } = useParams();
   const { accessToken } = useAuthContext();
   const { favoriteSnippetsIds, setFavoriteSnippetsIds } = useSnippetContext();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  function handleHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (favoriteSnippetsIds.includes(snippet.uuid)) {
-      removeFavorite(accessToken, snippet.uuid);
-      setFavoriteSnippetsIds(prev => prev.filter(id => id !== snippet.uuid));
-    } else {
-      addFavorite(accessToken, snippet.uuid);
-      setFavoriteSnippetsIds(prev => [...prev, snippet.uuid]);
-    }
-  }
 
   const { mutate: getSnippet, isPending, isError } = useMutation({
     mutationFn: () => getById(snippetId ?? '', accessToken),
@@ -81,6 +66,10 @@ const SnippetDetailsPage = () => {
       });
     }
   });
+
+  useEffect(() => {
+    getSnippet();
+  }, [snippetId, accessToken]);
 
   const { mutate: deleteSnippet } = useMutation({
     mutationFn: () => remove(snippet.uuid, accessToken),
@@ -149,25 +138,30 @@ const SnippetDetailsPage = () => {
     );
   }
 
+  function handleHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (favoriteSnippetsIds.includes(snippet.uuid)) {
+      removeFavorite(accessToken, snippet.uuid);
+      setFavoriteSnippetsIds(prev => prev.filter(id => id !== snippet.uuid));
+    } else {
+      addFavorite(accessToken, snippet.uuid);
+      setFavoriteSnippetsIds(prev => [...prev, snippet.uuid]);
+    }
+  }
+
   return (
     <main className={styles.main}>
-      {isModalOpen && (
-        <DeleteModal
-          onClose={() => setIsModalOpen(false)}
-          onDelete={deleteSnippet}
-        />
-      )}
       <div className={styles.head}>
-        <div className={styles.titleWrapper}>
-          <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
-        </div>
+        <h2 className={styles.title} id="snippet-title">{snippet.title || "Untitled"}</h2>
 
         <div className={styles.buttons} role="group" aria-label="Snippet actions">
           <button
             type="button"
             className={styles.buttonsDelete}
             title="Delete snippet"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => deleteSnippet()}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width='24' height='24' className={styles.buttonsDeleteIcon}>
               <path d="M232.7 69.9L224 96L128 96C110.3 96 96 110.3 96 128C96 145.7 110.3 160 128 160L512 160C529.7 160 544 145.7 544 128C544 110.3 529.7 96 512 96L416 96L407.3 69.9C402.9 56.8 390.7 48 376.9 48L263.1 48C249.3 48 237.1 56.8 232.7 69.9zM512 208L128 208L149.1 531.1C150.7 556.4 171.7 576 197 576L443 576C468.3 576 489.3 556.4 490.9 531.1L512 208z" />
