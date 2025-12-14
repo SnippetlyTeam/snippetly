@@ -12,6 +12,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   redis:
     image: redis:7-alpine
@@ -25,6 +33,14 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
 
   mongodb:
     image: mongo:7-jammy
@@ -46,6 +62,14 @@ services:
       interval: 30s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
 
   migrate:
     image: ${BACKEND_IMAGE}
@@ -76,6 +100,14 @@ services:
       retries: 5
       start_period: 30s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
 
   celery-worker:
     image: ${BACKEND_IMAGE}
@@ -87,6 +119,20 @@ services:
       - db
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "uv run celery -A src.worker.app.app inspect ping -d celery@$${HOSTNAME} -t 10 || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: '1.0'
+        reservations:
+          memory: 384M
+          cpus: '0.5'
 
   celery-beat:
     image: ${BACKEND_IMAGE}
@@ -98,6 +144,20 @@ services:
       - db
       - redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep '[c]elery.*beat' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -108,6 +168,14 @@ services:
     expose:
       - "80"
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
 
 networks:
   default:

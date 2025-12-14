@@ -6,9 +6,9 @@ runcmd:
     curl -fsSL https://get.docker.com | sh
     # Install git and docker compose plugin depending on OS
     if command -v dnf >/dev/null 2>&1; then
-      dnf install -y git docker-compose-plugin cronie || true
+      dnf install -y git docker-compose-plugin cronie fail2ban || true
     elif command -v apt-get >/dev/null 2>&1; then
-      apt-get update -y && apt-get install -y git docker-compose-plugin cron || true
+      apt-get update -y && apt-get install -y git docker-compose-plugin cron fail2ban || true
     fi
     usermod -aG docker ${username}
     systemctl enable docker --now
@@ -17,6 +17,23 @@ runcmd:
       systemctl enable crond --now || true
     else
       systemctl enable cron --now || true
+    fi
+    # Configure and enable fail2ban for SSH protection
+    if command -v fail2ban-server >/dev/null 2>&1; then
+      cat > /etc/fail2ban/jail.local <<'EOFFAIL2BAN'
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 5
+
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 7200
+EOFFAIL2BAN
+      systemctl enable fail2ban --now || true
     fi
   - |
     # Create and clone repo to /opt/snippetly
@@ -55,6 +72,7 @@ EOFENV
     # Ensure backup scripts (if present) are executable
     if [ -f /opt/snippetly/scripts/backup_pg.sh ]; then chmod +x /opt/snippetly/scripts/backup_pg.sh; fi
     if [ -f /opt/snippetly/scripts/backup_mongo.sh ]; then chmod +x /opt/snippetly/scripts/backup_mongo.sh; fi
+    if [ -f /opt/snippetly/scripts/backup_redis.sh ]; then chmod +x /opt/snippetly/scripts/backup_redis.sh; fi
   - |
     # Install cron jobs: migrations at boot and periodically; optional nightly backups
     cat >/etc/cron.d/snippetly
@@ -63,5 +81,6 @@ EOFENV
 */10 * * * * root cd /opt/snippetly && set -a && [ -f .deploy.env ] && . ./.deploy.env || true && set +a && docker compose -f docker-compose.yml run --rm migrate >/var/log/snippetly_migrate.log 2>&1
 0 2 * * * root [ -x /opt/snippetly/scripts/backup_pg.sh ] && /bin/bash /opt/snippetly/scripts/backup_pg.sh >> /var/log/snippetly_backups.log 2>&1
 15 2 * * * root [ -x /opt/snippetly/scripts/backup_mongo.sh ] && /bin/bash /opt/snippetly/scripts/backup_mongo.sh >> /var/log/snippetly_backups.log 2>&1
+30 2 * * * root [ -x /opt/snippetly/scripts/backup_redis.sh ] && /bin/bash /opt/snippetly/scripts/backup_redis.sh >> /var/log/snippetly_backups.log 2>&1
 EOFCRON
     chmod 644 /etc/cron.d/snippetly

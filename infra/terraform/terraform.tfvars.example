@@ -13,6 +13,11 @@ vnet_cidr   = "10.0.0.0/16"
 subnet_cidr = "10.0.1.0/24"
 allow_dev_ports = false
 
+# SSH Security: Restrict SSH access to specific IP ranges (CHANGE THIS!)
+# Example for single IP: ["203.0.113.42/32"]
+# Example for IP range: ["203.0.113.0/24", "198.51.100.0/24"]
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # WARNING: Change to your IP!
+
 # Repository to clone on VMs
 repo_url = "https://github.com/<your-org>/snippetly"
 

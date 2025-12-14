@@ -45,7 +45,7 @@ resource "azurerm_network_security_rule" "ingress_ssh" {
   protocol                    = "Tcp"
   source_port_range           = "*"
   destination_port_range      = "22"
-  source_address_prefix       = "*"
+  source_address_prefixes     = var.allowed_ssh_cidrs # Restricted to specific IPs/ranges
   destination_address_prefix  = "*"
   resource_group_name         = azurerm_resource_group.rg.name
   network_security_group_name = azurerm_network_security_group.nsg.name

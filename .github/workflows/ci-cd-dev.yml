@@ -69,6 +69,10 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test
+
   build-push-dev:
     name: Build & Push Images (Dev)
     runs-on: ubuntu-latest
@@ -132,6 +136,26 @@ jobs:
             set -euo pipefail
             cd /opt/snippetly
 
+            # Rollback function
+            rollback() {
+              echo "❌ Deployment failed! Rolling back to previous version..."
+              if [ -f .deploy.env.bak ]; then
+                mv .deploy.env.bak .deploy.env
+                set -a
+                . ./.deploy.env
+                set +a
+                docker compose -f docker-compose.yml -f docker-compose.override.yml pull || true
+                docker compose -f docker-compose.yml -f docker-compose.override.yml up -d || true
+                echo "✅ Rollback completed"
+              else
+                echo "⚠️ No backup found, cannot rollback"
+              fi
+              exit 1
+            }
+
+            # Trap errors for rollback
+            trap 'rollback' ERR
+
             # Pull latest code from develop branch
             echo "Pulling latest code from develop branch..."
             git fetch origin
@@ -149,46 +173,56 @@ jobs:
             # Compute image tags for this run (same as in build-push-dev)
             BACKEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}"
             FRONTEND_IMAGE="${{ secrets.DEV_ACR_LOGIN_SERVER }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
-            
+
             echo "Updating deployment configuration..."
-            # Update images in .deploy.env
+            # Update images in .deploy.env (creates .bak file automatically)
             sed -i.bak \
             -e "s|^BACKEND_IMAGE=.*$|BACKEND_IMAGE=${BACKEND_IMAGE}|" \
             -e "s|^FRONTEND_IMAGE=.*$|FRONTEND_IMAGE=${FRONTEND_IMAGE}|" \
             .deploy.env
-            
+
             # Load deployment environment
             set -a
             # shellcheck source=/dev/null
             . ./.deploy.env
             set +a
-            
+
             echo "Using BACKEND_IMAGE=$BACKEND_IMAGE"
             echo "Using FRONTEND_IMAGE=$FRONTEND_IMAGE"
-            
+
             # Login to ACR
             echo "Logging into Azure Container Registry..."
             echo "${{ secrets.DEV_AZURE_SP_PASSWORD }}" | docker login "${{ secrets.DEV_ACR_LOGIN_SERVER }}" \
               -u "${{ secrets.DEV_AZURE_SP_APP_ID }}" \
               --password-stdin
-            
+
             # Pull and deploy (Dev: use base compose + override for pgadmin + exposed ports)
             echo "Pulling Docker images..."
             docker compose -f docker-compose.yml -f docker-compose.override.yml pull
-            
+
             echo "Starting services..."
             docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
-            
+
             # Wait for services to be healthy
             echo "Waiting for services to be healthy..."
-            sleep 10
-            
-            # Verify deployment
+            sleep 15
+
+            # Verify deployment - critical services must be running
             echo "Verifying deployment..."
             docker compose -f docker-compose.yml -f docker-compose.override.yml ps
-            
+
+            # Health check: ensure backend is responding
+            echo "Performing health check..."
+            if ! curl -f -s http://${{ secrets.DEV_SSH_HOST }}/api/health > /dev/null; then
+              echo "❌ Health check failed!"
+              exit 1
+            fi
+
+            echo "✅ Deployment successful! Cleaning up backup..."
+            rm -f .deploy.env.bak
+
             # Cleanup old images (keep images from last 24 hours for dev)
             echo "Cleaning up old Docker images..."
             docker image prune -af --filter "until=24h" || true
-            
+
             echo "Dev deployment completed successfully!"

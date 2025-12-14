@@ -1,6 +1,11 @@
 variable "location" {
   description = "Azure region (e.g., westeurope)"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z]+$", var.location))
+    error_message = "Location must be a valid Azure region name (lowercase, no spaces)."
+  }
 }
 
 variable "resource_group_name" {
@@ -73,6 +78,11 @@ variable "backend_env_content_prod" {
 variable "storage_account_name" {
   description = "Azure Storage Account name (must be globally unique, 3-24 lowercase alphanumerics)"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9]{3,24}$", var.storage_account_name))
+    error_message = "Storage account name must be 3-24 characters, lowercase letters and numbers only."
+  }
 }
 
 variable "media_container_dev" {
@@ -102,4 +112,22 @@ variable "backup_container_prod" {
 variable "acr_name" {
   description = "Azure Container Registry name (3-50 alphanumerics)"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9]{5,50}$", var.acr_name))
+    error_message = "ACR name must be 5-50 characters, alphanumeric only."
+  }
+}
+
+variable "allowed_ssh_cidrs" {
+  description = "List of CIDR blocks allowed to SSH to VMs (restrict to your IP for security)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"] # CHANGE THIS! Use your home/office IP range
+
+  validation {
+    condition = alltrue([
+      for cidr in var.allowed_ssh_cidrs : can(cidrhost(cidr, 0))
+    ])
+    error_message = "All values must be valid CIDR notation (e.g., '203.0.113.0/24')."
+  }
 }

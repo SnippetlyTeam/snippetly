@@ -102,6 +102,10 @@ resource "azurerm_linux_virtual_machine" "dev" {
   }
 
   custom_data = base64encode(local.cloud_init_dev)
+
+  lifecycle {
+    ignore_changes = [custom_data]
+  }
 }
 
 resource "azurerm_linux_virtual_machine" "prod" {
@@ -132,4 +136,8 @@ resource "azurerm_linux_virtual_machine" "prod" {
   }
 
   custom_data = base64encode(local.cloud_init_prod)
+
+  lifecycle {
+    ignore_changes = [custom_data]
+  }
 }
