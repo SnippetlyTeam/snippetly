@@ -1,0 +1,46 @@
+@use "mixins" as *;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap");
+
+body {
+  font-family: "Space Mono", monospace;
+}
+
+a {
+  font-family: "Inter", sans-serif;
+}
+
+h1 {
+  font-size: 36px;
+  line-height: 1.2;
+
+  @include on-tablet {
+    font-size: 42px;
+  }
+
+  @include on-desktop {
+    font-size: 48px;
+  }
+}
+
+h2 {
+  font-size: 32px;
+  line-height: 1.2;
+
+  @include on-tablet {
+    font-size: 36px;
+  }
+}
+
+.buttonText {
+  font-size: 14px;
+  font-weight: 600;
+
+  @include on-tablet {
+    font-size: 16px;
+  }
+
+  @include on-desktop {
+    font-size: 18px;
+  }
+}

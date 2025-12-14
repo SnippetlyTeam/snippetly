@@ -1,0 +1,89 @@
+[project]
+name = "snippetly-api"
+version = "0.1.0"
+description = "Snippetly - platform for creating and sharing code fragments"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.16.5",
+    "asyncpg>=0.30.0",
+    "beanie>=2.0.0",
+    "fastapi>=0.117.1",
+    "psycopg>=3.2.10",
+    "pydantic[email]>=2.11.9",
+    "pydantic-settings>=2.10.1",
+    "pyjwt>=2.10.1",
+    "redis>=6.4.0",
+    "sqlalchemy>=2.0.43",
+    "bcrypt>=4.3.0",
+    "aiosmtplib>=4.0.2",
+    "aiohttp>=3.12.15",
+    "pillow>=11.3.0",
+    "python-multipart>=0.0.20",
+    "starlette-admin>=0.15.1",
+    "itsdangerous>=2.2.0",
+    "celery>=5.5.3",
+    "slowapi>=0.1.9",
+    "azure-storage-blob>=12.24.0",
+    "uvicorn>=0.38.0",
+    "prometheus-client>=0.21.1",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.406",
+    "ruff>=0.13.1",
+]
+test = [
+    "faker>=37.12.0",
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+select = [
+    "B", "C", "E", "F", "W",
+    "B9", "ANN", "Q0", "N8"
+]
+ignore = ["N807", "F401", "F405", "ANN204"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/{tests}/*" = ["ANN"]
+
+
+[tool.ruff.format]
+docstring-code-format = true
+
+
+[tool.alembic]
+path_separator = "os"
+script_location = "src/adapters/postgres/migrations"
+prepend_sys_path = "."
+sqlalchemy.url = "driver://user:pass@localhost/dbname"
+
+
+[tool.pyright]
+reportAttributeAccessIssue = "none"
+include = ["src"]
+exclude = ["src/adapters/postgres/migrations", "**/.venv", "**/venv", "**/__pycache__"]
+typeCheckingMode = "basic"
+
+[tool.pytest.ini_options]
+testpaths = "tests/"
+pythonpath = "src/"
+addopts = """
+    --tb=short
+    --strict-markers
+"""
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]

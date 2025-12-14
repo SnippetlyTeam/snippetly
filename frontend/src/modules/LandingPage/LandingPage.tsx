@@ -1,0 +1,38 @@
+import { useNavigate } from 'react-router-dom';
+import CodeEditor from '../../components/CodeEditor/CodeEditor';
+import MainButton from '../../components/MainButton/MainButton';
+import styles from './LandingPage.module.scss';
+
+const LandingPage: React.FC = () => {
+  const navigate = useNavigate();
+
+  return (
+    <main className={styles.main}>
+      <div className={styles.description}>
+        <h1 className={styles.title}>Store and Share Your Code Snippets.</h1>
+        <p className={styles.text}>
+          Save your code snippets, share them with other
+          developers, and discover new solutions for your
+          projects.
+        </p>
+      </div>
+
+      <CodeEditor value={
+        [
+          '// Save and share your favorite code snippets!',
+          'function saveSnippet(snippet) {',
+          '  if (!snippet) {',
+          '    console.log("Oops! No snippet to save.");',
+          '    return;',
+          '  }',
+          '  console.log(`Snippet saved: "${snippet}"`);',
+          '}',
+          '',
+          "saveSnippet(\"console.log('Hello, snippets!');\");"
+        ].join('\n')} language='javascript' />
+      <MainButton content='Start Coding' onClick={() => navigate('/snippets')} />
+    </main>
+  )
+}
+
+export default LandingPage;

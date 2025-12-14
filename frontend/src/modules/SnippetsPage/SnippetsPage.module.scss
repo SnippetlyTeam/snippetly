@@ -1,0 +1,232 @@
+@use "../../styles/mixins" as *;
+.main {
+  @include page-padding-inline;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &Content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.snippets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.pagination {
+  display: flex;
+  align-self: center;
+  gap: 16px;
+
+  > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &Pages {
+    display: flex;
+    gap: 8px;
+  }
+
+  &Switcher {
+    background-color: #252525;
+    color: #d4d4d4;
+    border: 1px solid #3a4047;
+    border-radius: 4px;
+    font-weight: 400;
+    width: 70px;
+    cursor: pointer;
+    opacity: 1;
+    transition: opacity 0.2s, background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #178ca4;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &Item {
+    background-color: var(--snippet-hover-bg-color);
+    border: 1px solid #3a4047;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: var(--color-white);
+    cursor: pointer;
+    font-weight: 600;
+    padding: 12px 16px;
+
+    &:not(&Active):hover {
+      background-color: #3a4047;
+    }
+
+    &Active {
+      background-color: #178ca4;
+    }
+  }
+}
+
+.search {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 12px;
+  position: relative;
+
+  &ResultsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: absolute;
+    top: 108%;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    background: #22262c;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.32);
+    padding: 8px 0;
+    margin-top: 4px;
+    border-radius: 4px;
+  }
+
+  &ResultsItem {
+    min-height: 16px;
+    color: var(--color-white);
+    padding: 8px 12px;
+    border-radius: 2px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &:hover {
+      background-color: #2a2d32;
+    }
+
+    &Title {
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    &Language {
+      font-size: 0.8em;
+      color: #a0a0a0;
+    }
+  }
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: #22262c;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.32), 0 1.5px 6px -1px #111;
+
+  &Button {
+    font-size: 16px;
+    color: var(--color-accent);
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    @include set-transition(color, 0.2s);
+
+    &:hover {
+      color: var(--color-purple);
+    }
+  }
+
+  &Title {
+    margin: 0;
+  }
+
+  &Content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+
+    transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      margin-top 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      padding-top 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      border-top-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      border-top-width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    overflow: hidden;
+    border-top: 1px solid transparent;
+
+    @include on-tablet {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @include on-desktop {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+  }
+
+  &Collapsed {
+    max-height: 0;
+    margin-top: 0;
+    padding-top: 0;
+    border-top-color: transparent;
+    border-top-width: 1px;
+    border-top-style: solid;
+  }
+
+  &Expanded {
+    max-height: 800px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top-color: var(--notification-color);
+    border-top-width: 1px;
+    border-top-style: solid;
+    overflow: visible;
+  }
+
+  &Item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+}
+
+.line {
+  border: 1px solid var(--notification-color);
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  padding-top: 8px;
+}
+
+.tagsList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

@@ -1,0 +1,47 @@
+# Production-only overrides: HTTPS with Let's Encrypt via nginx reverse proxy
+services:
+  # Nginx reverse proxy with HTTPS termination
+  nginx-proxy:
+    image: nginx:1.25-alpine
+    container_name: snippetly-nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx/prod-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/snippetly.codes.conf:/etc/nginx/conf.d/snippetly.codes.conf:ro
+      - /opt/app-data/certbot/conf:/etc/letsencrypt:ro
+      - /opt/app-data/certbot/www:/var/www/certbot:ro
+    depends_on:
+      frontend:
+        condition: service_started
+    networks:
+      - default
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Certbot for Let's Encrypt certificate management
+  certbot:
+    image: certbot/certbot:v2.11.0
+    container_name: snippetly-certbot
+    volumes:
+      - /opt/app-data/certbot/conf:/etc/letsencrypt
+      - /opt/app-data/certbot/www:/var/www/certbot
+    networks:
+      - default
+    # Runs certificate renewal check twice daily
+    entrypoint: "/bin/sh"
+    command: >
+      -c "trap exit TERM;
+      while :; do
+        echo 'Running certbot renewal check...';
+        certbot renew --webroot --webroot-path=/var/www/certbot --quiet --deploy-hook 'docker exec snippetly-nginx-proxy nginx -s reload' || echo 'Certbot renew failed or not needed';
+        echo 'Next renewal check in 12 hours...';
+        sleep 12h & wait $$!;
+      done"
+    restart: unless-stopped

@@ -1,0 +1,85 @@
+.main {
+  @include page-padding-inline;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  &Item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+  }
+}
+
+.container {
+  display: flex;
+  gap: 24px;
+}
+
+.visibility {
+  display: flex;
+  align-items: center;
+  width: 280px;
+  border: 1px solid var(--color-accent);
+  height: 36px;
+  border-radius: 6px;
+  padding: 0 8px;
+  gap: 8px;
+
+  &State {
+    font-size: 14px;
+  }
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.required {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.textarea {
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  background-color: var(--primary-bg-color);
+  color: var(--color-white);
+  padding: 8px 40px 8px 12px;
+  width: 50%;
+  height: 100px;
+  max-width: 500px;
+  max-height: 150px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.error {
+  font-family: "Inter", sans-serif;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--color-red);
+}
+
+.tag, 
+.language {
+  max-width: 280px;
+}
+
+.tagsList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

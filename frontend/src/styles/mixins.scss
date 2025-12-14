@@ -1,0 +1,29 @@
+@use "variables" as *;
+
+@mixin on-tablet {
+  @media (min-width: $tablet-min-width) {
+    @content;
+  }
+}
+
+@mixin on-desktop {
+  @media (min-width: $desktop-min-width) {
+    @content;
+  }
+}
+
+@mixin page-padding-inline {
+  padding-inline: $content-padding-mobile;
+
+  @include on-tablet {
+    padding-inline: $content-padding-tablet;
+  }
+
+  @include on-desktop {
+    padding-inline: $content-padding-desktop;
+  }
+}
+
+@mixin set-transition($properties: all, $duration: 0.2s, $timing: ease) {
+  transition: $properties $duration $timing;
+}

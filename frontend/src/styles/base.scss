@@ -1,0 +1,124 @@
+body {
+  background-color: var(--primary-bg-color);
+  color: var(--color-white);
+  padding: 0;
+  margin: 0;
+}
+
+main {
+  max-width: 1200px;
+}
+
+a {
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+input {
+  background-color: var(--primary-bg-color);
+  color: var(--color-white);
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--color-accent);
+  padding: 8px 40px 8px 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus {
+    border: 1px solid var(--color-accent-hover);
+    box-shadow: 0 0 0 1px var(--color-accent-hover);
+  }
+
+  &[type="date"] {
+    cursor: pointer;
+
+    &::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+    
+    // For Firefox
+    &::-moz-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+  }
+}
+
+label {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.dropdown {
+  position: relative;
+
+  &Trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    padding: 8px 40px 8px 16px;
+    border: 1px solid var(--color-accent);
+    border-radius: 6px;
+
+    font-size: 16px;
+    color: var(--color-white);
+
+    background-color: var(--primary-bg-color);
+
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-white);
+    }
+
+    &Active {
+      border-color: var(--color-white);
+    }
+  }
+
+  &Menu {
+    position: absolute;
+    top: 46px;
+    z-index: 999;
+
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    box-sizing: border-box;
+    padding-block: 8px;
+
+    border: 1px solid var(--color-purple);
+    border-radius: 6px;
+
+    background-color: var(--secondary-bg-color);
+    box-shadow: 0 2px 15px 0 #0000000d;
+  }
+
+  &Item {
+    display: flex;
+    align-items: center;
+    background-color: inherit;
+    border: none;
+    color: var(--color-white);
+    cursor: pointer;
+    height: 32px;
+    max-width: 100%;
+    padding-inline: 12px;
+    font-size: 14px;
+
+    &:hover {
+      background-color: var(--dropdown-item-hover-bg);
+    }
+  }
+}

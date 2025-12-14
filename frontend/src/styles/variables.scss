@@ -1,0 +1,22 @@
+$tablet-min-width: 640px;
+$desktop-min-width: 1200px;
+$content-padding-mobile: 16px;
+$content-padding-tablet: 24px;
+$content-padding-desktop: 40px;
+
+:root {
+  --color-purple: #c586c0;
+  --color-white: #d4d4d4;
+  --color-red: #ff0000;
+  --color-red-hover: #e60000;
+  --color-accent: #56b6c2;
+  --color-success: #10b881;
+  --color-accent-hover: #06b6d4;
+  
+  --primary-bg-color: #1d2024;
+  --secondary-bg-color: #23272b;
+  --secondary-text-color: #d4d4d4;
+
+  --snippet-hover-bg-color: #2a2f33;
+  --notification-color: #353945;
+}

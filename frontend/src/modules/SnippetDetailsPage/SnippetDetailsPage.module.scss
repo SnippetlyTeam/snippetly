@@ -1,0 +1,171 @@
+@use "../../styles/mixins" as *;
+.main {
+  @include page-padding-inline;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+}
+
+.titleWrapper {
+  min-width: 0;
+}
+
+.title {
+  word-break: break-all;
+}
+
+.buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+
+  &Heart {
+    border: none;
+    background-color: transparent;
+  }
+
+  &Delete {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 8px;
+
+    &:hover {
+      background-color: rgba(255, 0, 0, 0.1);
+      transform: scale(1.1);
+
+      .buttonsDeleteIcon {
+        fill: var(--color-red-hover);
+      }
+    }
+  }
+
+  .buttonsDeleteIcon {
+    transition: fill 0.2s ease;
+    fill: var(--color-red);
+  }
+
+  &Item {
+    @include set-transition(background-color);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border: none;
+    background-color: var(--color-accent);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    color: var(--primary-bg-color);
+
+    border-radius: 99px;
+    padding: 16px 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-accent-hover);
+    }
+  }
+}
+
+.copy {
+  border: 1px solid var(--notification-color, #5a6270);
+  background-color: var(--color-bg-grey, #22232b);
+  color: var(--color-accent, #a084fa);
+
+  &:hover {
+    background-color: var(--color-bg-grey-light, #282a36);
+    color: var(--color-accent-hover, #c3b3fa);
+    border-color: var(--color-accent, #a084fa);
+  }
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--secondary-bg-color);
+  border-radius: 6px;
+  padding: 16px;
+  box-sizing: border-box;
+
+  &Title {
+    margin: 8px;
+    word-wrap: break-word;
+  }
+
+  &Item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &Info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px;
+  }
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+}
+
+.line {
+  border: 1px solid var(--notification-color);
+  margin: 8px;
+}
+
+.type {
+  color: var(--color-accent);
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+
+  &Item {
+    display: flex;
+    gap: 8px;
+    text-transform: capitalize;
+    font-size: 14px;
+  }
+}
+
+.text {
+  margin: 0;
+}
+
+.key {
+  font-family: "Space Mono", monospace;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+
+.value {
+  font-family: "Inter", sans-serif;
+  line-height: 1.4;
+  vertical-align: middle;
+  position: relative;
+  top: 1px;
+}

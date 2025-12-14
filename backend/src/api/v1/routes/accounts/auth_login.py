@@ -1,0 +1,249 @@
+from typing import Annotated
+
+import jwt
+from fastapi import APIRouter, HTTPException, Request, Response, Cookie
+from fastapi.params import Depends
+from sqlalchemy.exc import SQLAlchemyError
+
+import src.api.docs.auth_error_examples as exm
+import src.core.exceptions as exc
+from src.adapters.postgres.models import UserModel
+from src.api.docs.openapi import create_error_examples, ErrorResponseSchema
+from src.api.v1.schemas.accounts import (
+    UserLoginRequestSchema,
+    UserLoginResponseSchema,
+    TokenRefreshResponseSchema,
+)
+from src.api.v1.schemas.common import MessageResponseSchema
+from src.core.app.limiter import limiter
+from src.core.dependencies.accounts import get_jwt_manager
+from src.core.dependencies.accounts import (
+    get_token,
+    get_current_user,
+    get_auth_service,
+)
+from src.core.security.jwt_manager import JWTAuthInterface
+from src.features.auth import AuthServiceInterface
+from .utils import set_refresh_token
+
+router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+@router.post(
+    "/login",
+    summary="Log in via username or email",
+    status_code=200,
+    description="Authenticate a user and return access/refresh tokens",
+    responses={
+        404: create_error_examples(
+            description="Not Found",
+            examples={
+                "not_found": "User with such email or username not registered."
+            },
+        ),
+        401: create_error_examples(
+            description="Unauthorized",
+            examples={
+                "unauthorized": "Entered Invalid password! Check your "
+                "keyboard layout or Caps Lock. Forgot your password?"
+            },
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples={"forbidden": "User account is not activated"},
+        ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 5 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Something went wrong during "
+                "refresh token creation"
+            },
+        ),
+    },
+)
+@limiter.limit("5/minute")
+async def login_user(
+    request: Request,
+    response: Response,
+    data: UserLoginRequestSchema,
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+) -> UserLoginResponseSchema:
+    try:
+        result = await service.login_user(data.login, data.password)
+    except exc.UserNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except exc.InvalidPasswordError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except exc.UserNotActiveError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Something went wrong during refresh token creation",
+        ) from e
+
+    set_refresh_token(response, result["refresh_token"])
+    return UserLoginResponseSchema(access_token=result["access_token"])
+
+
+@router.post(
+    "/refresh",
+    summary="Refresh token",
+    status_code=200,
+    description="Refresh an access token using a valid refresh token",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples={"auth_error": "Invalid refresh token"},
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples={"not_found": "User was not found"},
+        ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
+    },
+)
+@limiter.limit("30/minute")
+async def refresh(
+    request: Request,
+    response: Response,
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    refresh_token: Annotated[str | None, Cookie()] = None,
+) -> TokenRefreshResponseSchema:
+    if refresh_token is None:
+        raise HTTPException(
+            status_code=401, detail="Refresh token not found in cookies"
+        )
+
+    try:
+        result = await service.refresh_tokens(refresh_token)
+    except exc.AuthenticationError as e:
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except exc.UserNotFoundError as e:
+        raise HTTPException(
+            status_code=404, detail="User was not found"
+        ) from e
+    return TokenRefreshResponseSchema(**result)
+
+
+@router.post(
+    "/revoke-all-tokens",
+    summary="Logout from all sessions",
+    status_code=200,
+    description="Revoke all tokens of the current user, "
+    "logging out from every session",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={
+                "internal_server": "Failed to log out from every "
+                "sessions. Try again"
+            },
+        ),
+    },
+)
+async def revoke_all_tokens(
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    current_user: Annotated[UserModel, Depends(get_current_user)],
+) -> MessageResponseSchema:
+    try:
+        await service.logout_from_all_sessions(current_user)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to log out from every sessions. Try again",
+        ) from e
+    return MessageResponseSchema(
+        message="Logged out from every session successfully"
+    )
+
+
+@router.post(
+    "/logout",
+    response_model=MessageResponseSchema,
+    status_code=200,
+    summary="User Logout",
+    description="Logout a user by revoking their refresh and access tokens",
+    responses={
+        401: create_error_examples(
+            description="Unauthorized",
+            examples=exm.UNAUTHORIZED_ERROR_EXAMPLES,
+        ),
+        403: create_error_examples(
+            description="Forbidden",
+            examples=exm.FORBIDDEN_ERROR_EXAMPLES,
+        ),
+        404: create_error_examples(
+            description="Not Found",
+            examples=exm.NOT_FOUND_ERRORS_EXAMPLES,
+        ),
+        429: create_error_examples(
+            description="Too many requests",
+            examples={"error": "Rate limit exceeded: 30 per 1 minute"},
+            model=ErrorResponseSchema,
+        ),
+        500: create_error_examples(
+            description="Internal Server Error",
+            examples={"internal_server": "Failed to log out. Try again"},
+        ),
+    },
+)
+@limiter.limit("5/minute")
+async def logout_user(
+    request: Request,
+    response: Response,
+    service: Annotated[AuthServiceInterface, Depends(get_auth_service)],
+    access_token: Annotated[str, Depends(get_token)],
+    current_user: Annotated[UserModel, Depends(get_current_user)],  # noqa
+    refresh_token: Annotated[str | None, Cookie()] = None,
+) -> MessageResponseSchema:
+    try:
+        await service.logout_user(refresh_token, access_token)
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=500, detail="Failed to log out. Try again"
+        ) from e
+
+    response.delete_cookie("refresh_token")
+    return MessageResponseSchema(message="Logged out successfully")
+
+
+@router.get("/test-access-token/")
+async def test_access_token(
+    token: Annotated[str, Depends(get_token)],
+    jwt_manager: Annotated[JWTAuthInterface, Depends(get_jwt_manager)],
+) -> MessageResponseSchema:
+    """
+    Protected endpoint to check if access token is valid
+    and not blacklisted.
+    """
+    try:
+        await jwt_manager.verify_token(token, is_refresh=False)
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or blacklisted token",
+        ) from e
+
+    return MessageResponseSchema(message="Your token is valid!")

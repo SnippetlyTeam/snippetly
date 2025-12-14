@@ -1,0 +1,50 @@
+@use "../../styles/mixins" as *;
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background-color: var(--secondary-bg-color);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  max-height: 48px;
+  box-sizing: border-box;
+
+  @include on-tablet {
+    max-height: 64px;
+  }
+
+  @include on-desktop {
+    max-height: 80px;
+    padding-inline: 32px;
+    padding-block: 24px;
+  }
+
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 999;
+}
+
+.list {
+  display: flex;
+  gap: 32px;
+  
+  align-items: center;
+}
+
+.link {
+  font-family: "Space Mono", monospace;
+  color: var(--color-white);
+  @include set-transition(color);
+
+  &:hover {
+    color: var(--color-purple);
+  }
+}
+
+.activeLink {
+  color: var(--color-purple);
+}

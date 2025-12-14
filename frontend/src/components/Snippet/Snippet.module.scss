@@ -1,0 +1,94 @@
+@use "../../styles/mixins" as *;
+.snippet {
+  @include set-transition(background-color);
+
+  appearance: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 140px;
+  background-color: var(--secondary-bg-color);
+  width: 300px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.12);
+  padding: 24px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--snippet-hover-bg-color);
+  }
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.title {
+  font-size: 20px;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.language {
+  font-family: "Inter", sans-serif;
+  color: #d4d4d4;
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  text-transform: capitalize;
+}
+
+.content {
+  position: relative;
+  background-color: #1e1e1e;
+  border-radius: 4px;
+  font-size: 12px;
+  height: 48px;
+  overflow: hidden;
+  white-space: pre-wrap;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    pointer-events: none;
+    background: linear-gradient(to top, #1e1e1e, transparent);
+    z-index: 1;
+  }
+  padding: 12px;
+}
+
+.line {
+  border: 1px solid var(--notification-color);
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.button {
+  background-color: transparent;
+  border: none;
+}

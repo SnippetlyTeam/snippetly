@@ -1,0 +1,23 @@
+@use "../../styles/mixins" as *;
+.footer {
+  display: flex;
+  justify-content: center;
+
+  background-color: var(--secondary-bg-color);
+  min-width: 100%;
+
+  padding-block: 16px;
+
+  @include on-desktop {
+    padding-block: 32px;
+  }
+
+  &Content {
+    @include page-padding-inline;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    max-width: 1200px;
+    width: 100%;
+  }
+}
