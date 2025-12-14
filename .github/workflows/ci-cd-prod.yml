@@ -229,10 +229,20 @@ jobs:
             fi
 
             if [ "$MONITORING_PRESENT" = "1" ] || [ "$MONITORING_CHANGED" = "1" ]; then
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
+              COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml"
             else
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+              COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
             fi
+
+            echo "Starting infrastructure services..."
+            docker compose $COMPOSE_FILES up -d db redis mongodb
+            sleep 5
+
+            echo "Running migrations..."
+            docker compose $COMPOSE_FILES run --rm migrate
+
+            echo "Starting application services..."
+            docker compose $COMPOSE_FILES up -d --scale migrate=0
 
             if [ "$MONITORING_CHANGED" = "1" ]; then
               echo "Monitoring config changed, updating monitoring stack..."
