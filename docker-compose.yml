@@ -47,9 +47,6 @@ services:
     container_name: snippetly-mongodb
     env_file:
       - ./backend/.env
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - /opt/app-data/mongo:/data/db
     restart: unless-stopped

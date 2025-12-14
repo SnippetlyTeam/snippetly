@@ -18,6 +18,7 @@ RUN uv sync
 
 # Copy project code
 COPY src /app/src
+COPY ops /app/ops
 
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
 USER appuser

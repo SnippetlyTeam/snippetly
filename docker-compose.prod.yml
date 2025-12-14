@@ -27,7 +27,7 @@ services:
 
   # Certbot for Let's Encrypt certificate management
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v2.11.0
     container_name: snippetly-certbot
     volumes:
       - /opt/app-data/certbot/conf:/etc/letsencrypt
