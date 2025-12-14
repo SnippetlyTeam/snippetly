@@ -140,6 +140,7 @@ jobs:
 
             # Rollback function
             rollback() {
+              trap - EXIT
               echo "❌ Deployment failed! Rolling back to previous version..."
               if [ -f .deploy.env.bak ]; then
                 mv .deploy.env.bak .deploy.env
@@ -156,7 +157,7 @@ jobs:
             }
 
             # Trap errors for rollback
-            trap 'rollback' ERR
+            trap 'status=$?; if [ $status -ne 0 ]; then rollback; fi' EXIT
 
 
             # Pull latest code from repository
