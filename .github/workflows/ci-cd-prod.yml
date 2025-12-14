@@ -234,15 +234,50 @@ jobs:
               COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
             fi
 
+            echo "Docker Compose version:"
+            docker compose version || true
+
             echo "Starting infrastructure services..."
+            set +e
             docker compose $COMPOSE_FILES up -d db redis mongodb
+            INFRA_EC=$?
+            set -e
+            echo "infra_up_exit_code=$INFRA_EC"
+            docker compose $COMPOSE_FILES ps || true
+            if [ "$INFRA_EC" -ne 0 ]; then
+              echo "❌ Failed to start infrastructure services"
+              exit "$INFRA_EC"
+            fi
             sleep 5
 
             echo "Running migrations..."
+            set +e
             docker compose $COMPOSE_FILES run --rm migrate
+            MIGRATE_EC=$?
+            set -e
+            echo "migrate_exit_code=$MIGRATE_EC"
+            if [ "$MIGRATE_EC" -ne 0 ]; then
+              echo "❌ Migrations failed"
+              docker compose $COMPOSE_FILES ps || true
+              docker logs snippetly-backend --tail 200 || true
+              exit "$MIGRATE_EC"
+            fi
 
             echo "Starting application services..."
+            set +e
             docker compose $COMPOSE_FILES up -d --scale migrate=0
+            APP_EC=$?
+            set -e
+            echo "app_up_exit_code=$APP_EC"
+            docker compose $COMPOSE_FILES ps || true
+            if [ "$APP_EC" -ne 0 ]; then
+              echo "❌ Failed to start application services"
+              docker compose $COMPOSE_FILES ps || true
+              docker logs snippetly-nginx-proxy --tail 200 || true
+              docker logs snippetly-backend --tail 200 || true
+              docker logs snippetly-frontend --tail 200 || true
+              exit "$APP_EC"
+            fi
 
             if [ "$MONITORING_CHANGED" = "1" ]; then
               echo "Monitoring config changed, updating monitoring stack..."
