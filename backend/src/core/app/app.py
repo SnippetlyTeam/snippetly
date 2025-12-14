@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 
 from src.admin import admin
 from src.api.v1.routes import v1_router, docs_router
+from src.middleware.prometheus import metrics_endpoint
 from src.core.config import get_settings
 from .lifespan import lifespan
 from .limiter import setup_limiter
@@ -35,6 +36,8 @@ def create_app() -> FastAPI:
 
     app.include_router(docs_router, prefix="/api")
     app.include_router(v1_router, prefix="/api")
+
+    app.get("/api/metrics")(metrics_endpoint)
 
     @app.get("/api/health")
     def health() -> dict:
