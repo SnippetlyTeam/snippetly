@@ -1,3 +1,5 @@
+@use "../../styles/mixins" as *;
+
 .nav {
   display: flex;
   justify-content: space-between;

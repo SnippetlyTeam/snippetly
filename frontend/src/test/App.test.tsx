@@ -2,12 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App';
+import { AuthProvider } from '../contexts/AuthContext';
 
 describe('App', () => {
   it('renders without crashing', () => {
     render(
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     );
 
@@ -18,7 +21,9 @@ describe('App', () => {
   it('contains main application structure', () => {
     const { container } = render(
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     );
 
