@@ -162,8 +162,15 @@ jobs:
             # Pull latest code from repository
             echo "Pulling latest code from main..."
             git fetch origin
+
+            # Stash any local changes to avoid conflicts
+            if ! git diff-index --quiet HEAD --; then
+              echo "⚠️ Local changes detected, stashing..."
+              git stash push -m "Auto-stash before deployment $(date +%Y%m%d-%H%M%S)"
+            fi
+
             git checkout main
-            git pull origin main
+            git reset --hard origin/main
 
             # Ensure .deploy.env exists
             if [ ! -f .deploy.env ]; then
