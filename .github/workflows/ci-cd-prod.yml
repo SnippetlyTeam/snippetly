@@ -212,18 +212,35 @@ jobs:
 
             # Wait for services to be healthy
             echo "Waiting for services to be healthy..."
-            sleep 15
+            sleep 30
 
             # Verify deployment - critical services must be running
             echo "Verifying deployment..."
             docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
 
-            # Health check: ensure backend is responding
+            # Health check: ensure backend is responding (with retry)
             echo "Performing health check..."
-            if ! curl -f -s https://snippetly.codes/api/health > /dev/null; then
-              echo "❌ Health check failed!"
-              exit 1
-            fi
+            MAX_RETRIES=10
+            RETRY_COUNT=0
+            HEALTH_CHECK_URL="https://snippetly.codes/api/health"
+
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if curl -f -s "$HEALTH_CHECK_URL" > /dev/null 2>&1; then
+                echo "✅ Health check passed!"
+                break
+              fi
+
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⏳ Health check attempt $RETRY_COUNT/$MAX_RETRIES failed, retrying in 5s..."
+                sleep 5
+              else
+                echo "❌ Health check failed after $MAX_RETRIES attempts!"
+                echo "Backend logs:"
+                docker logs snippetly-backend --tail 50 || true
+                exit 1
+              fi
+            done
 
             echo "✅ Deployment successful! Cleaning up backup..."
             rm -f .deploy.env.bak
