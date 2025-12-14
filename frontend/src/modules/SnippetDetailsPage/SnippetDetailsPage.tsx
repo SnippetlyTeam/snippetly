@@ -97,6 +97,9 @@ const SnippetDetailsPage = () => {
   });
 
   useEffect(() => {
+    getSnippet();
+  }, [snippetId, accessToken]);
+  useEffect(() => {
     if (location.state && (
       location.state.title ||
       location.state.message ||
