@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
         name="static",
     )
 
+    app.include_router(docs_router, prefix="/api")
     app.include_router(v1_router, prefix="/api")
 
     @app.get("/api/health")

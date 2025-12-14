@@ -19,7 +19,7 @@ settings = get_settings()
     dependencies=[Depends(is_admin)],
 )
 def custom_swagger_ui() -> HTMLResponse:
-    return get_swagger_ui_html(openapi_url="/openapi.json/", title="Docs")
+    return get_swagger_ui_html(openapi_url="/api/openapi.json", title="Docs")
 
 
 @router.get(
@@ -28,7 +28,7 @@ def custom_swagger_ui() -> HTMLResponse:
     dependencies=[Depends(is_admin)],
 )
 def custom_redoc_html() -> HTMLResponse:
-    return get_redoc_html(openapi_url="/openapi.json/", title="Redoc")
+    return get_redoc_html(openapi_url="/api/openapi.json", title="Redoc")
 
 
 @router.get(
