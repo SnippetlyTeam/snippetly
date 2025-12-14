@@ -223,7 +223,16 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 
             echo "Starting services..."
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            MONITORING_PRESENT="0"
+            if docker ps -a --format "{{.Names}}" | grep -qx "snippetly-prometheus"; then
+              MONITORING_PRESENT="1"
+            fi
+
+            if [ "$MONITORING_PRESENT" = "1" ] || [ "$MONITORING_CHANGED" = "1" ]; then
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d
+            else
+              docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+            fi
 
             if [ "$MONITORING_CHANGED" = "1" ]; then
               echo "Monitoring config changed, updating monitoring stack..."
