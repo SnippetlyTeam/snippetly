@@ -140,7 +140,6 @@ jobs:
 
             # Rollback function
             rollback() {
-              trap - EXIT
               echo "❌ Deployment failed! Rolling back to previous version..."
               if [ -f .deploy.env.bak ]; then
                 mv .deploy.env.bak .deploy.env
@@ -157,12 +156,11 @@ jobs:
             }
 
             # Trap errors for rollback
-            trap 'status=$?; if [ $status -ne 0 ]; then rollback; fi' EXIT
+            trap 'rollback' ERR
 
 
             # Pull latest code from repository
             echo "Pulling latest code from main..."
-            OLD_REV="$(git rev-parse HEAD 2>/dev/null || true)"
             git fetch origin
 
             # Stash any local changes to avoid conflicts
@@ -173,17 +171,6 @@ jobs:
 
             git checkout main
             git reset --hard origin/main
-
-            NEW_REV="$(git rev-parse HEAD)"
-            MONITORING_CHANGED="0"
-            if [ -n "${OLD_REV:-}" ] && git cat-file -e "${OLD_REV}^{commit}" 2>/dev/null; then
-              if git diff --name-only "$OLD_REV" "$NEW_REV" -- docker-compose.monitoring.yml infra/prometheus infra/grafana | grep -q .; then
-                MONITORING_CHANGED="1"
-              fi
-            else
-              MONITORING_CHANGED="1"
-            fi
-            echo "Monitoring config changed: $MONITORING_CHANGED"
 
             # Ensure .deploy.env exists
             if [ ! -f .deploy.env ]; then
@@ -224,70 +211,7 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 
             echo "Starting services..."
-            MONITORING_PRESENT="0"
-            if docker ps -a --format "{{.Names}}" | grep -qx "snippetly-prometheus"; then
-              MONITORING_PRESENT="1"
-            fi
-
-            if [ "$MONITORING_PRESENT" = "1" ] || [ "$MONITORING_CHANGED" = "1" ]; then
-              COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml"
-            else
-              COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
-            fi
-
-            echo "Docker Compose version:"
-            docker compose version || true
-
-            echo "Starting infrastructure services..."
-            set +e
-            docker compose $COMPOSE_FILES up -d db redis mongodb
-            INFRA_EC=$?
-            set -e
-            echo "infra_up_exit_code=$INFRA_EC"
-            docker compose $COMPOSE_FILES ps || true
-            if [ "$INFRA_EC" -ne 0 ]; then
-              echo "❌ Failed to start infrastructure services"
-              exit "$INFRA_EC"
-            fi
-            sleep 5
-
-            echo "Running migrations..."
-            set +e
-            docker compose $COMPOSE_FILES run --rm migrate
-            MIGRATE_EC=$?
-            set -e
-            echo "migrate_exit_code=$MIGRATE_EC"
-            if [ "$MIGRATE_EC" -ne 0 ]; then
-              echo "❌ Migrations failed"
-              docker compose $COMPOSE_FILES ps || true
-              docker logs snippetly-backend --tail 200 || true
-              exit "$MIGRATE_EC"
-            fi
-
-            echo "Starting application services..."
-            set +e
-            docker compose $COMPOSE_FILES up -d --scale migrate=0
-            APP_EC=$?
-            set -e
-            echo "app_up_exit_code=$APP_EC"
-            docker compose $COMPOSE_FILES ps || true
-            if [ "$APP_EC" -ne 0 ]; then
-              echo "❌ Failed to start application services"
-              docker compose $COMPOSE_FILES ps || true
-              docker logs snippetly-nginx-proxy --tail 200 || true
-              docker logs snippetly-backend --tail 200 || true
-              docker logs snippetly-frontend --tail 200 || true
-              exit "$APP_EC"
-            fi
-
-            if [ "$MONITORING_CHANGED" = "1" ]; then
-              echo "Monitoring config changed, updating monitoring stack..."
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml pull || true
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml up -d prometheus grafana
-              docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.monitoring.yml ps prometheus grafana || true
-            else
-              echo "Monitoring config unchanged, skipping monitoring update."
-            fi
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
             # Wait for services to be healthy
             echo "Waiting for services to be healthy..."
@@ -315,25 +239,8 @@ jobs:
                 sleep 5
               else
                 echo "❌ Health check failed after $MAX_RETRIES attempts!"
-                echo "Compose status:"
-                docker compose -f docker-compose.yml -f docker-compose.prod.yml ps || true
-
-                echo "Nginx proxy logs:"
-                docker logs snippetly-nginx-proxy --tail 200 || true
-                echo "Nginx config test (nginx -t):"
-                docker exec snippetly-nginx-proxy nginx -t 2>&1 || true
-
-                echo "Certbot logs:"
-                docker logs snippetly-certbot --tail 200 || true
-
-                echo "Frontend logs:"
-                docker logs snippetly-frontend --tail 100 || true
-
                 echo "Backend logs:"
                 docker logs snippetly-backend --tail 50 || true
-
-                echo "Fallback internal healthcheck (frontend -> backend:8000):"
-                docker exec snippetly-frontend wget --no-verbose --tries=1 --spider http://backend:8000/api/health 2>&1 || true
                 exit 1
               fi
             done
