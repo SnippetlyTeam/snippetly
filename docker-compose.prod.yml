@@ -10,6 +10,7 @@ services:
     volumes:
       - ./infra/nginx/prod-nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/snippetly.codes.conf:/etc/nginx/conf.d/snippetly.codes.conf:ro
+      - ./infra/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - /opt/app-data/certbot/conf:/etc/letsencrypt:ro
       - /opt/app-data/certbot/www:/var/www/certbot:ro
     depends_on:
